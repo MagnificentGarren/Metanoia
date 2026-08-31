@@ -41,7 +41,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="DASHBOARD"
+                android:text="SESSION HISTORY"
                 android:textColor="#8E8E93"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -304,7 +304,7 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- 6. Two-Tab Bottom Navigation Bar (Sessions Screen) -->
+    <!-- 6. Two-Tab Bottom Navigation Bar -->
     <LinearLayout
         android:id="@+id/layoutBottomNav"
         android:layout_width="match_parent"

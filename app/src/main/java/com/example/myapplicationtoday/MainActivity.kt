@@ -4,12 +4,9 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
-import android.media.RingtoneManager
+import android.os.Build
 import android.os.Bundle
-import android.os.CountDownTimer
-import android.os.Handler
 import android.os.IBinder
-import android.os.Looper
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -22,11 +19,12 @@ import androidx.core.content.ContextCompat
 import com.google.android.material.switchmaterial.SwitchMaterial
 import java.util.Calendar
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), TimerService.TimerListener {
 
     private lateinit var tvTimerDisplay: TextView
     private lateinit var btnToggleTimer: Button
     private lateinit var btnEndSession: Button
+    private lateinit var btnCancelSession: Button
     private lateinit var etSessionName: EditText
     private lateinit var tvCategoryLabel: TextView
     private lateinit var switchTimerMode: SwitchMaterial
@@ -46,13 +44,12 @@ class MainActivity : AppCompatActivity() {
     private var isCountUpMode: Boolean = false
     private var isTimerRunning: Boolean = false
     private var isPaused: Boolean = false
+    private var isSessionComplete: Boolean = false
 
-    private var countDownTimer: CountDownTimer? = null
     private var selectedTimeInMillis: Long = 0L
     private var timeLeftInMillis: Long = 0L
-
     private var countUpTimeInSeconds: Long = 0L
-    private val handler = Handler(Looper.getMainLooper())
+
     private var timerService: TimerService? = null
     private var isBound = false
 
@@ -60,10 +57,57 @@ class MainActivity : AppCompatActivity() {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             val binder = service as TimerService.LocalBinder
             timerService = binder.getService()
+            timerService?.timerListener = this@MainActivity
             isBound = true
+
+            timerService?.let { ts ->
+                // 🟢 CHECK IF ALARM IS CURRENTLY RINGING FIRST
+                if (ts.isAlarmRinging) {
+                    isCountUpMode = ts.isCountUpMode
+                    switchTimerMode.isChecked = isCountUpMode
+
+                    layoutPresetChips.visibility = View.GONE
+                    layoutPicker.visibility = View.GONE
+                    switchTimerMode.visibility = View.GONE
+                    tvTimerDisplay.visibility = View.VISIBLE
+
+                    timeLeftInMillis = 0L
+                    updateTimerDisplay()
+                    triggerSessionCompletionState() // Restore the "DISMISS ALARM & SAVE ✓" button
+                    return
+                }
+
+                // Standard running/paused UI restoration logic...
+                if (ts.isTimerRunning || ts.isPaused) {
+                    isCountUpMode = ts.isCountUpMode
+                    switchTimerMode.isChecked = isCountUpMode
+
+                    layoutPresetChips.visibility = View.GONE
+                    layoutPicker.visibility = View.GONE
+                    switchTimerMode.visibility = View.GONE
+                    tvTimerDisplay.visibility = View.VISIBLE
+                    btnEndSession.visibility = View.VISIBLE
+                    btnCancelSession.visibility = View.VISIBLE
+
+                    if (isCountUpMode) {
+                        this@MainActivity.countUpTimeInSeconds = ts.countUpTimeInSeconds
+                        updateCountUpDisplay()
+                    } else {
+                        this@MainActivity.timeLeftInMillis = ts.timeLeftInMillis
+                        updateTimerDisplay()
+                    }
+
+                    if (ts.isPaused) {
+                        btnToggleTimer.text = "RESUME SESSION ▶"
+                    } else {
+                        btnToggleTimer.text = "PAUSE SESSION ❚❚"
+                    }
+                }
+            }
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
+            timerService?.timerListener = null
             isBound = false
         }
     }
@@ -82,16 +126,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val countUpRunnable = object : Runnable {
-        override fun run() {
-            if (isTimerRunning) {
-                countUpTimeInSeconds++
-                updateCountUpDisplay()
-                handler.postDelayed(this, 1000)
-            }
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -99,6 +133,7 @@ class MainActivity : AppCompatActivity() {
         tvTimerDisplay = findViewById(R.id.tvTimerDisplay)
         btnToggleTimer = findViewById(R.id.btnToggleTimer)
         btnEndSession = findViewById(R.id.btnEndSession)
+        btnCancelSession = findViewById(R.id.btnCancelSession)
         etSessionName = findViewById(R.id.etSessionName)
         switchTimerMode = findViewById(R.id.switchTimerMode)
         layoutPresetChips = findViewById(R.id.layoutPresetChips)
@@ -115,7 +150,6 @@ class MainActivity : AppCompatActivity() {
 
         tvCategoryLabel = findViewById(R.id.tvCategoryTag)
         tvCategoryLabel.setOnClickListener { showCategoryPickerDialog() }
-        etSessionName.setOnClickListener { showCategoryPickerDialog() }
 
         val navSessions: TextView = findViewById(R.id.navSessions)
         navSessions.setOnClickListener {
@@ -125,7 +159,10 @@ class MainActivity : AppCompatActivity() {
 
         setupWheelPickers()
 
-        switchTimerMode.setOnCheckedChangeListener { _, isChecked ->
+        switchTimerMode.setOnCheckedChangeListener { buttonView, isChecked ->
+            // Prevent programmatic updates from killing active service timers
+            if (!buttonView.isPressed) return@setOnCheckedChangeListener
+
             isCountUpMode = isChecked
             stopAllTimers()
             resetUiToInitialState()
@@ -152,7 +189,9 @@ class MainActivity : AppCompatActivity() {
         chip1h.setOnClickListener { selectPreset(1, 0, 0, chip1h) }
 
         btnToggleTimer.setOnClickListener {
-            if (isTimerRunning) {
+            if (isSessionComplete) {
+                silenceAndResetSession()
+            } else if (isTimerRunning) {
                 pauseTimer()
             } else {
                 startTimer()
@@ -160,6 +199,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnEndSession.setOnClickListener { saveAndResetSession() }
+        btnCancelSession.setOnClickListener { cancelSession() }
     }
 
     private fun setupWheelPickers() {
@@ -205,67 +245,81 @@ class MainActivity : AppCompatActivity() {
     private fun startTimer() {
         if (!isPaused && !isCountUpMode) {
             readTimeFromPickers()
+
             if (selectedTimeInMillis <= 0) {
                 Toast.makeText(this, "Please set a duration greater than 0 seconds", Toast.LENGTH_SHORT).show()
                 return
             }
+            timeLeftInMillis = selectedTimeInMillis
         }
 
         isTimerRunning = true
         isPaused = false
+        isSessionComplete = false
 
         layoutPresetChips.visibility = View.GONE
         layoutPicker.visibility = View.GONE
         switchTimerMode.visibility = View.GONE
         tvTimerDisplay.visibility = View.VISIBLE
         btnEndSession.visibility = View.VISIBLE
+        btnCancelSession.visibility = View.VISIBLE
 
         btnToggleTimer.text = "PAUSE SESSION ❚❚"
 
-        if (isCountUpMode) {
-            handler.postDelayed(countUpRunnable, 1000)
-        } else {
-            val intent = Intent(this, TimerService::class.java).apply {
-                action = TimerService.ACTION_START
-                putExtra(TimerService.EXTRA_TIME_MILLIS, timeLeftInMillis)
-                putExtra(TimerService.EXTRA_TITLE, etSessionName.text.toString().ifEmpty { "Focus Session" })
-            }
-            ContextCompat.startForegroundService(this, intent)
-
-            countDownTimer = object : CountDownTimer(timeLeftInMillis, 1000) {
-                override fun onTick(millisUntilFinished: Long) {
-                    timeLeftInMillis = millisUntilFinished
-                    updateTimerDisplay()
-                }
-
-                override fun onFinish() {
-                    isTimerRunning = false
-                    playAlarm()
-                    saveSessionToStorage()
-                    resetUiToInitialState()
-                    Toast.makeText(this@MainActivity, "Focus session saved!", Toast.LENGTH_LONG).show()
-                }
-            }.start()
+        val intent = Intent(this, TimerService::class.java).apply {
+            action = TimerService.ACTION_START
+            putExtra(TimerService.EXTRA_TIME_MILLIS, timeLeftInMillis)
+            putExtra(TimerService.EXTRA_TITLE, etSessionName.text.toString().ifEmpty { "Focus Session" })
+            putExtra(TimerService.EXTRA_IS_COUNT_UP, isCountUpMode)
         }
+        ContextCompat.startForegroundService(this, intent)
+    }
+
+    private fun triggerSessionCompletionState() {
+        isTimerRunning = false
+        isSessionComplete = true
+        btnEndSession.visibility = View.GONE
+        btnCancelSession.visibility = View.GONE
+
+        btnToggleTimer.text = "DISMISS ALARM & SAVE ✓"
+        Toast.makeText(this, "Session Complete!", Toast.LENGTH_LONG).show()
+    }
+
+    private fun silenceAndResetSession() {
+        timerService?.stopAlarmSound()
+        saveSessionToStorage()
+        stopAllTimers()
+        resetUiToInitialState()
+        Toast.makeText(this, "Focus session saved to history!", Toast.LENGTH_SHORT).show()
     }
 
     private fun pauseTimer() {
         isTimerRunning = false
         isPaused = true
 
-        if (isCountUpMode) {
-            handler.removeCallbacks(countUpRunnable)
-        } else {
-            countDownTimer?.cancel()
-            val intent = Intent(this, TimerService::class.java).apply {
-                action = TimerService.ACTION_PAUSE
-            }
-            startService(intent)
+        val intent = Intent(this, TimerService::class.java).apply {
+            action = TimerService.ACTION_PAUSE
         }
+        startService(intent)
         btnToggleTimer.text = "RESUME SESSION ▶"
     }
 
+    private fun cancelSession() {
+        AlertDialog.Builder(this)
+            .setTitle("Cancel Session")
+            .setMessage("Are you sure you want to cancel? This session will not be saved.")
+            .setPositiveButton("Discard") { dialog, _ ->
+                stopAllTimers()
+                resetUiToInitialState()
+                Toast.makeText(this, "Session cancelled", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+            .setNegativeButton("Keep Going", null)
+            .show()
+    }
+
     private fun saveAndResetSession() {
+        timerService?.stopAlarmSound()
         saveSessionToStorage()
         stopAllTimers()
         resetUiToInitialState()
@@ -275,8 +329,11 @@ class MainActivity : AppCompatActivity() {
     private fun resetUiToInitialState() {
         isTimerRunning = false
         isPaused = false
+        isSessionComplete = false
+
         btnToggleTimer.text = "START SESSION ▶"
         btnEndSession.visibility = View.GONE
+        btnCancelSession.visibility = View.GONE
         switchTimerMode.visibility = View.VISIBLE
 
         if (isCountUpMode) {
@@ -320,8 +377,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun stopAllTimers() {
-        countDownTimer?.cancel()
-        handler.removeCallbacks(countUpRunnable)
         isTimerRunning = false
 
         val intent = Intent(this, TimerService::class.java).apply {
@@ -333,6 +388,7 @@ class MainActivity : AppCompatActivity() {
     private fun selectPreset(hours: Int, minutes: Int, seconds: Int, selectedChip: TextView) {
         stopAllTimers()
         isPaused = false
+        isSessionComplete = false
         btnToggleTimer.text = "START SESSION ▶"
 
         resetChipStyles()
@@ -384,19 +440,45 @@ class MainActivity : AppCompatActivity() {
         tvTimerDisplay.text = String.format("%02d:%02d:%02d", hours, minutes, seconds)
     }
 
-    private fun playAlarm() {
-        try {
-            val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-            val ringtone = RingtoneManager.getRingtone(applicationContext, alarmUri)
-            ringtone.play()
-        } catch (e: Exception) {
-            e.printStackTrace()
+    override fun onDestroy() {
+        super.onDestroy()
+    }
+
+    override fun onTick(timeLeftMillis: Long) {
+        runOnUiThread {
+            if (isCountUpMode) {
+                this.countUpTimeInSeconds = timeLeftMillis / 1000L
+                updateCountUpDisplay()
+            } else {
+                this.timeLeftInMillis = timeLeftMillis
+                updateTimerDisplay()
+            }
+            this.isTimerRunning = true
+            this.isPaused = false
+            btnToggleTimer.text = "PAUSE SESSION ❚❚"
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        stopAllTimers()
+    override fun onFinish() {
+        runOnUiThread {
+            this.timeLeftInMillis = 0L
+            updateTimerDisplay()
+            triggerSessionCompletionState()
+        }
+    }
+
+    override fun onStateChanged(isRunning: Boolean, isPaused: Boolean) {
+        runOnUiThread {
+            this.isTimerRunning = isRunning
+            this.isPaused = isPaused
+
+            if (isPaused) {
+                btnToggleTimer.text = "RESUME SESSION ▶"
+            } else if (isRunning) {
+                btnToggleTimer.text = "PAUSE SESSION ❚❚"
+            } else {
+                resetUiToInitialState()
+            }
+        }
     }
 }
