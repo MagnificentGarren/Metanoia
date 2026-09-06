@@ -4,9 +4,12 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.CalendarView
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.util.Calendar
@@ -49,6 +52,7 @@ class SessionsActivity : AppCompatActivity() {
 
         setupCalendar()
         setupSessionsList()
+        setupSwipeActions()
 
         btnCalendarToggle.setOnClickListener {
             toggleCalendarView()
@@ -59,7 +63,6 @@ class SessionsActivity : AppCompatActivity() {
             updateSessionsForSelectedDate()
         }
 
-        // Bottom Navigation Click Handlers
         navDashboard.setOnClickListener {
             val intent = Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
@@ -67,6 +70,65 @@ class SessionsActivity : AppCompatActivity() {
             startActivity(intent)
             overridePendingTransition(0, 0)
         }
+    }
+
+    private fun setupSwipeActions() {
+        val swipeCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean = false
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.adapterPosition
+                val session = sessionAdapter.getItem(position)
+
+                val options = arrayOf("Edit Session", "Delete Session")
+                AlertDialog.Builder(this@SessionsActivity)
+                    .setTitle("Manage Session")
+                    .setItems(options) { _, which ->
+                        when (which) {
+                            0 -> showEditDialog(session)
+                            1 -> {
+                                SessionRepository.deleteSession(this@SessionsActivity, session.id)
+                                updateSessionsForSelectedDate()
+                            }
+                        }
+                    }
+                    .setOnCancelListener {
+                        sessionAdapter.notifyItemChanged(position)
+                    }
+                    .show()
+            }
+        }
+
+        ItemTouchHelper(swipeCallback).attachToRecyclerView(rvSessions)
+    }
+
+    private fun showEditDialog(session: Session) {
+        val view = layoutInflater.inflate(R.layout.dialog_edit_session, null)
+        val etTitle = view.findViewById<EditText>(R.id.etEditTitle)
+        val etCategory = view.findViewById<EditText>(R.id.etEditCategory)
+
+        etTitle.setText(session.title)
+        etCategory.setText(session.category)
+
+        AlertDialog.Builder(this)
+            .setTitle("Edit Session")
+            .setView(view)
+            .setPositiveButton("Save") { _, _ ->
+                val updatedSession = session.copy(
+                    title = etTitle.text.toString().ifEmpty { session.title },
+                    category = etCategory.text.toString().ifEmpty { session.category }
+                )
+                SessionRepository.updateSession(this, updatedSession)
+                updateSessionsForSelectedDate()
+            }
+            .setNegativeButton("Cancel") { _, _ ->
+                updateSessionsForSelectedDate()
+            }
+            .show()
     }
 
     private fun toggleCalendarView() {
@@ -103,7 +165,7 @@ class SessionsActivity : AppCompatActivity() {
 
     private fun setupSessionsList() {
         val filteredList = SessionRepository.getSessionsForDate(this, selectedDate)
-        sessionAdapter = SessionAdapter(filteredList)
+        sessionAdapter = SessionAdapter(filteredList.toMutableList())
         rvSessions.layoutManager = LinearLayoutManager(this)
         rvSessions.adapter = sessionAdapter
         updateStats(filteredList)

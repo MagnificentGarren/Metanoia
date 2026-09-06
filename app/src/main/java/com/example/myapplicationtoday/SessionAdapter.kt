@@ -8,7 +8,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class SessionAdapter(private var sessions: List<Session>) :
+class SessionAdapter(private var sessions: MutableList<Session>) :
     RecyclerView.Adapter<SessionAdapter.SessionViewHolder>() {
 
     class SessionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -30,13 +30,12 @@ class SessionAdapter(private var sessions: List<Session>) :
         holder.tvTitle.text = "${session.title} (${session.category})"
         holder.ivCategoryIcon.setImageResource(R.drawable.ic_head)
 
-        // Set dynamic accent bar colour based on selected category
         val accentColor = when (session.category.lowercase()) {
-            "study" -> Color.parseColor("#4A90E2")       // Soft Blue
-            "workout" -> Color.parseColor("#E74C3C")     // Crimson Red
-            "coding" -> Color.parseColor("#2ECC71")      // Emerald Green
-            "reading" -> Color.parseColor("#9B59B6")     // Purple
-            else -> Color.parseColor("#D4AF37")          // Gold Accent (Default)
+            "study" -> Color.parseColor("#4A90E2")
+            "workout" -> Color.parseColor("#E74C3C")
+            "coding" -> Color.parseColor("#2ECC71")
+            "reading" -> Color.parseColor("#9B59B6")
+            else -> Color.parseColor("#D4AF37")
         }
 
         holder.viewCategoryAccent.setBackgroundColor(accentColor)
@@ -44,8 +43,10 @@ class SessionAdapter(private var sessions: List<Session>) :
 
     override fun getItemCount(): Int = sessions.size
 
+    fun getItem(position: Int): Session = sessions[position]
+
     fun updateData(newSessions: List<Session>) {
-        sessions = newSessions
+        sessions = newSessions.toMutableList()
         notifyDataSetChanged()
     }
 }
