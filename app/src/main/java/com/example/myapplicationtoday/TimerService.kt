@@ -77,7 +77,7 @@ class TimerService : Service() {
                 }
             }
             ACTION_PAUSE -> togglePauseResume()
-            ACTION_STOP -> endAndSaveSession()
+            ACTION_STOP -> stopTimerAndService() // 🟢 Stop timer without saving to repository
             ACTION_STOP_ALARM -> stopAlarmSound()
         }
         return START_STICKY

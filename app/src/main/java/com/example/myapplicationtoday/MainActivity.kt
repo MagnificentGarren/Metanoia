@@ -52,6 +52,7 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
 
     private var timerService: TimerService? = null
     private var isBound = false
+    private var hasBeenSaved = false
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -61,7 +62,6 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
             isBound = true
 
             timerService?.let { ts ->
-                // 🟢 CHECK IF ALARM IS CURRENTLY RINGING FIRST
                 if (ts.isAlarmRinging) {
                     isCountUpMode = ts.isCountUpMode
                     switchTimerMode.isChecked = isCountUpMode
@@ -73,11 +73,10 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
 
                     timeLeftInMillis = 0L
                     updateTimerDisplay()
-                    triggerSessionCompletionState() // Restore the "DISMISS ALARM & SAVE ✓" button
+                    triggerSessionCompletionState()
                     return
                 }
 
-                // Standard running/paused UI restoration logic...
                 if (ts.isTimerRunning || ts.isPaused) {
                     isCountUpMode = ts.isCountUpMode
                     switchTimerMode.isChecked = isCountUpMode
@@ -160,7 +159,6 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
         setupWheelPickers()
 
         switchTimerMode.setOnCheckedChangeListener { buttonView, isChecked ->
-            // Prevent programmatic updates from killing active service timers
             if (!buttonView.isPressed) return@setOnCheckedChangeListener
 
             isCountUpMode = isChecked
@@ -286,8 +284,8 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
     }
 
     private fun silenceAndResetSession() {
-        timerService?.stopAlarmSound()
         saveSessionToStorage()
+        timerService?.stopAlarmSound()
         stopAllTimers()
         resetUiToInitialState()
         Toast.makeText(this, "Focus session saved to history!", Toast.LENGTH_SHORT).show()
@@ -319,39 +317,17 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
     }
 
     private fun saveAndResetSession() {
-        timerService?.stopAlarmSound()
         saveSessionToStorage()
+        timerService?.stopAlarmSound()
         stopAllTimers()
         resetUiToInitialState()
         Toast.makeText(this, "Session saved to history!", Toast.LENGTH_SHORT).show()
     }
 
-    private fun resetUiToInitialState() {
-        isTimerRunning = false
-        isPaused = false
-        isSessionComplete = false
-
-        btnToggleTimer.text = "START SESSION ▶"
-        btnEndSession.visibility = View.GONE
-        btnCancelSession.visibility = View.GONE
-        switchTimerMode.visibility = View.VISIBLE
-
-        if (isCountUpMode) {
-            layoutPresetChips.visibility = View.GONE
-            layoutPicker.visibility = View.GONE
-            tvTimerDisplay.visibility = View.VISIBLE
-            countUpTimeInSeconds = 0L
-            updateCountUpDisplay()
-        } else {
-            layoutPresetChips.visibility = View.VISIBLE
-            layoutPicker.visibility = View.VISIBLE
-            tvTimerDisplay.visibility = View.GONE
-            setPickerValues(0, 0, 0)
-            resetChipStyles()
-        }
-    }
-
     private fun saveSessionToStorage() {
+        if (hasBeenSaved) return
+        hasBeenSaved = true
+
         val title = etSessionName.text.toString().ifEmpty { "Focus Session" }
         val durationFormatted = if (isCountUpMode) {
             val mins = countUpTimeInSeconds / 60
@@ -374,6 +350,32 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
 
         SessionRepository.init(this)
         SessionRepository.addSession(this, newSession)
+    }
+
+    private fun resetUiToInitialState() {
+        isTimerRunning = false
+        isPaused = false
+        isSessionComplete = false
+        hasBeenSaved = false
+
+        btnToggleTimer.text = "START SESSION ▶"
+        btnEndSession.visibility = View.GONE
+        btnCancelSession.visibility = View.GONE
+        switchTimerMode.visibility = View.VISIBLE
+
+        if (isCountUpMode) {
+            layoutPresetChips.visibility = View.GONE
+            layoutPicker.visibility = View.GONE
+            tvTimerDisplay.visibility = View.VISIBLE
+            countUpTimeInSeconds = 0L
+            updateCountUpDisplay()
+        } else {
+            layoutPresetChips.visibility = View.VISIBLE
+            layoutPicker.visibility = View.VISIBLE
+            tvTimerDisplay.visibility = View.GONE
+            setPickerValues(0, 0, 0)
+            resetChipStyles()
+        }
     }
 
     private fun stopAllTimers() {
