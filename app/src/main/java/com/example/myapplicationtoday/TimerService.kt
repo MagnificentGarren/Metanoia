@@ -78,7 +78,8 @@ class TimerService : Service() {
             }
             ACTION_PAUSE -> togglePauseResume()
             ACTION_STOP -> stopTimerAndService() // 🟢 Stop timer without saving to repository
-            ACTION_STOP_ALARM -> stopAlarmSound()
+            ACTION_STOP_ALARM -> endAndSaveSession()
+            ACTION_END_AND_SAVE -> endAndSaveSession()
         }
         return START_STICKY
     }
@@ -107,6 +108,9 @@ class TimerService : Service() {
 
         SessionRepository.init(this)
         SessionRepository.addSession(this, newSession)
+
+        // Notify listener so open UI resets immediately
+        timerListener?.onStateChanged(isRunning = false, isPaused = false)
 
         stopTimerAndService()
     }
@@ -214,6 +218,7 @@ class TimerService : Service() {
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
 
+        // Notify MainActivity UI to reset to initial state
         timerListener?.onStateChanged(isRunning = false, isPaused = false)
     }
 
@@ -275,7 +280,7 @@ class TimerService : Service() {
             PendingIntent.FLAG_IMMUTABLE
         )
         val stopIntent = PendingIntent.getService(
-            this, 2, Intent(this, TimerService::class.java).apply { action = ACTION_STOP },
+            this, 2, Intent(this, TimerService::class.java).apply { action = ACTION_END_AND_SAVE },
             PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -327,6 +332,7 @@ class TimerService : Service() {
         const val ACTION_PAUSE = "ACTION_PAUSE"
         const val ACTION_STOP = "ACTION_STOP"
         const val ACTION_STOP_ALARM = "ACTION_STOP_ALARM"
+        const val ACTION_END_AND_SAVE = "ACTION_END_AND_SAVE"
         const val EXTRA_TIME_MILLIS = "EXTRA_TIME_MILLIS"
         const val EXTRA_TITLE = "EXTRA_TITLE"
         const val EXTRA_IS_COUNT_UP = "EXTRA_IS_COUNT_UP"
