@@ -12,10 +12,10 @@ class SessionAdapter(private var sessions: MutableList<Session>) :
     RecyclerView.Adapter<SessionAdapter.SessionViewHolder>() {
 
     class SessionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val viewCategoryAccent: View = itemView.findViewById(R.id.viewCategoryAccent)
         val ivCategoryIcon: ImageView = itemView.findViewById(R.id.ivCategoryIcon)
         val tvTimestamp: TextView = itemView.findViewById(R.id.tvItemTimestamp)
         val tvTitle: TextView = itemView.findViewById(R.id.tvItemTitle)
+        val tvCategoryTag: TextView = itemView.findViewById(R.id.tvItemCategoryTag)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SessionViewHolder {
@@ -27,7 +27,8 @@ class SessionAdapter(private var sessions: MutableList<Session>) :
     override fun onBindViewHolder(holder: SessionViewHolder, position: Int) {
         val session = sessions[position]
         holder.tvTimestamp.text = "${session.startTime} • ${session.durationText}"
-        holder.tvTitle.text = "${session.title} (${session.category})"
+        holder.tvTitle.text = session.title
+        holder.tvCategoryTag.text = session.category
         holder.ivCategoryIcon.setImageResource(R.drawable.ic_head)
 
         val accentColor = when (session.category.lowercase()) {
@@ -38,7 +39,14 @@ class SessionAdapter(private var sessions: MutableList<Session>) :
             else -> Color.parseColor("#D4AF37")
         }
 
-        holder.viewCategoryAccent.setBackgroundColor(accentColor)
+        holder.tvCategoryTag.setTextColor(accentColor)
+        try {
+            val drawable = holder.tvCategoryTag.background?.mutate() as? android.graphics.drawable.GradientDrawable
+            drawable?.setStroke(1, accentColor)
+            drawable?.setColor((accentColor and 0x00FFFFFF) or 0x1A000000)
+        } catch (e: Exception) {
+            // fallback
+        }
     }
 
     override fun getItemCount(): Int = sessions.size

@@ -18,7 +18,7 @@ data class Session(
 object SessionRepository {
     private const val PREF_NAME = "metanoia_sessions_pref"
     private const val KEY_SESSIONS = "saved_sessions_json"
-    private val memorySessions = mutableListOf<Session>()
+    val memorySessions = mutableListOf<Session>()
     private var isInitialized = false
 
     fun init(context: Context) {
@@ -76,7 +76,7 @@ object SessionRepository {
 
     fun getSessionsForDate(context: Context, date: Calendar): List<Session> {
         init(context)
-        return memorySessions.filter { isSameDay(it.date, date) }
+        return memorySessions
     }
 
     private fun saveToDisk(context: Context) {
@@ -96,10 +96,5 @@ object SessionRepository {
         }
 
         prefs.edit().putString(KEY_SESSIONS, jsonArray.toString()).apply()
-    }
-
-    private fun isSameDay(cal1: Calendar, cal2: Calendar): Boolean {
-        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
-                cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
     }
 }

@@ -55,6 +55,7 @@ class TimerService : Service() {
     var isPaused: Boolean = false
     var isAlarmRinging: Boolean = false
     var sessionTitle: String = "Focus Session"
+    var sessionCategory: String = "Deep Work"
 
     inner class LocalBinder : Binder() {
         fun getService(): TimerService = this@TimerService
@@ -68,6 +69,7 @@ class TimerService : Service() {
             ACTION_START -> {
                 isCountUpMode = intent.getBooleanExtra(EXTRA_IS_COUNT_UP, false)
                 sessionTitle = intent.getStringExtra(EXTRA_TITLE) ?: "Focus Session"
+                sessionCategory = intent.getStringExtra(EXTRA_CATEGORY) ?: "Deep Work"
                 val millis = intent.getLongExtra(EXTRA_TIME_MILLIS, 25 * 60 * 1000L)
 
                 if (isCountUpMode) {
@@ -103,7 +105,7 @@ class TimerService : Service() {
             durationText = durationFormatted,
             startTime = startTime,
             date = Calendar.getInstance(),
-            category = "Focus"
+            category = sessionCategory
         )
 
         SessionRepository.init(this)
@@ -335,6 +337,7 @@ class TimerService : Service() {
         const val ACTION_END_AND_SAVE = "ACTION_END_AND_SAVE"
         const val EXTRA_TIME_MILLIS = "EXTRA_TIME_MILLIS"
         const val EXTRA_TITLE = "EXTRA_TITLE"
+        const val EXTRA_CATEGORY = "EXTRA_CATEGORY"
         const val EXTRA_IS_COUNT_UP = "EXTRA_IS_COUNT_UP"
     }
 }

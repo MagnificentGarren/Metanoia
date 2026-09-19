@@ -6,14 +6,16 @@
     android:layout_marginBottom="10dp"
     android:background="@drawable/bg_search_rounded"
     android:gravity="center_vertical"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:paddingEnd="16dp">
 
     <!-- Slim Vertical Category Accent Bar -->
     <View
         android:id="@+id/viewCategoryAccent"
         android:layout_width="4dp"
         android:layout_height="match_parent"
-        android:background="#D4AF37" />
+        android:background="#D4AF37"
+        android:visibility="gone" />
 
     <ImageView
         android:id="@+id/ivCategoryIcon"
@@ -24,12 +26,12 @@
         app:tint="#D4AF37" />
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
+        android:layout_weight="1"
         android:orientation="vertical"
-        android:paddingVertical="16dp"
-        android:paddingEnd="16dp">
+        android:paddingVertical="16dp">
 
         <TextView
             android:id="@+id/tvItemTimestamp"
@@ -47,5 +49,16 @@
             android:textColor="#8E8E93"
             android:textSize="13sp" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvItemCategoryTag"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_category_pill"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="4dp"
+        android:textColor="#D4AF37"
+        android:textSize="12sp"
+        android:textStyle="bold" />
 
 </LinearLayout>

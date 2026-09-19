@@ -26,11 +26,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Sessions Activity -->
-        <activity
-            android:name=".SessionsActivity"
-            android:exported="false" />
-
         <service
             android:name=".TimerService"
             android:enabled="true"

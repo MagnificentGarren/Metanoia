@@ -7,64 +7,52 @@
     android:padding="24dp">
 
     <TextView
+        android:id="@+id/tvAlertTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="EDIT SESSION"
+        android:text="MANAGE SESSION"
         android:textColor="#D4AF37"
         android:textSize="16sp"
         android:textStyle="bold"
         android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="20dp" />
+        android:layout_marginBottom="12dp" />
 
-    <EditText
-        android:id="@+id/etEditTitle"
+    <TextView
+        android:id="@+id/tvAlertMessage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="48dp"
-        android:paddingHorizontal="14dp"
-        android:paddingVertical="12dp"
-        android:hint="Session Title"
         android:textColor="#FFFFFF"
-        android:textColorHint="#8E8E93"
-        android:background="@drawable/bg_search_rounded"
-        android:inputType="textCapWords" />
-
-    <EditText
-        android:id="@+id/etEditCategory"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:minHeight="48dp"
-        android:paddingHorizontal="14dp"
-        android:paddingVertical="12dp"
-        android:hint="Category (e.g. Focus, Coding)"
-        android:textColor="#FFFFFF"
-        android:textColorHint="#8E8E93"
-        android:background="@drawable/bg_search_rounded"
-        android:inputType="textCapWords" />
+        android:textSize="14sp"
+        android:layout_marginBottom="24dp"
+        android:gravity="center" />
 
     <LinearLayout
+        android:id="@+id/layoutAlertOptions"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:orientation="vertical"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/layoutAlertButtons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="end">
 
         <Button
-            android:id="@+id/btnDialogCancel"
+            android:id="@+id/btnAlertNegative"
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="CANCEL"
             android:textColor="#8E8E93"
             android:layout_marginEnd="8dp" />
 
         <Button
-            android:id="@+id/btnDialogSave"
+            android:id="@+id/btnAlertPositive"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:backgroundTint="#D4AF37"
-            android:text="SAVE"
             android:textColor="#0A0A0A"
             android:textStyle="bold" />
     </LinearLayout>

@@ -1,89 +1,89 @@
 package com.example.myapplicationtoday
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
+import android.view.View
 import android.widget.TextView
-import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.example.myapplicationtoday.ui.DialogHelper
-import com.example.myapplicationtoday.ui.SessionRepositoryManager
-import com.example.myapplicationtoday.ui.SessionUIManager
-import com.example.myapplicationtoday.ui.TimePickerManager
-import com.example.myapplicationtoday.ui.TimerDisplayFormatter
-import com.example.myapplicationtoday.ui.TimerServiceController
-import com.google.android.material.switchmaterial.SwitchMaterial
+import androidx.fragment.app.Fragment
 
-class MainActivity : AppCompatActivity(), TimerService.TimerListener {
+class MainActivity : AppCompatActivity() {
 
-    private lateinit var tvTimerDisplay: TextView
-    private lateinit var btnToggleTimer: Button
-    private lateinit var btnEndSession: Button
-    private lateinit var btnCancelSession: Button
-    private lateinit var etSessionName: EditText
-    private lateinit var tvCategoryLabel: TextView
-    private lateinit var switchTimerMode: SwitchMaterial
+    private lateinit var navDashboard: TextView
+    private lateinit var navSessions: TextView
 
-    private lateinit var pickerManager: TimePickerManager
-    private lateinit var uiManager: SessionUIManager
-    private lateinit var repoManager: SessionRepositoryManager
-    private lateinit var serviceController: TimerServiceController
-
-    private var selectedCategory: String = "Deep Work"
-    private var isCountUpMode: Boolean = false
-    private var isTimerRunning: Boolean = false
-    private var isPaused: Boolean = false
-    private var isSessionComplete: Boolean = false
-
-    private var selectedTimeInMillis: Long = 0L
-    private var timeLeftInMillis: Long = 0L
-    private var countUpTimeInSeconds: Long = 0L
+    private val dashboardFragment = DashboardFragment()
+    private val sessionsFragment = SessionsFragment()
+    private var currentFragment: Fragment = dashboardFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Request runtime permission for notifications on Android 13+
         checkNotificationPermission()
 
-        initViews()
-        val chips = listOf(
-            findViewById<TextView>(R.id.chip25m),
-            findViewById<TextView>(R.id.chip45m),
-            findViewById<TextView>(R.id.chip50m),
-            findViewById<TextView>(R.id.chip1h)
-        )
+        navDashboard = findViewById(R.id.navDashboard)
+        navSessions = findViewById(R.id.navSessions)
 
-        uiManager = SessionUIManager(
-            tvTimerDisplay,
-            btnToggleTimer,
-            btnEndSession,
-            btnCancelSession,
-            switchTimerMode,
-            findViewById(R.id.layoutPresetChips),
-            findViewById(R.id.layoutPicker),
-            tvCategoryLabel,
-            etSessionName,
-            findViewById(R.id.navSessions)
-        )
+        // Initial fragment setup
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.container, dashboardFragment)
+            .commit()
 
-        pickerManager = TimePickerManager(
-            this, findViewById(R.id.pickerHours), findViewById(R.id.pickerMinutes),
-            findViewById(R.id.pickerSeconds), chips
-        ) { readTimeFromPickers() }
-        repoManager = SessionRepositoryManager(this)
-
-        serviceController = TimerServiceController(this, this).apply {
-            onServiceSynced = { service -> syncUiWithService(service) }
+        navDashboard.setOnClickListener {
+            switchToFragment(dashboardFragment, isDashboard = true)
         }
 
-        setupListeners(chips)
+        navSessions.setOnClickListener {
+            switchToFragment(sessionsFragment, isDashboard = false)
+        }
+
+        // Handle custom deterministic back/exit confirmation dialog
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (currentFragment != dashboardFragment) {
+                    switchToFragment(dashboardFragment, isDashboard = true)
+                } else {
+                    showExitConfirmationDialog()
+                }
+            }
+        })
+    }
+
+    private fun switchToFragment(fragment: Fragment, isDashboard: Boolean) {
+        currentFragment = fragment
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.container, fragment)
+            .commit()
+
+        if (isDashboard) {
+            navDashboard.setBackgroundResource(R.drawable.bg_card_outline)
+            navDashboard.setTextColor(0xFFD4AF37.toInt())
+            navSessions.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+            navSessions.setTextColor(0xFF8E8E93.toInt())
+        } else {
+            navSessions.setBackgroundResource(R.drawable.bg_card_outline)
+            navSessions.setTextColor(0xFFD4AF37.toInt())
+            navDashboard.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+            navDashboard.setTextColor(0xFF8E8E93.toInt())
+        }
+    }
+
+    private fun showExitConfirmationDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Exit Application")
+            .setMessage("Are you sure you want to exit?")
+            .setPositiveButton("Exit") { _, _ ->
+                finish()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun checkNotificationPermission() {
@@ -98,212 +98,6 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
                     arrayOf(Manifest.permission.POST_NOTIFICATIONS),
                     1001
                 )
-            }
-        }
-    }
-
-    private fun initViews() {
-        tvTimerDisplay = findViewById(R.id.tvTimerDisplay)
-        btnToggleTimer = findViewById(R.id.btnToggleTimer)
-        btnEndSession = findViewById(R.id.btnEndSession)
-        btnCancelSession = findViewById(R.id.btnCancelSession)
-        etSessionName = findViewById(R.id.etSessionName)
-        switchTimerMode = findViewById(R.id.switchTimerMode)
-        tvCategoryLabel = findViewById(R.id.tvCategoryTag)
-    }
-
-    override fun onStart() {
-        super.onStart()
-        serviceController.bind()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        serviceController.unbind()
-    }
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        serviceController.timerService?.let { syncUiWithService(it) }
-    }
-
-    private fun syncUiWithService(ts: TimerService) {
-        isCountUpMode = ts.isCountUpMode
-        switchTimerMode.isChecked = isCountUpMode
-        switchTimerMode.text = if (isCountUpMode) "Mode: Count Up" else "Mode: Count Down"
-
-        when {
-            ts.isAlarmRinging -> {
-                isTimerRunning = false
-                isSessionComplete = true
-                timeLeftInMillis = 0L
-                tvTimerDisplay.text = TimerDisplayFormatter.formatHmsFromMillis(0)
-                uiManager.showCompletionState()
-            }
-            ts.isTimerRunning || ts.isPaused -> {
-                isTimerRunning = ts.isTimerRunning
-                isPaused = ts.isPaused
-                isSessionComplete = false
-                uiManager.showRunningState(isPaused)
-
-                if (isCountUpMode) {
-                    countUpTimeInSeconds = ts.countUpTimeInSeconds
-                    tvTimerDisplay.text = TimerDisplayFormatter.formatHmsFromSeconds(countUpTimeInSeconds)
-                } else {
-                    timeLeftInMillis = ts.timeLeftInMillis
-                    tvTimerDisplay.text = TimerDisplayFormatter.formatHmsFromMillis(timeLeftInMillis)
-                }
-            }
-            else -> {
-                resetUiToInitialState()
-            }
-        }
-    }
-
-    private fun setupListeners(chips: List<TextView>) {
-        tvCategoryLabel.setOnClickListener {
-            DialogHelper.showCategoryPicker(
-                this,
-                arrayOf("Deep Work", "Study", "Workout", "Coding", "Reading")
-            ) { category ->
-                selectedCategory = category
-                tvCategoryLabel.text = "• $selectedCategory ▾"
-            }
-        }
-
-        findViewById<TextView>(R.id.navSessions).setOnClickListener {
-            startActivity(Intent(this, SessionsActivity::class.java))
-        }
-
-        switchTimerMode.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (!buttonView.isPressed) return@setOnCheckedChangeListener
-            isCountUpMode = isChecked
-            serviceController.stopAllTimers()
-            resetUiToInitialState()
-            switchTimerMode.text = if (isCountUpMode) "Mode: Count Up" else "Mode: Count Down"
-        }
-
-        chips[0].setOnClickListener { selectPreset(0, 25, 0, chips[0]) }
-        chips[1].setOnClickListener { selectPreset(0, 45, 0, chips[1]) }
-        chips[2].setOnClickListener { selectPreset(0, 50, 0, chips[2]) }
-        chips[3].setOnClickListener { selectPreset(1, 0, 0, chips[3]) }
-
-        btnToggleTimer.setOnClickListener {
-            when {
-                isSessionComplete -> saveAndResetSession()
-                isTimerRunning -> pauseTimer()
-                else -> startTimer()
-            }
-        }
-
-        btnEndSession.setOnClickListener { saveAndResetSession() }
-        btnCancelSession.setOnClickListener {
-            DialogHelper.showCancelConfirmation(this) {
-                serviceController.stopAllTimers()
-                resetUiToInitialState()
-            }
-        }
-    }
-
-    private fun readTimeFromPickers() {
-        if (!isTimerRunning && !isPaused) {
-            selectedTimeInMillis = pickerManager.getSelectedTimeMillis()
-            timeLeftInMillis = selectedTimeInMillis
-        }
-    }
-
-    private fun selectPreset(h: Int, m: Int, s: Int, chip: TextView) {
-        serviceController.stopAllTimers()
-        isPaused = false
-        isSessionComplete = false
-        btnToggleTimer.text = "START SESSION ▶"
-        pickerManager.selectPreset(h, m, s, chip)
-    }
-
-    private fun startTimer() {
-        if (!isPaused && !isCountUpMode) {
-            readTimeFromPickers()
-            if (selectedTimeInMillis <= 0) {
-                Toast.makeText(this, "Please set a duration greater than 0 seconds", Toast.LENGTH_SHORT).show()
-                return
-            }
-            timeLeftInMillis = selectedTimeInMillis
-        }
-
-        isTimerRunning = true
-        isPaused = false
-        isSessionComplete = false
-        uiManager.showRunningState(isPaused = false)
-        serviceController.startTimer(timeLeftInMillis, etSessionName.text.toString(), isCountUpMode)
-    }
-
-    private fun pauseTimer() {
-        isTimerRunning = false
-        isPaused = true
-        serviceController.pauseTimer()
-        btnToggleTimer.text = "RESUME SESSION ▶"
-    }
-
-    private fun saveAndResetSession() {
-        repoManager.saveSession(
-            etSessionName.text.toString(), selectedCategory, isCountUpMode,
-            countUpTimeInSeconds, selectedTimeInMillis, timeLeftInMillis
-        )
-        serviceController.timerService?.stopAlarmSound()
-        serviceController.stopAllTimers()
-        resetUiToInitialState()
-    }
-
-    private fun resetUiToInitialState() {
-        isTimerRunning = false
-        isPaused = false
-        isSessionComplete = false
-        repoManager.resetSaveState()
-        uiManager.showInitialState(isCountUpMode)
-
-        if (isCountUpMode) {
-            countUpTimeInSeconds = 0L
-            tvTimerDisplay.text = TimerDisplayFormatter.formatHmsFromSeconds(0)
-        } else {
-            pickerManager.setValues(0, 0, 0)
-            pickerManager.resetChipStyles()
-        }
-    }
-
-    override fun onTick(timeLeftMillis: Long) {
-        runOnUiThread {
-            if (isCountUpMode) {
-                countUpTimeInSeconds = timeLeftMillis / 1000L
-                tvTimerDisplay.text = TimerDisplayFormatter.formatHmsFromSeconds(countUpTimeInSeconds)
-            } else {
-                this.timeLeftInMillis = timeLeftMillis
-                tvTimerDisplay.text = TimerDisplayFormatter.formatHmsFromMillis(timeLeftInMillis)
-            }
-            isTimerRunning = true
-            isPaused = false
-            btnToggleTimer.text = "PAUSE SESSION ❚❚"
-        }
-    }
-
-    override fun onFinish() {
-        runOnUiThread {
-            timeLeftInMillis = 0L
-            tvTimerDisplay.text = TimerDisplayFormatter.formatHmsFromMillis(0)
-            isTimerRunning = false
-            isSessionComplete = true
-            uiManager.showCompletionState()
-        }
-    }
-
-    override fun onStateChanged(isRunning: Boolean, isPaused: Boolean) {
-        runOnUiThread {
-            this.isTimerRunning = isRunning
-            this.isPaused = isPaused
-            when {
-                isPaused -> btnToggleTimer.text = "RESUME SESSION ▶"
-                isRunning -> btnToggleTimer.text = "PAUSE SESSION ❚❚"
-                else -> resetUiToInitialState()
             }
         }
     }

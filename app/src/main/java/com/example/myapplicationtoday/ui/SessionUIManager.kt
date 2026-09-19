@@ -19,8 +19,7 @@ class SessionUIManager(
     private val layoutPresetChips: LinearLayout,
     private val layoutPicker: LinearLayout,
     private val tvCategoryTag: TextView,
-    private val etSessionName: EditText,
-    private val navSessions: TextView
+    private val etSessionName: EditText
 ) {
 
     /** Displays UI layout when a timer session is actively running or paused. */
@@ -78,11 +77,13 @@ class SessionUIManager(
         tvCategoryTag.isEnabled = enabled
         etSessionName.isEnabled = enabled
         switchTimerMode.isEnabled = enabled
-        navSessions.isEnabled = enabled
+        
+        // Ensure the main action button is ALWAYS enabled so user can dismiss alarm
+        btnToggleTimer.isEnabled = true
+        btnToggleTimer.alpha = 1.0f
 
         val alpha = if (enabled) 1.0f else 0.5f
         tvCategoryTag.alpha = alpha
         etSessionName.alpha = alpha
-        navSessions.alpha = alpha
     }
 }
