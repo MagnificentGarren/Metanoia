@@ -56,6 +56,7 @@ class TimerService : Service() {
     var isAlarmRinging: Boolean = false
     var sessionTitle: String = "Focus Session"
     var sessionCategory: String = "Deep Work"
+    var sessionProjectId: String? = null
 
     inner class LocalBinder : Binder() {
         fun getService(): TimerService = this@TimerService
@@ -70,6 +71,7 @@ class TimerService : Service() {
                 isCountUpMode = intent.getBooleanExtra(EXTRA_IS_COUNT_UP, false)
                 sessionTitle = intent.getStringExtra(EXTRA_TITLE) ?: "Focus Session"
                 sessionCategory = intent.getStringExtra(EXTRA_CATEGORY) ?: "Deep Work"
+                sessionProjectId = intent.getStringExtra(EXTRA_PROJECT_ID)
                 val millis = intent.getLongExtra(EXTRA_TIME_MILLIS, 25 * 60 * 1000L)
 
                 if (isCountUpMode) {
@@ -105,7 +107,8 @@ class TimerService : Service() {
             durationText = durationFormatted,
             startTime = startTime,
             date = Calendar.getInstance(),
-            category = sessionCategory
+            category = sessionCategory,
+            projectId = sessionProjectId
         )
 
         SessionRepository.init(this)
@@ -288,23 +291,30 @@ class TimerService : Service() {
 
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(sessionTitle)
+            .setSubText(sessionCategory)
+            .setColor(0xD4A359)
             .setSmallIcon(R.drawable.ic_head)
             .setContentIntent(pendingIntent)
-            .setOngoing(isTimerRunning)
+            .setOngoing(isTimerRunning || isAlarmRinging)
             .setOnlyAlertOnce(true)
+            .setStyle(NotificationCompat.BigTextStyle())
 
         if (isAlarmRinging) {
             val stopAlarmIntent = PendingIntent.getService(
                 this, 3, Intent(this, TimerService::class.java).apply { action = ACTION_STOP_ALARM },
                 PendingIntent.FLAG_IMMUTABLE
             )
-            builder.setContentText("🎉 Session finished! Tap to dismiss alarm.")
-                .addAction(0, "SILENCE ALARM", stopAlarmIntent)
+            builder.setContentText("✨ Session complete! Phenomenal focus. Tap to dismiss alarm.")
+                .addAction(0, "🔕 SILENCE ALARM", stopAlarmIntent)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
         } else {
-            val label = if (isCountUpMode) "Elapsed: $timeFormatted" else "Time remaining: $timeFormatted"
+            val label = if (isCountUpMode) "⏱️ Elapsed: $timeFormatted" else "⏳ Remaining: $timeFormatted"
             builder.setContentText(statusText ?: label)
-                .addAction(0, if (isTimerRunning) "Pause" else "Resume", pauseIntent)
-                .addAction(0, "End & Save", stopIntent)
+                .addAction(0, if (isTimerRunning) "⏸️ PAUSE" else "▶️ RESUME", pauseIntent)
+                .addAction(0, "⏹️ END & SAVE", stopIntent)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setCategory(NotificationCompat.CATEGORY_PROGRESS)
         }
 
         return builder.build()
@@ -339,5 +349,6 @@ class TimerService : Service() {
         const val EXTRA_TITLE = "EXTRA_TITLE"
         const val EXTRA_CATEGORY = "EXTRA_CATEGORY"
         const val EXTRA_IS_COUNT_UP = "EXTRA_IS_COUNT_UP"
+        const val EXTRA_PROJECT_ID = "EXTRA_PROJECT_ID"
     }
 }

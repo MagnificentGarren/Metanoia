@@ -17,9 +17,13 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var navDashboard: TextView
     private lateinit var navSessions: TextView
+    private lateinit var navProjects: TextView
+    private lateinit var navAchievements: TextView
 
     private val dashboardFragment = DashboardFragment()
     private val sessionsFragment = SessionsFragment()
+    private val projectsFragment = ProjectsFragment()
+    private val achievementsFragment = AchievementsFragment()
     private var currentFragment: Fragment = dashboardFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,6 +34,8 @@ class MainActivity : AppCompatActivity() {
 
         navDashboard = findViewById(R.id.navDashboard)
         navSessions = findViewById(R.id.navSessions)
+        navProjects = findViewById(R.id.navProjects)
+        navAchievements = findViewById(R.id.navAchievements)
 
         // Initial fragment setup
         supportFragmentManager.beginTransaction()
@@ -37,18 +43,26 @@ class MainActivity : AppCompatActivity() {
             .commit()
 
         navDashboard.setOnClickListener {
-            switchToFragment(dashboardFragment, isDashboard = true)
+            switchToFragment(dashboardFragment, navDashboard)
         }
 
         navSessions.setOnClickListener {
-            switchToFragment(sessionsFragment, isDashboard = false)
+            switchToFragment(sessionsFragment, navSessions)
+        }
+
+        navProjects.setOnClickListener {
+            switchToFragment(projectsFragment, navProjects)
+        }
+
+        navAchievements.setOnClickListener {
+            switchToFragment(achievementsFragment, navAchievements)
         }
 
         // Handle custom deterministic back/exit confirmation dialog
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (currentFragment != dashboardFragment) {
-                    switchToFragment(dashboardFragment, isDashboard = true)
+                    switchToFragment(dashboardFragment, navDashboard)
                 } else {
                     showExitConfirmationDialog()
                 }
@@ -56,22 +70,21 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    private fun switchToFragment(fragment: Fragment, isDashboard: Boolean) {
+    private fun switchToFragment(fragment: Fragment, activeNav: TextView) {
         currentFragment = fragment
         supportFragmentManager.beginTransaction()
             .replace(R.id.container, fragment)
             .commit()
 
-        if (isDashboard) {
-            navDashboard.setBackgroundResource(R.drawable.bg_card_outline)
-            navDashboard.setTextColor(0xFFD4AF37.toInt())
-            navSessions.setBackgroundColor(android.graphics.Color.TRANSPARENT)
-            navSessions.setTextColor(0xFF8E8E93.toInt())
-        } else {
-            navSessions.setBackgroundResource(R.drawable.bg_card_outline)
-            navSessions.setTextColor(0xFFD4AF37.toInt())
-            navDashboard.setBackgroundColor(android.graphics.Color.TRANSPARENT)
-            navDashboard.setTextColor(0xFF8E8E93.toInt())
+        val navItems = listOf(navDashboard, navSessions, navProjects, navAchievements)
+        for (item in navItems) {
+            if (item == activeNav) {
+                item.setBackgroundResource(R.drawable.bg_card_outline)
+                item.setTextColor(0xFFD4AF37.toInt())
+            } else {
+                item.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                item.setTextColor(0xFF8E8E93.toInt())
+            }
         }
     }
 

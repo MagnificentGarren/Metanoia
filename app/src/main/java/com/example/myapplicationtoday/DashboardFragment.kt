@@ -10,12 +10,16 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplicationtoday.ui.DialogHelper
 import com.example.myapplicationtoday.ui.SessionUIManager
 import com.example.myapplicationtoday.ui.TimePickerManager
 import com.example.myapplicationtoday.ui.TimerDisplayFormatter
 import com.example.myapplicationtoday.ui.TimerServiceController
 import com.google.android.material.switchmaterial.SwitchMaterial
+import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Locale
 
@@ -28,6 +32,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
     private lateinit var etSessionName: EditText
     private lateinit var tvCategoryLabel: TextView
     private lateinit var switchTimerMode: SwitchMaterial
+    private lateinit var rvProjectPicker: RecyclerView
 
     private lateinit var pickerManager: TimePickerManager
     private lateinit var uiManager: SessionUIManager
@@ -36,6 +41,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
     private val viewModel: MainViewModel by activityViewModels()
 
     private var selectedCategory: String = "Deep Work"
+    private var selectedProjectId: String? = null
     private var isCountUpMode: Boolean = false
     private var isTimerRunning: Boolean = false
     private var isPaused: Boolean = false
@@ -61,11 +67,15 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         etSessionName = view.findViewById(R.id.etSessionName)
         switchTimerMode = view.findViewById(R.id.switchTimerMode)
         tvCategoryLabel = view.findViewById(R.id.tvCategoryTag)
+        rvProjectPicker = view.findViewById(R.id.rvDashboardProjectPicker)
 
         // Restore draft state
         etSessionName.setText(viewModel.draftSessionName)
         tvCategoryLabel.text = "• ${viewModel.draftCategory} ▾"
         selectedCategory = viewModel.draftCategory
+        selectedProjectId = viewModel.draftProjectId
+
+        setupProjectPicker()
 
         val chips = listOf(
             view.findViewById<TextView>(R.id.chip25m),
@@ -100,6 +110,49 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         setupListeners(chips)
     }
 
+    private fun setupProjectPicker() {
+        rvProjectPicker.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.allProjectsFlow.collect { projects ->
+                rvProjectPicker.adapter = DashboardProjectAdapter(projects)
+            }
+        }
+    }
+
+    inner class DashboardProjectAdapter(val projects: List<Project>) : RecyclerView.Adapter<DashboardProjectAdapter.DVH>() {
+        inner class DVH(v: View) : RecyclerView.ViewHolder(v) {
+            val emoji: TextView = v.findViewById(R.id.tvDashProjectEmoji)
+            val name: TextView = v.findViewById(R.id.tvDashProjectName)
+        }
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = DVH(
+            LayoutInflater.from(parent.context).inflate(R.layout.item_dashboard_project, parent, false)
+        )
+        override fun onBindViewHolder(holder: DVH, position: Int) {
+            val p = projects[position]
+            holder.emoji.text = p.emoji
+            holder.name.text = p.name
+            
+            val isSelected = p.id == selectedProjectId
+            val bg = holder.emoji.background?.mutate() as? android.graphics.drawable.GradientDrawable
+            if (isSelected) {
+                bg?.setStroke(4, p.color)
+                bg?.setColor((p.color and 0x00FFFFFF) or 0x33000000)
+                holder.name.setTextColor(p.color)
+            } else {
+                bg?.setStroke(2, 0xFF2A2824.toInt())
+                bg?.setColor(0x00000000)
+                holder.name.setTextColor(0xFF8E8E93.toInt())
+            }
+
+            holder.itemView.setOnClickListener {
+                selectedProjectId = if (isSelected) null else p.id
+                viewModel.draftProjectId = selectedProjectId
+                notifyDataSetChanged()
+            }
+        }
+        override fun getItemCount() = projects.size
+    }
+
     override fun onStart() {
         super.onStart()
         serviceController.bind()
@@ -115,7 +168,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         switchTimerMode.isChecked = isCountUpMode
         switchTimerMode.text = if (isCountUpMode) "Mode: Count Up" else "Mode: Count Down"
 
-        // Restore category and title from service if it's active
+        // Restore category, title and project from service if it's active
         if (ts.isTimerRunning || ts.isPaused || ts.isAlarmRinging) {
             selectedCategory = ts.sessionCategory
             viewModel.draftCategory = ts.sessionCategory
@@ -123,6 +176,9 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
             
             etSessionName.setText(ts.sessionTitle)
             viewModel.draftSessionName = ts.sessionTitle
+
+            selectedProjectId = ts.sessionProjectId
+            viewModel.draftProjectId = ts.sessionProjectId
         }
 
         when {
@@ -149,6 +205,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
                 }
             }
             else -> {
+                viewModel.refreshSessions()
                 resetUiToInitialState()
             }
         }
@@ -178,7 +235,17 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
             if (!buttonView.isPressed) return@setOnCheckedChangeListener
             isCountUpMode = isChecked
             serviceController.stopAllTimers()
-            resetUiToInitialState()
+            
+            // UI Reset specific to timer mode, but keep project/session name persistent
+            uiManager.showInitialState(isCountUpMode)
+            if (isCountUpMode) {
+                countUpTimeInSeconds = 0L
+                tvTimerDisplay.text = TimerDisplayFormatter.formatHmsFromSeconds(0)
+            } else {
+                pickerManager.setValues(0, 0, 0)
+                pickerManager.resetChipStyles()
+            }
+
             switchTimerMode.text = if (isCountUpMode) "Mode: Count Up" else "Mode: Count Down"
         }
 
@@ -203,6 +270,11 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         btnCancelSession.setOnClickListener {
             DialogHelper.showCancelConfirmation(requireContext()) {
                 serviceController.stopAllTimers()
+                
+                // Per refinements: Reset project only after explicitly canceling session
+                selectedProjectId = null
+                viewModel.draftProjectId = null
+                
                 resetUiToInitialState()
             }
         }
@@ -237,7 +309,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         isPaused = false
         isSessionComplete = false
         uiManager.showRunningState(isPaused = false)
-        serviceController.startTimer(timeLeftInMillis, etSessionName.text.toString(), selectedCategory, isCountUpMode)
+        serviceController.startTimer(timeLeftInMillis, etSessionName.text.toString(), selectedCategory, isCountUpMode, selectedProjectId)
     }
 
     private fun pauseTimer() {
@@ -281,12 +353,18 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
             durationText = durationFormatted,
             startTime = startTime,
             date = Calendar.getInstance(),
-            category = selectedCategory
+            category = selectedCategory,
+            projectId = selectedProjectId
         )
 
         viewModel.addSession(newSession)
         serviceController.timerService?.stopAlarmSound()
         serviceController.stopAllTimers()
+
+        // Per refinements: Reset project only after finishing session
+        selectedProjectId = null
+        viewModel.draftProjectId = null
+
         resetUiToInitialState()
     }
 
@@ -303,6 +381,9 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
             pickerManager.setValues(0, 0, 0)
             pickerManager.resetChipStyles()
         }
+        
+        // Keep project/category persistent as per refinements
+        rvProjectPicker.adapter?.notifyDataSetChanged()
     }
 
     override fun onTick(timeLeftMillis: Long) {
@@ -341,7 +422,10 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
             when {
                 isPaused -> btnToggleTimer.text = "RESUME SESSION ▶"
                 isRunning -> btnToggleTimer.text = "PAUSE SESSION ❚❚"
-                else -> resetUiToInitialState()
+                else -> {
+                    viewModel.refreshSessions()
+                    resetUiToInitialState()
+                }
             }
         }
     }

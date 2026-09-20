@@ -193,6 +193,13 @@
             android:textColorHint="@color/text_muted"
             android:textSize="16sp" />
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvDashboardProjectPicker"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal" />
+
         <Button
             android:id="@+id/btnToggleTimer"
             android:layout_width="match_parent"

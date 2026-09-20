@@ -6,8 +6,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.CalendarView
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
@@ -23,8 +23,7 @@ import java.util.Calendar
 class SessionsFragment : Fragment() {
 
     private lateinit var rvCalendar: RecyclerView
-    private lateinit var monthCalendarView: CalendarView
-    private lateinit var btnCalendarToggle: ImageView
+    private lateinit var btnCalendarToggle: ImageButton
     private lateinit var rvSessions: RecyclerView
     private lateinit var sessionAdapter: SessionAdapter
 
@@ -36,7 +35,7 @@ class SessionsFragment : Fragment() {
     private val viewModel: MainViewModel by activityViewModels()
 
     private var selectedDate: Calendar = Calendar.getInstance()
-    private var isMonthViewVisible = false
+    private var isCalendarCollapsed = false
     private var searchQuery: String = ""
     private var allSessions: List<Session> = emptyList()
 
@@ -50,7 +49,6 @@ class SessionsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         rvCalendar = view.findViewById(R.id.rvCalendar)
-        monthCalendarView = view.findViewById(R.id.monthCalendarView)
         btnCalendarToggle = view.findViewById(R.id.btnCalendarToggle)
         rvSessions = view.findViewById(R.id.rvSessions)
 
@@ -79,11 +77,6 @@ class SessionsFragment : Fragment() {
 
         btnCalendarToggle.setOnClickListener {
             toggleCalendarView()
-        }
-
-        monthCalendarView.setOnDateChangeListener { _, year, month, dayOfMonth ->
-            selectedDate.set(year, month, dayOfMonth)
-            updateSessionsForSelectedDate()
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -253,21 +246,19 @@ class SessionsFragment : Fragment() {
     }
 
     private fun toggleCalendarView() {
-        isMonthViewVisible = !isMonthViewVisible
+        isCalendarCollapsed = !isCalendarCollapsed
 
         val parentView = view as? ViewGroup
         if (parentView != null) {
             TransitionManager.beginDelayedTransition(parentView)
         }
 
-        if (isMonthViewVisible) {
+        if (isCalendarCollapsed) {
             rvCalendar.visibility = View.GONE
-            monthCalendarView.visibility = View.VISIBLE
-            btnCalendarToggle.animate().rotation(180f).setDuration(200).start()
-        } else {
-            monthCalendarView.visibility = View.GONE
-            rvCalendar.visibility = View.VISIBLE
             btnCalendarToggle.animate().rotation(0f).setDuration(200).start()
+        } else {
+            rvCalendar.visibility = View.VISIBLE
+            btnCalendarToggle.animate().rotation(180f).setDuration(200).start()
         }
     }
 

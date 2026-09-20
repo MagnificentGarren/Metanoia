@@ -17,13 +17,28 @@
         android:background="#D4AF37"
         android:visibility="gone" />
 
-    <ImageView
-        android:id="@+id/ivCategoryIcon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_marginStart="16dp"
-        android:src="@drawable/ic_head"
-        app:tint="#D4AF37" />
+    <FrameLayout
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="16dp">
+
+        <ImageView
+            android:id="@+id/ivCategoryIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_head"
+            app:tint="#D4AF37" />
+
+        <TextView
+            android:id="@+id/tvItemEmoji"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_card_outline"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:visibility="gone" />
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="0dp"

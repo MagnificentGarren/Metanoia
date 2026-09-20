@@ -52,13 +52,14 @@ class TimerServiceController(
         }
     }
 
-    fun startTimer(millis: Long, title: String, category: String, isCountUp: Boolean) {
+    fun startTimer(millis: Long, title: String, category: String, isCountUp: Boolean, projectId: String?) {
         val intent = Intent(context, TimerService::class.java).apply {
             action = TimerService.ACTION_START
             putExtra(TimerService.EXTRA_TIME_MILLIS, millis)
             putExtra(TimerService.EXTRA_TITLE, title.ifEmpty { "Focus Session" })
             putExtra(TimerService.EXTRA_CATEGORY, category)
             putExtra(TimerService.EXTRA_IS_COUNT_UP, isCountUp)
+            putExtra(TimerService.EXTRA_PROJECT_ID, projectId)
         }
         ContextCompat.startForegroundService(context, intent)
     }
