@@ -8,8 +8,11 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class SessionAdapter(private var sessions: MutableList<Session>) :
-    RecyclerView.Adapter<SessionAdapter.SessionViewHolder>() {
+class SessionAdapter(
+    private var sessions: MutableList<Session>,
+    private val onEditClick: ((Session) -> Unit)? = null,
+    private val onDeleteClick: ((Session) -> Unit)? = null
+) : RecyclerView.Adapter<SessionAdapter.SessionViewHolder>() {
 
     class SessionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val ivCategoryIcon: ImageView = itemView.findViewById(R.id.ivCategoryIcon)
@@ -17,6 +20,8 @@ class SessionAdapter(private var sessions: MutableList<Session>) :
         val tvTimestamp: TextView = itemView.findViewById(R.id.tvItemTimestamp)
         val tvTitle: TextView = itemView.findViewById(R.id.tvItemTitle)
         val tvCategoryTag: TextView = itemView.findViewById(R.id.tvItemCategoryTag)
+        val btnEditSession: ImageView = itemView.findViewById(R.id.btnEditSession)
+        val btnDeleteSession: ImageView = itemView.findViewById(R.id.btnDeleteSession)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SessionViewHolder {
@@ -30,6 +35,13 @@ class SessionAdapter(private var sessions: MutableList<Session>) :
         holder.tvTimestamp.text = "${session.startTime} • ${session.durationText}"
         holder.tvTitle.text = session.title
         holder.tvCategoryTag.text = session.category
+
+        holder.btnEditSession.setOnClickListener {
+            onEditClick?.invoke(session)
+        }
+        holder.btnDeleteSession.setOnClickListener {
+            onDeleteClick?.invoke(session)
+        }
 
         // Dynamic Emoji Swap: Replace lightbulb with Project Emoji if linked
         val project = SessionRepository.memoryProjects.find { it.id == session.projectId }

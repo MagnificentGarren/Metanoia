@@ -7,8 +7,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.json.JSONArray
+import android.content.Context
+import android.content.SharedPreferences
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val DAILY_FOCUS_GOAL_KEY = "daily_focus_goal"
+    private val GLOBAL_PREFS_NAME = "metanoia_prefs"
+
+
+    private val _dailyFocusGoalMillis = MutableStateFlow(0L)
+    val dailyFocusGoalMillis: StateFlow<Long> = _dailyFocusGoalMillis
     
     private val _allSessionsFlow = MutableStateFlow<List<Session>>(emptyList())
     val allSessionsFlow: StateFlow<List<Session>> = _allSessionsFlow
@@ -23,6 +32,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         refreshSessions()
+        loadDailyFocusGoal() // Load the goal on init
     }
 
     fun refreshSessions() {
@@ -171,5 +181,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             array.put(t)
         }
         prefs.edit().putString("custom_tags_list", array.toString()).apply()
+    }
+
+    // Daily Focus Goal Management
+    fun saveDailyFocusGoal(goalMillis: Long) {
+        val sharedPref = getApplication<Application>().getSharedPreferences(GLOBAL_PREFS_NAME, Context.MODE_PRIVATE)
+        sharedPref.edit().putLong(DAILY_FOCUS_GOAL_KEY, goalMillis).apply()
+        _dailyFocusGoalMillis.value = goalMillis
+    }
+
+    private fun loadDailyFocusGoal() {
+        val sharedPref = getApplication<Application>().getSharedPreferences(GLOBAL_PREFS_NAME, Context.MODE_PRIVATE)
+        _dailyFocusGoalMillis.value = sharedPref.getLong(DAILY_FOCUS_GOAL_KEY, 0L)
     }
 }

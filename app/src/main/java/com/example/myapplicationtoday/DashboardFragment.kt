@@ -7,6 +7,9 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.LinearLayout
+import android.content.Context
+import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -31,6 +34,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
     private lateinit var btnCancelSession: Button
     private lateinit var etSessionName: EditText
     private lateinit var tvCategoryLabel: TextView
+
     private lateinit var switchTimerMode: SwitchMaterial
     private lateinit var rvProjectPicker: RecyclerView
 
@@ -42,6 +46,9 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
 
     private var selectedCategory: String = "Deep Work"
     private var selectedProjectId: String? = null
+
+
+
     private var isCountUpMode: Boolean = false
     private var isTimerRunning: Boolean = false
     private var isPaused: Boolean = false
@@ -50,6 +57,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
     private var selectedTimeInMillis: Long = 0L
     private var timeLeftInMillis: Long = 0L
     private var countUpTimeInSeconds: Long = 0L
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -69,6 +77,9 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         tvCategoryLabel = view.findViewById(R.id.tvCategoryTag)
         rvProjectPicker = view.findViewById(R.id.rvDashboardProjectPicker)
 
+
+
+
         // Restore draft state
         etSessionName.setText(viewModel.draftSessionName)
         tvCategoryLabel.text = "• ${viewModel.draftCategory} ▾"
@@ -76,6 +87,9 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         selectedProjectId = viewModel.draftProjectId
 
         setupProjectPicker()
+
+
+
 
         val chips = listOf(
             view.findViewById<TextView>(R.id.chip25m),
@@ -117,6 +131,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
                 rvProjectPicker.adapter = DashboardProjectAdapter(projects)
             }
         }
+
     }
 
     inner class DashboardProjectAdapter(val projects: List<Project>) : RecyclerView.Adapter<DashboardProjectAdapter.DVH>() {
@@ -209,6 +224,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
                 resetUiToInitialState()
             }
         }
+
     }
 
     private fun setupListeners(chips: List<TextView>) {
@@ -278,6 +294,8 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
                 resetUiToInitialState()
             }
         }
+
+
     }
 
     private fun readTimeFromPickers() {
@@ -335,11 +353,12 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
             timeLeftInMillis // Usually 0 if finished
         } else 0L
 
-        val durationFormatted = if (isCountUpMode) {
+        val durationText = if (isCountUpMode) {
             "${finalCountUpSec / 60} mins"
         } else {
             "${(finalTotalMillis - finalLeftMillis) / 1000 / 60} mins"
         }
+
 
         val startTime = String.format(
             Locale.getDefault(),
@@ -350,7 +369,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
 
         val newSession = Session(
             title = etSessionName.text.toString().ifEmpty { ts?.sessionTitle ?: "Focus Session" },
-            durationText = durationFormatted,
+            durationText = durationText,
             startTime = startTime,
             date = Calendar.getInstance(),
             category = selectedCategory,
@@ -428,5 +447,9 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
                 }
             }
         }
+
     }
+
+
+
 }

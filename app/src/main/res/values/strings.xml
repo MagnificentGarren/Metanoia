@@ -1,3 +1,29 @@
 <resources>
     <string name="app_name">Metanoia</string>
+    <string name="profile_initials_placeholder">JD</string>
+    <string name="profile_settings_title">Profile &amp; Settings</string>
+    <string name="settings_focus_timer_header">Focus &amp; Timer Settings</string>
+    <string name="settings_haptic_sound">Haptic &amp; Sound Feedback</string>
+    <string name="settings_notifications_reminders_header">Notifications &amp; Reminders</string>
+    <string name="settings_daily_focus_goal">Daily Focus Goal</string>
+    <string name="settings_daily_reminder_time">Daily Reminder Time</string>
+    <string name="settings_data_storage_header">Data &amp; Storage</string>
+    <string name="settings_export_focus_history">Export Focus History</string>
+    <string name="settings_cloud_local_backup">Cloud / Local Backup</string>
+    <string name="settings_reset_data">Reset Data</string>
+    <string name="settings_app_info_header">App Info</string>
+    <string name="settings_app_version">App Version (Metanoia v1.0)</string>
+    <string name="settings_terms_privacy">Terms of Service &amp; Privacy Policy</string>
+    <string name="settings_support_feedback">Support &amp; Feedback</string>
+    <string name="settings_daily_focus_goal_title">Set Daily Focus Goal</string>
+    <string name="settings_daily_focus_goal_hours_short">h</string>
+    <string name="settings_daily_focus_goal_minutes_short">m</string>
+    <string name="settings_daily_focus_goal_set_button">SET GOAL</string>
+    <string name="daily_focus_goal_header">DAILY FOCUS GOAL</string>
+    <string name="daily_focus_goal_not_set">Not Set</string>
+    <string name="button_save_daily_goal">SAVE DAILY GOAL</string>
+    <string name="button_set_daily_goal">SET DAILY GOAL</string>
+    <string name="streak_count_display">Streak: %d days</string>
+    <string name="streak_count_profile_display">Current Streak: %d days</string>
+    <string name="daily_focus_goal_profile_display">Daily Goal: %s</string>
 </resources>

@@ -48,16 +48,27 @@
 
         <ImageView
             android:id="@+id/btnEditProject"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:padding="2dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="4dp"
             android:src="@drawable/ic_edit"
             app:tint="#8E8E93" />
 
         <ImageView
+            android:id="@+id/btnDeleteProject"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="4dp"
+            android:src="@drawable/ic_delete"
+            app:tint="#FF5252" />
+
+        <ImageView
             android:layout_width="20dp"
             android:layout_height="20dp"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="6dp"
             android:rotation="-90"
             android:src="@drawable/ic_chevron_down"
             app:tint="#3A3A3C" />

@@ -281,7 +281,11 @@ class SessionsFragment : Fragment() {
     }
 
     private fun setupSessionsList() {
-        sessionAdapter = SessionAdapter(mutableListOf())
+        sessionAdapter = SessionAdapter(
+            mutableListOf(),
+            onEditClick = { session -> showEditDialog(session) },
+            onDeleteClick = { session -> showDeleteConfirmation(session) }
+        )
         rvSessions.layoutManager = LinearLayoutManager(requireContext())
         rvSessions.adapter = sessionAdapter
     }

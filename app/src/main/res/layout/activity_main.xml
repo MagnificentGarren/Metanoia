@@ -10,6 +10,21 @@
         android:layout_height="match_parent"
         android:layout_above="@id/layoutBottomNav" />
 
+    <TextView
+        android:id="@+id/profileIcon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/bg_profile_avatar"
+        android:gravity="center"
+        android:text="@string/profile_initials_placeholder"
+        android:textColor="@color/gold_primary"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
     <LinearLayout
         android:id="@+id/layoutBottomNav"
         android:layout_width="match_parent"

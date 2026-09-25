@@ -92,8 +92,23 @@ class ProjectsFragment : Fragment() {
         }
 
         // Filter sessions for this project
-        val projectSessions = SessionRepository.memorySessions.filter { it.projectId == project.id }
-        val sessionAdapter = SessionAdapter(projectSessions.toMutableList())
+        val projectSessions = SessionRepository.memorySessions.filter { it.projectId == project.id }.toMutableList()
+        lateinit var sessionAdapter: SessionAdapter
+
+        fun refreshProjectSessions() {
+            val updatedList = SessionRepository.memorySessions.filter { it.projectId == project.id }
+            sessionAdapter.updateData(updatedList)
+        }
+
+        sessionAdapter = SessionAdapter(
+            projectSessions,
+            onEditClick = { session ->
+                showEditSessionDialog(session) { refreshProjectSessions() }
+            },
+            onDeleteClick = { session ->
+                showDeleteSessionConfirmation(session) { refreshProjectSessions() }
+            }
+        )
         rvSessions.layoutManager = LinearLayoutManager(requireContext())
         rvSessions.adapter = sessionAdapter
 
@@ -102,6 +117,65 @@ class ProjectsFragment : Fragment() {
             .create()
 
         btnBack.setOnClickListener { dialog.dismiss() }
+        dialog.show()
+    }
+
+    private fun showDeleteSessionConfirmation(session: Session, onDeleted: () -> Unit) {
+        val view = layoutInflater.inflate(R.layout.dialog_custom_alert, null)
+        val tvTitle = view.findViewById<TextView>(R.id.tvAlertTitle)
+        val tvMessage = view.findViewById<TextView>(R.id.tvAlertMessage)
+        val btnNegative = view.findViewById<Button>(R.id.btnAlertNegative)
+        val btnPositive = view.findViewById<Button>(R.id.btnAlertPositive)
+
+        tvTitle.text = "DELETE SESSION"
+        tvMessage.text = "Are you sure you want to permanently delete this session? This action cannot be undone."
+        btnNegative.text = "CANCEL"
+        btnPositive.text = "YES, DELETE"
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(view)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnNegative.setOnClickListener { dialog.dismiss() }
+        btnPositive.setOnClickListener {
+            viewModel.deleteSession(session.id)
+            dialog.dismiss()
+            onDeleted()
+        }
+
+        dialog.show()
+    }
+
+    private fun showEditSessionDialog(session: Session, onUpdated: () -> Unit) {
+        val view = layoutInflater.inflate(R.layout.dialog_edit_session, null)
+        val etTitle = view.findViewById<EditText>(R.id.etEditTitle)
+        val etCategory = view.findViewById<EditText>(R.id.etEditCategory)
+        val btnCancel = view.findViewById<Button>(R.id.btnDialogCancel)
+        val btnSave = view.findViewById<Button>(R.id.btnDialogSave)
+
+        etTitle.setText(session.title)
+        etCategory.setText(session.category)
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(view)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        btnSave.setOnClickListener {
+            val updatedSession = session.copy(
+                title = etTitle.text.toString().ifEmpty { session.title },
+                category = etCategory.text.toString().ifEmpty { session.category }
+            )
+            viewModel.updateSession(updatedSession)
+            dialog.dismiss()
+            onUpdated()
+        }
+
         dialog.show()
     }
 
@@ -170,6 +244,33 @@ class ProjectsFragment : Fragment() {
         dialog.show()
     }
 
+    private fun showDeleteProjectConfirmation(project: Project) {
+        val view = layoutInflater.inflate(R.layout.dialog_custom_alert, null)
+        val tvTitle = view.findViewById<TextView>(R.id.tvAlertTitle)
+        val tvMessage = view.findViewById<TextView>(R.id.tvAlertMessage)
+        val btnNegative = view.findViewById<Button>(R.id.btnAlertNegative)
+        val btnPositive = view.findViewById<Button>(R.id.btnAlertPositive)
+
+        tvTitle.text = "DELETE PROJECT"
+        tvMessage.text = "Are you sure you want to delete '${project.name}'? This action cannot be undone."
+        btnNegative.text = "CANCEL"
+        btnPositive.text = "YES, DELETE"
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(view)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnNegative.setOnClickListener { dialog.dismiss() }
+        btnPositive.setOnClickListener {
+            viewModel.deleteProject(project.id)
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
     inner class ProjectsAdapter(private var projects: List<Project>) : RecyclerView.Adapter<ProjectsAdapter.ProjectViewHolder>() {
         inner class ProjectViewHolder(v: View) : RecyclerView.ViewHolder(v) {
             val emoji: TextView = v.findViewById(R.id.tvProjectEmoji)
@@ -179,6 +280,7 @@ class ProjectsFragment : Fragment() {
             val progress: LinearProgressIndicator = v.findViewById(R.id.progressProjectGoal)
             val goalStatus: TextView = v.findViewById(R.id.tvGoalStatus)
             val btnEdit: View = v.findViewById(R.id.btnEditProject)
+            val btnDelete: View = v.findViewById(R.id.btnDeleteProject)
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = ProjectViewHolder(
@@ -216,18 +318,8 @@ class ProjectsFragment : Fragment() {
                 showCreateProjectDialog(p)
             }
 
-            holder.itemView.setOnLongClickListener {
-                val options = arrayOf("Edit Project", "Delete Project")
-                AlertDialog.Builder(requireContext())
-                    .setTitle("Project Options")
-                    .setItems(options) { _, which ->
-                        when (which) {
-                            0 -> showCreateProjectDialog(p)
-                            1 -> viewModel.deleteProject(p.id)
-                        }
-                    }
-                    .show()
-                true
+            holder.btnDelete.setOnClickListener {
+                showDeleteProjectConfirmation(p)
             }
         }
 
