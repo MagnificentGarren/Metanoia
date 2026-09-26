@@ -9,7 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.widget.Button
-import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -26,7 +26,7 @@ class AchievementsFragment : Fragment() {
 
     private lateinit var tvTrophiesUnlockedLabel: TextView
     private lateinit var tvLevelLabel: TextView
-    private lateinit var progressBarGold: View
+    private lateinit var progressBarGold: ProgressBar
     private lateinit var rvAchievements: RecyclerView
 
     private lateinit var btnFilterAll: TextView
@@ -80,10 +80,10 @@ class AchievementsFragment : Fragment() {
         activeFilter = filter
         for (btn in buttons) {
             if (btn == selectedBtn) {
-                btn.setBackgroundResource(R.drawable.bg_calendar_selected)
-                btn.setTextColor(ContextCompat.getColor(requireContext(), R.color.bg_dark))
+                btn.setBackgroundResource(R.drawable.bg_tab_selected)
+                btn.setTextColor(ContextCompat.getColor(requireContext(), R.color.gold_primary))
             } else {
-                btn.setBackgroundResource(R.drawable.bg_calendar_unselected)
+                btn.setBackgroundResource(R.drawable.bg_tab_unselected)
                 btn.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_light_grey))
             }
         }
@@ -120,16 +120,7 @@ class AchievementsFragment : Fragment() {
         tvLevelLabel.text = "Level $playerLevel • $percentage%"
 
         // Progress bar adjustment
-        progressBarGold.post {
-            val parentView = progressBarGold.parent as? View
-            parentView?.let { parent ->
-                val parentWidth = parent.width
-                val targetWidth = (parentWidth * (percentage / 100.0)).toInt()
-                val lp = progressBarGold.layoutParams
-                lp.width = if (targetWidth > 10) targetWidth else 10
-                progressBarGold.layoutParams = lp
-            }
-        }
+        progressBarGold.progress = percentage
 
         applyFilter()
     }

@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
@@ -28,7 +27,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navSessions: TextView
     private lateinit var navProjects: TextView
     private lateinit var navAchievements: TextView
-    private lateinit var profileIcon: ImageView
+    private lateinit var profileIcon: TextView
 
     private val viewModel: MainViewModel by viewModels()
 
@@ -106,13 +105,18 @@ class MainActivity : AppCompatActivity() {
         updateProfileIconState()
     }
 
-    private fun updateProfileIconState() {
+    fun updateProfileIconState() {
+        val prefs = getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
+        val altPrefs = getPreferences(Context.MODE_PRIVATE)
+        val initials = prefs.getString("profile_initials", altPrefs?.getString("profile_initials", "JD")) ?: "JD"
+        profileIcon.text = initials
+
         if (currentFragment == profileFragment) {
-            profileIcon.setColorFilter(ContextCompat.getColor(this, R.color.gold_primary))
+            profileIcon.setTextColor(ContextCompat.getColor(this, R.color.gold_primary))
             profileIcon.alpha = 1.0f
         } else {
-            profileIcon.setColorFilter(ContextCompat.getColor(this, R.color.text_light_grey))
-            profileIcon.alpha = 0.8f
+            profileIcon.setTextColor(ContextCompat.getColor(this, R.color.text_white))
+            profileIcon.alpha = 0.85f
         }
     }
 

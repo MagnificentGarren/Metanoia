@@ -4,33 +4,33 @@
     android:id="@+id/layoutAchievementCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="6dp"
+    android:layout_margin="4dp"
     android:background="@drawable/bg_card_outline"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?android:attr/selectableItemBackground"
     android:gravity="center"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="12dp">
 
     <!-- Glowing Icon Area -->
     <FrameLayout
-        android:layout_width="85dp"
-        android:layout_height="85dp"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:gravity="center">
 
         <!-- Outer Glowing Ring -->
         <View
             android:id="@+id/viewGlowRing"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
+            android:layout_width="68dp"
+            android:layout_height="68dp"
             android:layout_gravity="center"
             android:background="@drawable/bg_profile_avatar" />
 
         <!-- Innermost dark container for contrast -->
         <View
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
             android:layout_gravity="center"
             android:background="@drawable/bg_search_rounded" />
 
@@ -41,7 +41,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="⏳"
-            android:textSize="28sp" />
+            android:textSize="26sp" />
 
         <!-- Lock overlay icon -->
         <TextView
@@ -49,12 +49,12 @@
             android:layout_width="22dp"
             android:layout_height="22dp"
             android:layout_gravity="top|end"
-            android:layout_marginTop="6dp"
-            android:layout_marginEnd="6dp"
-            android:background="#99000000"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="4dp"
+            android:background="@drawable/bg_profile_avatar"
             android:gravity="center"
             android:text="🔒"
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:visibility="gone" />
     </FrameLayout>
 

@@ -23,6 +23,7 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import com.example.myapplicationtoday.BackupManager
+import com.example.myapplicationtoday.MainActivity
 import com.example.myapplicationtoday.R
 import com.example.myapplicationtoday.ReminderScheduler
 import com.example.myapplicationtoday.SessionRepository
@@ -432,6 +433,7 @@ class ProfileFragment : Fragment() {
 
             tvProfileName.text = nameText
             tvProfileAvatar.text = initialsText
+            (activity as? MainActivity)?.updateProfileIconState()
 
             Toast.makeText(context, R.string.toast_profile_updated, Toast.LENGTH_SHORT).show()
             dialog.dismiss()
