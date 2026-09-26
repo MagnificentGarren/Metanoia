@@ -6,26 +6,192 @@
     android:background="#0A0A0A"
     android:padding="16dp">
 
-    <!-- 1. Top Bar -->
-    <TextView
-        android:id="@+id/tvSessionsHeader"
-        android:layout_width="wrap_content"
+    <!-- 1. Top Header & Segmented View Switcher -->
+    <RelativeLayout
+        android:id="@+id/layoutTopHeader"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="20dp"
-        android:text="SESSION\nHISTORY"
-        android:textAlignment="center"
-        android:textColor="@color/gold_primary"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:layout_marginTop="8dp">
 
-    <!-- 2. Search & Filter Bar -->
+        <TextView
+            android:id="@+id/tvSessionsHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:text="SESSION HISTORY"
+            android:textColor="@color/gold_primary"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
+
+        <!-- Segmented Week/Month Mode Switcher Bar -->
+        <LinearLayout
+            android:id="@+id/layoutViewToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="52dp"
+            android:background="@drawable/bg_segmented_container"
+            android:orientation="horizontal"
+            android:padding="3dp">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnViewWeek"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="58dp"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_chip_selected"
+                android:padding="0dp"
+                android:text="Week"
+                android:textAllCaps="false"
+                android:textColor="#0A0A0A"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnViewMonth"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="58dp"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent"
+                android:padding="0dp"
+                android:text="Month"
+                android:textAllCaps="false"
+                android:textColor="#8E8E93"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <!-- 2. Month Navigation Header (Shown when Month View is Active) -->
+    <RelativeLayout
+        android:id="@+id/layoutMonthHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layoutTopHeader"
+        android:layout_marginTop="12dp"
+        android:visibility="gone">
+
+        <ImageButton
+            android:id="@+id/btnPrevMonth"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Previous Month"
+            android:src="@drawable/ic_chevron_down"
+            android:rotation="90"
+            app:tint="#D4AF37" />
+
+        <TextView
+            android:id="@+id/tvMonthTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="OCTOBER 2023"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
+
+        <ImageButton
+            android:id="@+id/btnNextMonth"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_toStartOf="@id/btnToday"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="6dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Next Month"
+            android:src="@drawable/ic_chevron_down"
+            android:rotation="270"
+            app:tint="#D4AF37" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnToday"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/bg_segmented_container"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:text="Today"
+            android:textAllCaps="false"
+            android:textColor="#D4AF37"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+
+    <!-- 3. Day of Week Labels (Shown for Month View Grid) -->
+    <LinearLayout
+        android:id="@+id/layoutDayOfWeekHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layoutMonthHeader"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="S" android:textColor="#8E8E93" android:textSize="12sp" android:textStyle="bold" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="M" android:textColor="#8E8E93" android:textSize="12sp" android:textStyle="bold" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="T" android:textColor="#8E8E93" android:textSize="12sp" android:textStyle="bold" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="W" android:textColor="#8E8E93" android:textSize="12sp" android:textStyle="bold" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="T" android:textColor="#8E8E93" android:textSize="12sp" android:textStyle="bold" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="F" android:textColor="#8E8E93" android:textSize="12sp" android:textStyle="bold" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="S" android:textColor="#8E8E93" android:textSize="12sp" android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- 4. Calendar Containers (Week Strip & Month Grid) -->
+    <LinearLayout
+        android:id="@+id/layoutCalendarSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layoutDayOfWeekHeader"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <!-- Week Horizontal Strip -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvCalendar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+
+        <!-- Month 7-Column Grid -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvMonthGrid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/btnCalendarToggle"
+        android:layout_width="48dp"
+        android:layout_height="28dp"
+        android:layout_below="@id/layoutCalendarSection"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="2dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Toggle Calendar"
+        android:padding="2dp"
+        android:rotation="180"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_chevron_down"
+        app:tint="#D4AF37" />
+
+    <!-- 5. Search & Filter Bar -->
     <LinearLayout
         android:id="@+id/layoutSearch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/tvSessionsHeader"
-        android:layout_marginTop="16dp"
+        android:layout_below="@id/btnCalendarToggle"
+        android:layout_marginTop="6dp"
         android:orientation="horizontal">
 
         <EditText
@@ -56,44 +222,30 @@
             app:tint="#D4AF37" />
     </LinearLayout>
 
-    <!-- 3. Calendar Section -->
-    <LinearLayout
-        android:id="@+id/layoutCalendarSection"
-        android:layout_width="match_parent"
+    <!-- Active Filter Indicator Chip -->
+    <TextView
+        android:id="@+id/tvActiveFilterPill"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/layoutSearch"
-        android:layout_marginTop="16dp"
-        android:gravity="center"
-        android:orientation="vertical">
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_chip_selected"
+        android:paddingStart="12dp"
+        android:paddingTop="5dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="5dp"
+        android:text="Filter: Deep Work ✕"
+        android:textColor="#0A0A0A"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvCalendar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" />
-    </LinearLayout>
-
-    <ImageButton
-        android:id="@+id/btnCalendarToggle"
-        android:layout_width="48dp"
-        android:layout_height="32dp"
-        android:layout_below="@id/layoutCalendarSection"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="0dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Toggle Calendar"
-        android:padding="4dp"
-        android:rotation="180"
-        android:scaleType="centerInside"
-        android:src="@drawable/ic_chevron_down"
-        app:tint="#D4AF37" />
-
-    <!-- Scrollable Content Area for Stats & Session Cards -->
+    <!-- 6. Scrollable Content Area for Stats, Sessions & Empty State -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/btnCalendarToggle"
-        android:layout_marginTop="8dp"
+        android:layout_below="@id/tvActiveFilterPill"
+        android:layout_marginTop="10dp"
         android:fillViewport="true">
 
         <LinearLayout
@@ -101,7 +253,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- 4. Dynamic Stats Row -->
+            <!-- Stats Row -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="160dp"
@@ -170,8 +322,9 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <!-- Simple Visual Bar Chart Indicator -->
+                    <!-- Dynamic Visual 7-Bar Weekly Focus Chart -->
                     <LinearLayout
+                        android:id="@+id/layoutWeeklyBars"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="bottom"
@@ -179,36 +332,57 @@
                         android:paddingTop="8dp">
 
                         <View
+                            android:id="@+id/barDay0"
                             android:layout_width="0dp"
-                            android:layout_height="10dp"
+                            android:layout_height="6dp"
                             android:layout_margin="2dp"
                             android:layout_weight="1"
                             android:background="#3A3A3C" />
 
                         <View
+                            android:id="@+id/barDay1"
                             android:layout_width="0dp"
-                            android:layout_height="10dp"
+                            android:layout_height="6dp"
                             android:layout_margin="2dp"
                             android:layout_weight="1"
                             android:background="#3A3A3C" />
 
                         <View
+                            android:id="@+id/barDay2"
                             android:layout_width="0dp"
-                            android:layout_height="10dp"
+                            android:layout_height="6dp"
                             android:layout_margin="2dp"
                             android:layout_weight="1"
                             android:background="#3A3A3C" />
 
                         <View
+                            android:id="@+id/barDay3"
                             android:layout_width="0dp"
-                            android:layout_height="10dp"
+                            android:layout_height="6dp"
                             android:layout_margin="2dp"
                             android:layout_weight="1"
                             android:background="#3A3A3C" />
 
                         <View
+                            android:id="@+id/barDay4"
                             android:layout_width="0dp"
-                            android:layout_height="10dp"
+                            android:layout_height="6dp"
+                            android:layout_margin="2dp"
+                            android:layout_weight="1"
+                            android:background="#3A3A3C" />
+
+                        <View
+                            android:id="@+id/barDay5"
+                            android:layout_width="0dp"
+                            android:layout_height="6dp"
+                            android:layout_margin="2dp"
+                            android:layout_weight="1"
+                            android:background="#3A3A3C" />
+
+                        <View
+                            android:id="@+id/barDay6"
+                            android:layout_width="0dp"
+                            android:layout_height="6dp"
                             android:layout_margin="2dp"
                             android:layout_weight="1"
                             android:background="#3A3A3C" />
@@ -253,13 +427,67 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- 5. Dynamic Sessions List -->
+            <!-- Dynamic Sessions List -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvSessions"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:nestedScrollingEnabled="false" />
+
+            <!-- Empty State Container -->
+            <LinearLayout
+                android:id="@+id/layoutEmptyState"
+                android:layout_width="match_parent"
+                android:layout_height="220dp"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/bg_card_outline"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="24dp"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:contentDescription="No sessions"
+                    android:src="@drawable/ic_sessions"
+                    app:tint="#6C6C70" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="No Sessions Found"
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvEmptySubtext"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center"
+                    android:text="No focus sessions logged for this day or filter criteria."
+                    android:textColor="#8E8E93"
+                    android:textSize="12sp" />
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btnEmptyAction"
+                    style="?android:attr/borderlessButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_button_gold"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:text="Start Session"
+                    android:textAllCaps="false"
+                    android:textColor="#0A0A0A"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

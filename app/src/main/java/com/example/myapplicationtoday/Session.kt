@@ -216,7 +216,34 @@ object SessionRepository {
 
     fun getSessionsForDate(context: Context, date: Calendar): List<Session> {
         init(context)
-        return memorySessions
+        return memorySessions.filter {
+            it.date.get(Calendar.YEAR) == date.get(Calendar.YEAR) &&
+                    it.date.get(Calendar.DAY_OF_YEAR) == date.get(Calendar.DAY_OF_YEAR)
+        }
+    }
+
+    fun getSessionsForMonth(context: Context, calendar: Calendar): List<Session> {
+        init(context)
+        return getSessionsForMonth(memorySessions, calendar)
+    }
+
+    fun getSessionsForMonth(sessions: List<Session>, calendar: Calendar): List<Session> {
+        val targetMonth = calendar.get(Calendar.MONTH)
+        val targetYear = calendar.get(Calendar.YEAR)
+        return sessions.filter {
+            it.date.get(Calendar.MONTH) == targetMonth && it.date.get(Calendar.YEAR) == targetYear
+        }
+    }
+
+    fun computeDailyActivityTotals(sessions: List<Session>, calendar: Calendar): Map<Int, Int> {
+        val monthSessions = getSessionsForMonth(sessions, calendar)
+        val resultMap = mutableMapOf<Int, Int>()
+        for (session in monthSessions) {
+            val dayOfMonth = session.date.get(Calendar.DAY_OF_MONTH)
+            val currentTotal = resultMap.getOrDefault(dayOfMonth, 0)
+            resultMap[dayOfMonth] = currentTotal + parseDurationToMinutes(session.durationText)
+        }
+        return resultMap
     }
 
     private fun saveToDisk(context: Context) {
