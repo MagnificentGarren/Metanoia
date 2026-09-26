@@ -5,6 +5,7 @@ import android.content.Intent
 import android.media.AudioManager
 import android.media.Ringtone
 import android.media.RingtoneManager
+import android.media.AudioAttributes
 import android.media.ToneGenerator
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -382,21 +383,9 @@ class ProfileFragment : Fragment() {
             .create()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
-        // Allow dialog dismissal with back button
-        dialog.setOnKeyListener { _, keyCode, event ->
-            if (keyCode == android.view.KeyEvent.KEYCODE_BACK && event.action == android.view.KeyEvent.ACTION_UP) {
-                dialog.dismiss()
-                true
-            } else false
-        }
 
-        // Allow dialog dismissal with back button
-        dialog.setOnKeyListener { _, keyCode, event ->
-            if (keyCode == android.view.KeyEvent.KEYCODE_BACK && event.action == android.view.KeyEvent.ACTION_UP) {
-                dialog.dismiss()
-                true
-            } else false
-        }
+
+
         btnClose.setOnClickListener { dialog.dismiss() }
         dialog.show()
     }
@@ -421,13 +410,7 @@ class ProfileFragment : Fragment() {
             .create()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
-        // Allow dialog dismissal with back button
-        dialog.setOnKeyListener { _, keyCode, event ->
-            if (keyCode == android.view.KeyEvent.KEYCODE_BACK && event.action == android.view.KeyEvent.ACTION_UP) {
-                dialog.dismiss()
-                true
-            } else false
-        }
+
 
         btnClose.setOnClickListener { dialog.dismiss() }
         btnSave.setOnClickListener {
@@ -523,21 +506,30 @@ class ProfileFragment : Fragment() {
 
             when (chimeName) {
                 "Zen Bell" -> {
-                    previewToneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100) // Increased volume
+                    previewToneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
                     previewToneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 1000)
                 }
                 "Digital Chime" -> {
-                    previewToneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100) // Increased volume
+                    previewToneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
                     previewToneGenerator?.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 1000)
                 }
                 "Gentle Chime" -> {
-                    previewToneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100) // Increased volume
+                    previewToneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
                     previewToneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 1000)
+                }
+                "Classic Alarm" -> {
+                    previewToneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
+                    previewToneGenerator?.startTone(ToneGenerator.TONE_CDMA_HIGH_L, 1000)
                 }
                 else -> {
                     val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
                         ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
                     previewRingtone = RingtoneManager.getRingtone(requireContext().applicationContext, alarmUri)
+                    val audioAttributes = AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                    previewRingtone?.audioAttributes = audioAttributes
                     previewRingtone?.play()
                 }
             }
@@ -662,13 +654,7 @@ class ProfileFragment : Fragment() {
             .create()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
-        // Allow dialog dismissal with back button
-        dialog.setOnKeyListener { _, keyCode, event ->
-            if (keyCode == android.view.KeyEvent.KEYCODE_BACK && event.action == android.view.KeyEvent.ACTION_UP) {
-                dialog.dismiss()
-                true
-            } else false
-        }
+
 
         btnNegative.setOnClickListener {
             dialog.dismiss()
@@ -715,13 +701,7 @@ class ProfileFragment : Fragment() {
             .create()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
-        // Allow dialog dismissal with back button
-        dialog.setOnKeyListener { _, keyCode, event ->
-            if (keyCode == android.view.KeyEvent.KEYCODE_BACK && event.action == android.view.KeyEvent.ACTION_UP) {
-                dialog.dismiss()
-                true
-            } else false
-        }
+
 
         btnNegative.setOnClickListener { dialog.dismiss() }
         btnPositive.setOnClickListener {
@@ -772,13 +752,7 @@ class ProfileFragment : Fragment() {
             .create()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
-        // Allow dialog dismissal with back button
-        dialog.setOnKeyListener { _, keyCode, event ->
-            if (keyCode == android.view.KeyEvent.KEYCODE_BACK && event.action == android.view.KeyEvent.ACTION_UP) {
-                dialog.dismiss()
-                true
-            } else false
-        }
+
 
         btnPositive.setOnClickListener { dialog.dismiss() }
         dialog.show()

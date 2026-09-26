@@ -108,68 +108,76 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/layoutPicker"
-            android:layout_width="wrap_content"
+        <FrameLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginVertical="12dp"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:gravity="center">
 
-            <com.example.myapplicationtoday.CustomWheelPicker
-                android:id="@+id/pickerHours"
-                android:layout_width="65dp"
-                android:layout_height="120dp" />
-
-            <TextView
+            <LinearLayout
+                android:id="@+id/layoutPicker"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="6dp"
-                android:text="h"
-                android:textColor="@color/gold_primary"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:orientation="horizontal">
 
-            <com.example.myapplicationtoday.CustomWheelPicker
-                android:id="@+id/pickerMinutes"
-                android:layout_width="65dp"
-                android:layout_height="120dp" />
+                <com.example.myapplicationtoday.CustomWheelPicker
+                    android:id="@+id/pickerHours"
+                    android:layout_width="65dp"
+                    android:layout_height="120dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="6dp"
+                    android:text="h"
+                    android:textColor="@color/gold_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <com.example.myapplicationtoday.CustomWheelPicker
+                    android:id="@+id/pickerMinutes"
+                    android:layout_width="65dp"
+                    android:layout_height="120dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="6dp"
+                    android:text="m"
+                    android:textColor="@color/gold_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <com.example.myapplicationtoday.CustomWheelPicker
+                    android:id="@+id/pickerSeconds"
+                    android:layout_width="65dp"
+                    android:layout_height="120dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="s"
+                    android:textColor="@color/gold_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <TextView
+                android:id="@+id/tvTimerDisplay"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="6dp"
-                android:text="m"
+                android:layout_height="120dp"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="00:00:00"
                 android:textColor="@color/gold_primary"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textSize="48sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
 
-            <com.example.myapplicationtoday.CustomWheelPicker
-                android:id="@+id/pickerSeconds"
-                android:layout_width="65dp"
-                android:layout_height="120dp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:text="s"
-                android:textColor="@color/gold_primary"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/tvTimerDisplay"
-            android:layout_width="wrap_content"
-            android:layout_height="120dp"
-            android:layout_marginVertical="12dp"
-            android:gravity="center"
-            android:text="00:00:00"
-            android:textColor="@color/gold_primary"
-            android:textSize="48sp"
-            android:textStyle="bold"
-            android:visibility="gone" />
+        </FrameLayout>
 
         <TextView
             android:id="@+id/tvCategoryTag"

@@ -135,7 +135,7 @@
                             android:id="@+id/tvStatTotalFocus"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/text_white"
+                            android:textColor="@color/gold_primary"
                             android:textSize="15sp"
                             android:textStyle="bold"
                             tools:text="14h 25m" />
@@ -165,7 +165,7 @@
                             android:id="@+id/tvStatTotalSessions"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/text_white"
+                            android:textColor="@color/gold_primary"
                             android:textSize="15sp"
                             android:textStyle="bold"
                             tools:text="28" />
@@ -194,7 +194,7 @@
                             android:id="@+id/tvStatStreak"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/text_white"
+                            android:textColor="@color/gold_primary"
                             android:textSize="15sp"
                             android:textStyle="bold"
                             tools:text="5 Days" />
@@ -232,7 +232,7 @@
                             android:id="@+id/tvStatBestDay"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/text_white"
+                            android:textColor="@color/gold_primary"
                             android:textSize="15sp"
                             android:textStyle="bold"
                             tools:text="3h 15m (Oct 24)" />
@@ -261,7 +261,7 @@
                             android:id="@+id/tvStatDailyAvg"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/text_white"
+                            android:textColor="@color/gold_primary"
                             android:textSize="15sp"
                             android:textStyle="bold"
                             tools:text="45m / day" />

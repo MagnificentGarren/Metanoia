@@ -36,6 +36,7 @@ class TimerService : Service() {
     private var countDownTimer: CountDownTimer? = null
     private var ringtone: Ringtone? = null
     private var tickToneGenerator: ToneGenerator? = null
+    private var previewToneGenerator: ToneGenerator? = null // New ToneGenerator for preview
     private var alarmToneGenerator: ToneGenerator? = null
 
     private val handler = Handler(Looper.getMainLooper())
@@ -246,16 +247,60 @@ class TimerService : Service() {
     }
 
     private fun playTickFeedback() {
-        val prefs = getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
-        val altPrefs = getSharedPreferences("com.example.myapplicationtoday.MainActivity", Context.MODE_PRIVATE)
-        val isEnabled = prefs.getBoolean("haptic_sound", altPrefs.getBoolean("haptic_sound", true))
-        if (!isEnabled) return
+        val metanoiaPrefs = getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
+        val mainActivityPrefs = getSharedPreferences("com.example.myapplicationtoday.MainActivity", Context.MODE_PRIVATE)
+        val isHapticSoundEnabled = metanoiaPrefs.getBoolean("haptic_sound", mainActivityPrefs.getBoolean("haptic_sound", true))
+        val soundChoice = metanoiaPrefs.getString("alert_sound", mainActivityPrefs.getString("alert_sound", "Zen Bell")) ?: "Zen Bell"
+
+        if (!isHapticSoundEnabled) return
 
         try {
-            if (tickToneGenerator == null) {
-                tickToneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 15)
+            // Play a short preview of the selected alarm sound
+            when (soundChoice) {
+                "Zen Bell" -> {
+                    if (previewToneGenerator == null) {
+                        previewToneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 15)
+                    }
+                    previewToneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 100) // Shorter duration for preview
+                }
+                "Digital Chime" -> {
+                    if (previewToneGenerator == null) {
+                        previewToneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 15)
+                    }
+                    previewToneGenerator?.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 100)
+                }
+                "Gentle Chime" -> {
+                    if (previewToneGenerator == null) {
+                        previewToneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 15)
+                    }
+                    previewToneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 100)
+                }
+                "Classic Alarm" -> {
+                    if (previewToneGenerator == null) {
+                        previewToneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 15)
+                    }
+                    previewToneGenerator?.startTone(ToneGenerator.TONE_CDMA_HIGH_L, 100)
+                }
+                else -> {
+                    // For custom ringtones, play a short snippet
+                    val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                        ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                    val tempRingtone = RingtoneManager.getRingtone(applicationContext, alarmUri)
+                    if (tempRingtone != null) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            tempRingtone.isLooping = false // Ensure it doesn't loop for preview
+                        }
+                        tempRingtone.play()
+                        // Stop after a short duration
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            if (tempRingtone.isPlaying) {
+                                tempRingtone.stop()
+                            }
+                        }, 500)
+                    }
+                }
             }
-            tickToneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP, 30)
+
 
             val vibrator = getVibrator()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -281,6 +326,7 @@ class TimerService : Service() {
                     "Zen Bell" -> alarmToneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 1000)
                     "Digital Chime" -> alarmToneGenerator?.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 1000)
                     "Gentle Chime" -> alarmToneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 1000)
+                    "Classic Alarm" -> alarmToneGenerator?.startTone(ToneGenerator.TONE_CDMA_HIGH_L, 1000)
                     else -> {
                         if (ringtone != null && !ringtone!!.isPlaying) {
                             ringtone?.play()
@@ -318,7 +364,7 @@ class TimerService : Service() {
                 vibrator?.vibrate(pattern, 0)
             }
 
-            if (soundChoice != "Zen Bell" && soundChoice != "Digital Chime" && soundChoice != "Gentle Chime") {
+            if (soundChoice != "Zen Bell" && soundChoice != "Digital Chime" && soundChoice != "Gentle Chime" && soundChoice != "Classic Alarm") {
                 val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
                     ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
                 ringtone = RingtoneManager.getRingtone(applicationContext, alarmUri)
@@ -351,6 +397,7 @@ class TimerService : Service() {
         try {
             alarmToneGenerator?.stopTone()
             alarmToneGenerator?.release()
+        previewToneGenerator?.release() // Release the new ToneGenerator
             alarmToneGenerator = null
         } catch (e: Exception) {
             e.printStackTrace()

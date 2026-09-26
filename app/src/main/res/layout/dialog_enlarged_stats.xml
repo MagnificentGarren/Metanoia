@@ -4,14 +4,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#0A0A0A"
-    android:padding="20dp">
+    android:padding="20dp"
+    android:fitsSystemWindows="true">
 
     <!-- Header Bar -->
     <RelativeLayout
         android:id="@+id/layoutStatsHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="24dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -32,7 +33,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Close"
             android:padding="6dp"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:src="@drawable/ic_cancel"
             app:tint="#D4AF37"
             android:clickable="true"
             android:focusable="true"/>
@@ -66,7 +67,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="TOTAL TIME INVESTED"
-                    android:textColor="#0A0A0A"
+                    android:textColor="#FFFFFF"
                     android:textSize="12sp"
                     android:textStyle="bold"
                     android:letterSpacing="0.05" />
@@ -82,7 +83,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="00"
-                        android:textColor="#0A0A0A"
+                        android:textColor="#FFFFFF"
                         android:textSize="48sp"
                         android:textStyle="bold" />
 
@@ -100,7 +101,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="00"
-                        android:textColor="#0A0A0A"
+                        android:textColor="#FFFFFF"
                         android:textSize="48sp"
                         android:textStyle="bold" />
 
