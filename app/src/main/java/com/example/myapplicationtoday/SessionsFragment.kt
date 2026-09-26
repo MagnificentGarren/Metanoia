@@ -315,19 +315,7 @@ class SessionsFragment : Fragment() {
     }
 
     private fun parseDurationToMinutes(durationText: String): Int {
-        return try {
-            val digits = durationText.replace("[^0-9:]".toRegex(), "")
-            val parts = digits.split(":")
-            if (parts.size == 2) {
-                val m = parts[0].toIntOrNull() ?: 0
-                val s = parts[1].toIntOrNull() ?: 0
-                m + if (s > 0) 1 else 0
-            } else {
-                digits.toIntOrNull() ?: 0
-            }
-        } catch (e: Exception) {
-            0
-        }
+        return SessionRepository.parseDurationToMinutes(durationText)
     }
 
     private fun isSameDay(cal1: Calendar, cal2: Calendar): Boolean {

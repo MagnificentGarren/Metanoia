@@ -4,15 +4,21 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
+import android.media.AudioManager
 import android.media.Ringtone
 import android.media.RingtoneManager
+import android.media.ToneGenerator
 import android.os.Binder
 import android.os.Build
 import android.os.CountDownTimer
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 import java.util.Calendar
 
@@ -29,6 +35,8 @@ class TimerService : Service() {
     private val binder = LocalBinder()
     private var countDownTimer: CountDownTimer? = null
     private var ringtone: Ringtone? = null
+    private var tickToneGenerator: ToneGenerator? = null
+    private var alarmToneGenerator: ToneGenerator? = null
 
     private val handler = Handler(Looper.getMainLooper())
     private val autoStopRunnable = Runnable { stopAlarmSound() }
@@ -42,6 +50,7 @@ class TimerService : Service() {
             if (isTimerRunning) {
                 val now = System.currentTimeMillis()
                 countUpTimeInSeconds = (now - countUpStartTime) / 1000L
+                playTickFeedback()
                 updateNotification()
                 timerListener?.onTick(countUpTimeInSeconds * 1000L)
                 handler.postDelayed(this, 1000)
@@ -81,7 +90,7 @@ class TimerService : Service() {
                 }
             }
             ACTION_PAUSE -> togglePauseResume()
-            ACTION_STOP -> stopTimerAndService() // 🟢 Stop timer without saving to repository
+            ACTION_STOP -> stopTimerAndService()
             ACTION_STOP_ALARM -> endAndSaveSession()
             ACTION_END_AND_SAVE -> endAndSaveSession()
         }
@@ -114,7 +123,6 @@ class TimerService : Service() {
         SessionRepository.init(this)
         SessionRepository.addSession(this, newSession)
 
-        // Notify listener so open UI resets immediately
         timerListener?.onStateChanged(isRunning = false, isPaused = false)
 
         stopTimerAndService()
@@ -163,6 +171,7 @@ class TimerService : Service() {
         countDownTimer = object : CountDownTimer(timeLeftInMillis, 1000) {
             override fun onTick(millisUntilFinished: Long) {
                 timeLeftInMillis = millisUntilFinished
+                playTickFeedback()
                 updateNotification()
                 timerListener?.onTick(millisUntilFinished)
             }
@@ -171,7 +180,7 @@ class TimerService : Service() {
                 timeLeftInMillis = 0L
                 isTimerRunning = false
                 isPaused = false
-                playAlarmSound() // Sets isAlarmRinging = true
+                playAlarmSound()
                 updateNotification("Session Complete!")
                 timerListener?.onFinish()
             }
@@ -223,18 +232,108 @@ class TimerService : Service() {
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
 
-        // Notify MainActivity UI to reset to initial state
         timerListener?.onStateChanged(isRunning = false, isPaused = false)
     }
 
-    private fun playAlarmSound() {
-        try {
-            isAlarmRinging = true
-            val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-            ringtone = RingtoneManager.getRingtone(applicationContext, alarmUri)
-            ringtone?.play()
+    private fun getVibrator(): Vibrator? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager = getSystemService(VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+            vibratorManager?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(VIBRATOR_SERVICE) as? Vibrator
+        }
+    }
 
+    private fun playTickFeedback() {
+        val prefs = getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
+        val altPrefs = getSharedPreferences("com.example.myapplicationtoday.MainActivity", Context.MODE_PRIVATE)
+        val isEnabled = prefs.getBoolean("haptic_sound", altPrefs.getBoolean("haptic_sound", true))
+        if (!isEnabled) return
+
+        try {
+            if (tickToneGenerator == null) {
+                tickToneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 15)
+            }
+            tickToneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP, 30)
+
+            val vibrator = getVibrator()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createOneShot(20, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(20)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private val alarmLoopRunnable = object : Runnable {
+        override fun run() {
+            if (!isAlarmRinging) return
+            val prefs = getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
+            val altPrefs = getSharedPreferences("com.example.myapplicationtoday.MainActivity", Context.MODE_PRIVATE)
+            val soundChoice = prefs.getString("alert_sound", altPrefs.getString("alert_sound", "Zen Bell")) ?: "Zen Bell"
+
+            try {
+                when (soundChoice) {
+                    "Zen Bell" -> alarmToneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 1000)
+                    "Digital Chime" -> alarmToneGenerator?.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 1000)
+                    "Gentle Chime" -> alarmToneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 1000)
+                    else -> {
+                        if (ringtone != null && !ringtone!!.isPlaying) {
+                            ringtone?.play()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            handler.postDelayed(this, 1200)
+        }
+    }
+
+    private fun playAlarmSound() {
+        val prefs = getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
+        val altPrefs = getSharedPreferences("com.example.myapplicationtoday.MainActivity", Context.MODE_PRIVATE)
+        val isHapticEnabled = prefs.getBoolean("haptic_sound", altPrefs.getBoolean("haptic_sound", true))
+        val soundChoice = prefs.getString("alert_sound", altPrefs.getString("alert_sound", "Zen Bell")) ?: "Zen Bell"
+
+        isAlarmRinging = true
+
+        if (!isHapticEnabled) {
+            handler.removeCallbacks(autoStopRunnable)
+            handler.postDelayed(autoStopRunnable, 30_000)
+            return
+        }
+
+        try {
+            val vibrator = getVibrator()
+            val pattern = longArrayOf(0, 400, 200, 400, 200, 400)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 0))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(pattern, 0)
+            }
+
+            if (soundChoice != "Zen Bell" && soundChoice != "Digital Chime" && soundChoice != "Gentle Chime") {
+                val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                ringtone = RingtoneManager.getRingtone(applicationContext, alarmUri)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    ringtone?.isLooping = true
+                }
+                ringtone?.play()
+            } else {
+                alarmToneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
+            }
+
+            handler.removeCallbacks(alarmLoopRunnable)
+            handler.post(alarmLoopRunnable)
+
+            handler.removeCallbacks(autoStopRunnable)
             handler.postDelayed(autoStopRunnable, 30_000)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -243,10 +342,27 @@ class TimerService : Service() {
 
     fun stopAlarmSound() {
         handler.removeCallbacks(autoStopRunnable)
+        handler.removeCallbacks(alarmLoopRunnable)
         if (ringtone?.isPlaying == true) {
             ringtone?.stop()
         }
         ringtone = null
+
+        try {
+            alarmToneGenerator?.stopTone()
+            alarmToneGenerator?.release()
+            alarmToneGenerator = null
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        try {
+            val vibrator = getVibrator()
+            vibrator?.cancel()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         isAlarmRinging = false
         if (!isTimerRunning) {
             stopForeground(STOP_FOREGROUND_REMOVE)
@@ -334,6 +450,12 @@ class TimerService : Service() {
 
     override fun onDestroy() {
         stopAlarmSound()
+        try {
+            tickToneGenerator?.release()
+            tickToneGenerator = null
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
         super.onDestroy()
     }
 

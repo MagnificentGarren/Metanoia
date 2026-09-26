@@ -107,17 +107,56 @@ object SessionRepository {
         saveToDisk(context)
     }
 
-    private fun parseDurationToMinutes(durationText: String): Int {
+    fun reset(context: Context) {
+        memorySessions.clear()
+        memoryProjects.clear()
+        isInitialized = false
+        val sessionPrefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        sessionPrefs.edit().clear().apply()
+    }
+
+    fun parseDurationToMinutes(durationText: String): Int {
         return try {
-            val digits = durationText.replace("[^0-9:]".toRegex(), "")
-            val parts = digits.split(":")
-            if (parts.size == 2) {
-                val m = parts[0].toIntOrNull() ?: 0
-                val s = parts[1].toIntOrNull() ?: 0
-                m + if (s > 0) 1 else 0
-            } else {
-                digits.toIntOrNull() ?: 0
+            val text = durationText.trim().lowercase(java.util.Locale.getDefault())
+            if (text.isEmpty()) return 0
+
+            if (text.contains(":") && !text.contains("h") && !text.contains("m")) {
+                val parts = text.split(":")
+                return when (parts.size) {
+                    2 -> {
+                        val m = parts[0].toIntOrNull() ?: 0
+                        val s = parts[1].toIntOrNull() ?: 0
+                        m + if (s > 0) 1 else 0
+                    }
+                    3 -> {
+                        val h = parts[0].toIntOrNull() ?: 0
+                        val m = parts[1].toIntOrNull() ?: 0
+                        val s = parts[2].toIntOrNull() ?: 0
+                        h * 60 + m + if (s > 0) 1 else 0
+                    }
+                    else -> 0
+                }
             }
+
+            var totalMinutes = 0
+            val hourRegex = "(\\d+)\\s*(?:h|hr|hrs|hour|hours)".toRegex()
+            val hourMatch = hourRegex.find(text)
+            if (hourMatch != null) {
+                totalMinutes += (hourMatch.groupValues[1].toIntOrNull() ?: 0) * 60
+            }
+
+            val minRegex = "(\\d+)\\s*(?:m|min|mins|minute|minutes)".toRegex()
+            val minMatch = minRegex.find(text)
+            if (minMatch != null) {
+                totalMinutes += (minMatch.groupValues[1].toIntOrNull() ?: 0)
+            }
+
+            if (hourMatch == null && minMatch == null) {
+                val digits = text.replace("[^0-9]".toRegex(), "")
+                totalMinutes = digits.toIntOrNull() ?: 0
+            }
+
+            totalMinutes
         } catch (e: Exception) { 0 }
     }
 
