@@ -6,29 +6,39 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.TextView
-import android.widget.LinearLayout
-import android.content.Context
-import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.myapplicationtoday.ui.CircularTimerView
 import com.example.myapplicationtoday.ui.DialogHelper
 import com.example.myapplicationtoday.ui.SessionUIManager
 import com.example.myapplicationtoday.ui.TimePickerManager
 import com.example.myapplicationtoday.ui.TimerDisplayFormatter
 import com.example.myapplicationtoday.ui.TimerServiceController
 import com.google.android.material.switchmaterial.SwitchMaterial
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Locale
 
 class DashboardFragment : Fragment(), TimerService.TimerListener {
 
+    private lateinit var tvDashboardStreak: TextView
+    private lateinit var btnEditDailyGoal: TextView
+    private lateinit var pbDailyGoal: ProgressBar
+    private lateinit var tvDailyGoalProgress: TextView
+
     private lateinit var tvTimerDisplay: TextView
+    private lateinit var tvTimerSubtext: TextView
+    private lateinit var circularTimerView: CircularTimerView
+    private lateinit var layoutRunningHero: View
+    private lateinit var cardQuickLaunch: View
+
     private lateinit var btnToggleTimer: Button
     private lateinit var btnEndSession: Button
     private lateinit var btnCancelSession: Button
@@ -37,6 +47,14 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
 
     private lateinit var switchTimerMode: SwitchMaterial
     private lateinit var rvProjectPicker: RecyclerView
+
+    private lateinit var tvStatTotalToday: TextView
+    private lateinit var tvStatSessionsToday: TextView
+    private lateinit var tvStatStreak: TextView
+    private lateinit var tvStatLevel: TextView
+
+    private lateinit var rvTodaySessions: RecyclerView
+    private lateinit var tvEmptyTodaySessions: TextView
 
     private lateinit var pickerManager: TimePickerManager
     private lateinit var uiManager: SessionUIManager
@@ -47,8 +65,6 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
     private var selectedCategory: String = "Deep Work"
     private var selectedProjectId: String? = null
 
-
-
     private var isCountUpMode: Boolean = false
     private var isTimerRunning: Boolean = false
     private var isPaused: Boolean = false
@@ -57,7 +73,6 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
     private var selectedTimeInMillis: Long = 0L
     private var timeLeftInMillis: Long = 0L
     private var countUpTimeInSeconds: Long = 0L
-
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -68,7 +83,20 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Headers & Goal
+        tvDashboardStreak = view.findViewById(R.id.tvDashboardStreak)
+        btnEditDailyGoal = view.findViewById(R.id.btnEditDailyGoal)
+        pbDailyGoal = view.findViewById(R.id.pbDailyGoal)
+        tvDailyGoalProgress = view.findViewById(R.id.tvDailyGoalProgress)
+
+        // Hero Timer
         tvTimerDisplay = view.findViewById(R.id.tvTimerDisplay)
+        tvTimerSubtext = view.findViewById(R.id.tvTimerSubtext)
+        circularTimerView = view.findViewById(R.id.circularTimerView)
+        layoutRunningHero = view.findViewById(R.id.layoutRunningHero)
+        cardQuickLaunch = view.findViewById(R.id.cardQuickLaunch)
+
+        // Controls
         btnToggleTimer = view.findViewById(R.id.btnToggleTimer)
         btnEndSession = view.findViewById(R.id.btnEndSession)
         btnCancelSession = view.findViewById(R.id.btnCancelSession)
@@ -77,8 +105,16 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         tvCategoryLabel = view.findViewById(R.id.tvCategoryTag)
         rvProjectPicker = view.findViewById(R.id.rvDashboardProjectPicker)
 
+        // Summary Stats
+        tvStatTotalToday = view.findViewById(R.id.tvStatTotalToday)
+        tvStatSessionsToday = view.findViewById(R.id.tvStatSessionsToday)
+        tvStatStreak = view.findViewById(R.id.tvStatStreak)
+        tvStatLevel = view.findViewById(R.id.tvStatLevel)
 
-
+        // Today Activity Feed
+        rvTodaySessions = view.findViewById(R.id.rvTodaySessions)
+        tvEmptyTodaySessions = view.findViewById(R.id.tvEmptyTodaySessions)
+        rvTodaySessions.layoutManager = LinearLayoutManager(requireContext())
 
         // Restore draft state
         etSessionName.setText(viewModel.draftSessionName)
@@ -88,20 +124,18 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
 
         setupProjectPicker()
 
-
-
-
         val chips = listOf(
+            view.findViewById<TextView>(R.id.chip15m),
             view.findViewById<TextView>(R.id.chip25m),
             view.findViewById<TextView>(R.id.chip45m),
-            view.findViewById<TextView>(R.id.chip50m),
-            view.findViewById<TextView>(R.id.chip1h)
+            view.findViewById<TextView>(R.id.chip60m),
+            view.findViewById<TextView>(R.id.chip90m)
         )
 
         uiManager = SessionUIManager(
-            tvTimerDisplay, btnToggleTimer, btnEndSession, btnCancelSession,
+            tvTimerDisplay, tvTimerSubtext, btnToggleTimer, btnEndSession, btnCancelSession,
             switchTimerMode, view.findViewById(R.id.layoutPresetChips),
-            view.findViewById(R.id.layoutPicker), tvCategoryLabel, etSessionName
+            view.findViewById(R.id.layoutPicker), layoutRunningHero, cardQuickLaunch, tvCategoryLabel, etSessionName
         )
 
         etSessionName.addTextChangedListener(object : android.text.TextWatcher {
@@ -121,7 +155,8 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
             onServiceSynced = { service -> syncUiWithService(service) }
         }
 
-        setupListeners(chips)
+        setupListeners(chips, view)
+        observeDashboardData()
     }
 
     private fun setupProjectPicker() {
@@ -131,7 +166,70 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
                 rvProjectPicker.adapter = DashboardProjectAdapter(projects)
             }
         }
+    }
 
+    private fun observeDashboardData() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.allSessionsFlow.collectLatest { sessions ->
+                updateDashboardAnalytics(sessions)
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.dailyFocusGoalMillis.collectLatest { goalMillis ->
+                updateGoalProgress(viewModel.allSessionsFlow.value, goalMillis)
+            }
+        }
+    }
+
+    private fun updateDashboardAnalytics(sessions: List<Session>) {
+        val todayCal = Calendar.getInstance()
+        val todaySessions = sessions.filter {
+            val cal = Calendar.getInstance().apply { timeInMillis = it.date.timeInMillis }
+            cal.get(Calendar.YEAR) == todayCal.get(Calendar.YEAR) &&
+                    cal.get(Calendar.DAY_OF_YEAR) == todayCal.get(Calendar.DAY_OF_YEAR)
+        }
+
+        val todayMins = todaySessions.sumOf { SessionRepository.parseDurationToMinutes(it.durationText) }
+        val hours = todayMins / 60
+        val mins = todayMins % 60
+        tvStatTotalToday.text = if (hours > 0) "${hours}h ${mins}m" else "${mins}m"
+        tvStatSessionsToday.text = "${todaySessions.size} done"
+
+        val streak = viewModel.calculateStreak(sessions)
+        tvDashboardStreak.text = "🔥 $streak Day Streak"
+        tvStatStreak.text = "$streak days"
+
+        val totalMinsAll = sessions.sumOf { SessionRepository.parseDurationToMinutes(it.durationText) }
+        val level = (totalMinsAll / 60) + 1
+        tvStatLevel.text = "Level $level"
+
+        updateGoalProgress(sessions, viewModel.dailyFocusGoalMillis.value)
+
+        if (todaySessions.isEmpty()) {
+            tvEmptyTodaySessions.visibility = View.VISIBLE
+            rvTodaySessions.visibility = View.GONE
+        } else {
+            tvEmptyTodaySessions.visibility = View.GONE
+            rvTodaySessions.visibility = View.VISIBLE
+            rvTodaySessions.adapter = TodaySessionAdapter(todaySessions)
+        }
+    }
+
+    private fun updateGoalProgress(sessions: List<Session>, goalMillis: Long) {
+        val todayCal = Calendar.getInstance()
+        val todaySessions = sessions.filter {
+            val cal = Calendar.getInstance().apply { timeInMillis = it.date.timeInMillis }
+            cal.get(Calendar.YEAR) == todayCal.get(Calendar.YEAR) &&
+                    cal.get(Calendar.DAY_OF_YEAR) == todayCal.get(Calendar.DAY_OF_YEAR)
+        }
+        val todayMins = todaySessions.sumOf { SessionRepository.parseDurationToMinutes(it.durationText) }
+
+        val targetGoalMins = if (goalMillis > 0) (goalMillis / (1000 * 60)).toInt() else 120
+        val percent = ((todayMins.toFloat() / targetGoalMins.toFloat()) * 100).toInt().coerceIn(0, 100)
+
+        pbDailyGoal.progress = percent
+        tvDailyGoalProgress.text = "${todayMins}m / ${targetGoalMins}m ($percent% complete)"
     }
 
     inner class DashboardProjectAdapter(val projects: List<Project>) : RecyclerView.Adapter<DashboardProjectAdapter.DVH>() {
@@ -146,7 +244,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
             val p = projects[position]
             holder.emoji.text = p.emoji
             holder.name.text = p.name
-            
+
             val isSelected = p.id == selectedProjectId
             val bg = holder.emoji.background?.mutate() as? android.graphics.drawable.GradientDrawable
             if (isSelected) {
@@ -166,6 +264,30 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
             }
         }
         override fun getItemCount() = projects.size
+    }
+
+    inner class TodaySessionAdapter(val sessions: List<Session>) : RecyclerView.Adapter<TodaySessionAdapter.SVH>() {
+        inner class SVH(v: View) : RecyclerView.ViewHolder(v) {
+            val emoji: TextView = v.findViewById(R.id.tvTodaySessionEmoji)
+            val title: TextView = v.findViewById(R.id.tvTodaySessionTitle)
+            val category: TextView = v.findViewById(R.id.tvTodaySessionCategory)
+            val time: TextView = v.findViewById(R.id.tvTodaySessionTime)
+            val duration: TextView = v.findViewById(R.id.tvTodaySessionDuration)
+        }
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = SVH(
+            LayoutInflater.from(parent.context).inflate(R.layout.item_dashboard_today_session, parent, false)
+        )
+        override fun onBindViewHolder(holder: SVH, position: Int) {
+            val s = sessions[position]
+            holder.title.text = s.title
+            holder.category.text = s.category
+            holder.time.text = "Started at ${s.startTime}"
+            holder.duration.text = s.durationText
+
+            val project = viewModel.allProjectsFlow.value.find { it.id == s.projectId }
+            holder.emoji.text = project?.emoji ?: "🎯"
+        }
+        override fun getItemCount() = sessions.size
     }
 
     override fun onStart() {
@@ -188,7 +310,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
             selectedCategory = ts.sessionCategory
             viewModel.draftCategory = ts.sessionCategory
             tvCategoryLabel.text = "• $selectedCategory ▾"
-            
+
             etSessionName.setText(ts.sessionTitle)
             viewModel.draftSessionName = ts.sessionTitle
 
@@ -202,6 +324,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
                 isSessionComplete = true
                 timeLeftInMillis = 0L
                 tvTimerDisplay.text = TimerDisplayFormatter.formatHmsFromMillis(0)
+                circularTimerView.setProgress(0.0f, running = false)
                 uiManager.showCompletionState()
                 btnToggleTimer.text = "DISMISS ALARM ✕"
             }
@@ -209,14 +332,18 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
                 isTimerRunning = ts.isTimerRunning
                 isPaused = ts.isPaused
                 isSessionComplete = false
-                uiManager.showRunningState(isPaused)
+                uiManager.showRunningState(isPaused, isCountUpMode)
 
                 if (isCountUpMode) {
                     countUpTimeInSeconds = ts.countUpTimeInSeconds
                     tvTimerDisplay.text = TimerDisplayFormatter.formatHmsFromSeconds(countUpTimeInSeconds)
+                    circularTimerView.setProgress(1.0f, running = isTimerRunning)
                 } else {
                     timeLeftInMillis = ts.timeLeftInMillis
+                    selectedTimeInMillis = if (ts.totalDurationMillis > 0) ts.totalDurationMillis else selectedTimeInMillis
                     tvTimerDisplay.text = TimerDisplayFormatter.formatHmsFromMillis(timeLeftInMillis)
+                    val ratio = if (selectedTimeInMillis > 0) timeLeftInMillis.toFloat() / selectedTimeInMillis.toFloat() else 0f
+                    circularTimerView.setProgress(ratio, running = isTimerRunning)
                 }
             }
             else -> {
@@ -224,10 +351,23 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
                 resetUiToInitialState()
             }
         }
-
     }
 
-    private fun setupListeners(chips: List<TextView>) {
+    private fun setupListeners(chips: List<TextView>, root: View) {
+        btnEditDailyGoal.setOnClickListener {
+            showEditDailyGoalDialog()
+        }
+
+        root.findViewById<View>(R.id.btnMinus5m).setOnClickListener {
+            pickerManager.adjustMinutes(-5)
+            readTimeFromPickers()
+        }
+
+        root.findViewById<View>(R.id.btnPlus5m).setOnClickListener {
+            pickerManager.adjustMinutes(5)
+            readTimeFromPickers()
+        }
+
         tvCategoryLabel.setOnClickListener {
             val customTags = viewModel.getCustomTags()
             val baseCategories = arrayOf("Deep Work", "Study", "Workout", "Coding", "Reading")
@@ -240,7 +380,6 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
                 selectedCategory = category
                 viewModel.draftCategory = category
                 tvCategoryLabel.text = "• $selectedCategory ▾"
-                // If it's not a base category, save it to persistent custom tags
                 if (!baseCategories.contains(category)) {
                     viewModel.saveCustomTag(category)
                 }
@@ -251,12 +390,12 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
             if (!buttonView.isPressed) return@setOnCheckedChangeListener
             isCountUpMode = isChecked
             serviceController.stopAllTimers()
-            
-            // UI Reset specific to timer mode, but keep project/session name persistent
+
             uiManager.showInitialState(isCountUpMode)
             if (isCountUpMode) {
                 countUpTimeInSeconds = 0L
                 tvTimerDisplay.text = TimerDisplayFormatter.formatHmsFromSeconds(0)
+                circularTimerView.setProgress(1.0f, running = false)
             } else {
                 pickerManager.setValues(0, 0, 0)
                 pickerManager.resetChipStyles()
@@ -265,17 +404,28 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
             switchTimerMode.text = if (isCountUpMode) "Mode: Count Up" else "Mode: Count Down"
         }
 
-        chips[0].setOnClickListener { selectPreset(0, 25, 0, chips[0]) }
-        chips[1].setOnClickListener { selectPreset(0, 45, 0, chips[1]) }
-        chips[2].setOnClickListener { selectPreset(0, 50, 0, chips[2]) }
+        // Quick Preset Chips (15m, 25m, 45m, 60m, 90m)
+        chips[0].setOnClickListener { selectPreset(0, 15, 0, chips[0]) }
+        chips[1].setOnClickListener { selectPreset(0, 25, 0, chips[1]) }
+        chips[2].setOnClickListener { selectPreset(0, 45, 0, chips[2]) }
         chips[3].setOnClickListener { selectPreset(1, 0, 0, chips[3]) }
+        chips[4].setOnClickListener { selectPreset(1, 30, 0, chips[4]) }
+
+        // 1-Tap Quick Focus Launchers
+        root.findViewById<View>(R.id.btnQuickPomodoro).setOnClickListener {
+            launchQuickWorkflow(0, 25, "Deep Work", "Pomodoro Focus")
+        }
+        root.findViewById<View>(R.id.btnQuickDeepWork).setOnClickListener {
+            launchQuickWorkflow(0, 45, "Coding", "Power Focus")
+        }
+        root.findViewById<View>(R.id.btnQuickSprint).setOnClickListener {
+            launchQuickWorkflow(0, 15, "Study", "Quick Sprint")
+        }
 
         btnToggleTimer.setOnClickListener {
             val ts = serviceController.timerService
             when {
-                ts?.isAlarmRinging == true -> {
-                    saveAndResetSession()
-                }
+                ts?.isAlarmRinging == true -> saveAndResetSession()
                 isSessionComplete -> saveAndResetSession()
                 isTimerRunning -> pauseTimer()
                 else -> startTimer()
@@ -286,16 +436,46 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         btnCancelSession.setOnClickListener {
             DialogHelper.showCancelConfirmation(requireContext()) {
                 serviceController.stopAllTimers()
-                
-                // Per refinements: Reset project only after explicitly canceling session
                 selectedProjectId = null
                 viewModel.draftProjectId = null
-                
                 resetUiToInitialState()
             }
         }
+    }
 
+    private fun launchQuickWorkflow(hours: Int, minutes: Int, category: String, sessionTitle: String) {
+        if (isTimerRunning || isPaused) {
+            serviceController.stopAllTimers()
+        }
+        isCountUpMode = false
+        switchTimerMode.isChecked = false
+        switchTimerMode.text = "Mode: Count Down"
 
+        selectedCategory = category
+        viewModel.draftCategory = category
+        tvCategoryLabel.text = "• $selectedCategory ▾"
+
+        etSessionName.setText(sessionTitle)
+        viewModel.draftSessionName = sessionTitle
+
+        pickerManager.setValues(hours, minutes, 0)
+        readTimeFromPickers()
+
+        startTimer()
+    }
+
+    private fun showEditDailyGoalDialog() {
+        val currentGoalMins = (viewModel.dailyFocusGoalMillis.value / (1000 * 60)).toInt().let { if (it > 0) it else 120 }
+        DialogHelper.showTimePicker(
+            requireContext(),
+            currentGoalMins / 60,
+            currentGoalMins % 60
+        ) { h, m ->
+            val totalMins = (h * 60) + m
+            val millis = totalMins * 60 * 1000L
+            viewModel.saveDailyFocusGoal(millis)
+            Toast.makeText(requireContext(), "Daily Goal set to ${totalMins}m", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun readTimeFromPickers() {
@@ -306,11 +486,14 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
     }
 
     private fun selectPreset(h: Int, m: Int, s: Int, chip: TextView) {
-        serviceController.stopAllTimers()
+        if (isTimerRunning || isPaused) {
+            serviceController.stopAllTimers()
+        }
         isPaused = false
         isSessionComplete = false
         btnToggleTimer.text = "START SESSION ▶"
         pickerManager.selectPreset(h, m, s, chip)
+        readTimeFromPickers()
     }
 
     private fun startTimer() {
@@ -326,7 +509,8 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         isTimerRunning = true
         isPaused = false
         isSessionComplete = false
-        uiManager.showRunningState(isPaused = false)
+        uiManager.showRunningState(isPaused = false, isCountUpMode)
+        circularTimerView.setProgress(1.0f, running = true)
         serviceController.startTimer(timeLeftInMillis, etSessionName.text.toString(), selectedCategory, isCountUpMode, selectedProjectId)
     }
 
@@ -335,12 +519,14 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         isPaused = true
         serviceController.pauseTimer()
         btnToggleTimer.text = "RESUME SESSION ▶"
+        uiManager.showRunningState(isPaused = true, isCountUpMode)
+        val ratio = if (selectedTimeInMillis > 0) timeLeftInMillis.toFloat() / selectedTimeInMillis.toFloat() else 0f
+        circularTimerView.setProgress(ratio, running = false)
     }
 
     private fun saveAndResetSession() {
         val ts = serviceController.timerService
-        
-        // Recover values from service if we synced while running/ringing
+
         val finalCountUpSec = if (isCountUpMode) {
             if (countUpTimeInSeconds > 0) countUpTimeInSeconds else (ts?.countUpTimeInSeconds ?: 0L)
         } else 0L
@@ -348,17 +534,17 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         val finalTotalMillis = if (!isCountUpMode) {
             if (selectedTimeInMillis > 0) selectedTimeInMillis else (ts?.totalDurationMillis ?: 0L)
         } else 0L
-        
+
         val finalLeftMillis = if (!isCountUpMode) {
-            timeLeftInMillis // Usually 0 if finished
+            timeLeftInMillis
         } else 0L
 
         val durationText = if (isCountUpMode) {
             "${finalCountUpSec / 60} mins"
         } else {
-            "${(finalTotalMillis - finalLeftMillis) / 1000 / 60} mins"
+            val mins = ((finalTotalMillis - finalLeftMillis) / 1000 / 60).coerceAtLeast(1)
+            "$mins mins"
         }
-
 
         val startTime = String.format(
             Locale.getDefault(),
@@ -380,7 +566,6 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         serviceController.timerService?.stopAlarmSound()
         serviceController.stopAllTimers()
 
-        // Per refinements: Reset project only after finishing session
         selectedProjectId = null
         viewModel.draftProjectId = null
 
@@ -396,12 +581,13 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         if (isCountUpMode) {
             countUpTimeInSeconds = 0L
             tvTimerDisplay.text = TimerDisplayFormatter.formatHmsFromSeconds(0)
+            circularTimerView.setProgress(1.0f, running = false)
         } else {
             pickerManager.setValues(0, 0, 0)
             pickerManager.resetChipStyles()
+            circularTimerView.setProgress(1.0f, running = false)
         }
-        
-        // Keep project/category persistent as per refinements
+
         rvProjectPicker.adapter?.notifyDataSetChanged()
     }
 
@@ -411,9 +597,12 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
             if (isCountUpMode) {
                 countUpTimeInSeconds = timeLeftMillis / 1000L
                 tvTimerDisplay.text = TimerDisplayFormatter.formatHmsFromSeconds(countUpTimeInSeconds)
+                circularTimerView.setProgress(1.0f, running = true)
             } else {
                 this.timeLeftInMillis = timeLeftMillis
                 tvTimerDisplay.text = TimerDisplayFormatter.formatHmsFromMillis(timeLeftInMillis)
+                val ratio = if (selectedTimeInMillis > 0) timeLeftInMillis.toFloat() / selectedTimeInMillis.toFloat() else 0f
+                circularTimerView.setProgress(ratio, running = true)
             }
             isTimerRunning = true
             isPaused = false
@@ -426,6 +615,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
             if (!isAdded) return@runOnUiThread
             timeLeftInMillis = 0L
             tvTimerDisplay.text = TimerDisplayFormatter.formatHmsFromMillis(0)
+            circularTimerView.setProgress(0.0f, running = false)
             isTimerRunning = false
             isSessionComplete = true
             uiManager.showCompletionState()
@@ -439,17 +629,19 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
             this.isTimerRunning = isRunning
             this.isPaused = isPaused
             when {
-                isPaused -> btnToggleTimer.text = "RESUME SESSION ▶"
-                isRunning -> btnToggleTimer.text = "PAUSE SESSION ❚❚"
+                isPaused -> {
+                    btnToggleTimer.text = "RESUME SESSION ▶"
+                    val ratio = if (selectedTimeInMillis > 0) timeLeftInMillis.toFloat() / selectedTimeInMillis.toFloat() else 0f
+                    circularTimerView.setProgress(ratio, running = false)
+                }
+                isRunning -> {
+                    btnToggleTimer.text = "PAUSE SESSION ❚❚"
+                }
                 else -> {
                     viewModel.refreshSessions()
                     resetUiToInitialState()
                 }
             }
         }
-
     }
-
-
-
 }

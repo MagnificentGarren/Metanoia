@@ -58,6 +58,16 @@ class TimePickerManager(
         setValues(h, m, s)
     }
 
+    /** Adjusts total minutes by delta (+5 or -5) */
+    fun adjustMinutes(deltaMinutes: Int) {
+        resetChipStyles()
+        val currentTotalMins = (pickerHours.value * 60) + pickerMinutes.value
+        val newTotalMins = (currentTotalMins + deltaMinutes).coerceIn(0, 23 * 60 + 59)
+        val h = newTotalMins / 60
+        val m = newTotalMins % 60
+        setValues(h, m, pickerSeconds.value)
+    }
+
     /** Resets all preset chips back to their unselected styling. */
     fun resetChipStyles() {
         val unselectedBg = R.drawable.bg_calendar_unselected
