@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Metanoia</string>
     <string name="profile_initials_placeholder">JD</string>
+    <string name="profile_name_placeholder">John Doe</string>
     <string name="profile_settings_title">Profile &amp; Settings</string>
     <string name="settings_focus_timer_header">Focus &amp; Timer Settings</string>
     <string name="settings_haptic_sound">Haptic &amp; Sound Feedback</string>
@@ -26,4 +27,22 @@
     <string name="streak_count_display">Streak: %d days</string>
     <string name="streak_count_profile_display">Current Streak: %d days</string>
     <string name="daily_focus_goal_profile_display">Daily Goal: %s</string>
+
+    <!-- New Profile Enhancements Strings -->
+    <string name="dialog_edit_profile_title">Edit Profile</string>
+    <string name="dialog_edit_name_hint">Enter Username</string>
+    <string name="dialog_edit_initials_hint">Enter Initials (1 to 3 chars)</string>
+    <string name="dialog_edit_save_button">SAVE</string>
+    <string name="toast_profile_updated">Profile updated successfully!</string>
+    <string name="toast_invalid_initials">Please enter 1 to 3 characters for initials</string>
+    <string name="toast_backup_success">Local backup created and restored successfully!</string>
+    <string name="toast_export_success">Focus history generated successfully!</string>
+    <string name="toast_reset_success">All data and settings have been reset!</string>
+    <string name="dialog_reset_title">RESET ALL DATA</string>
+    <string name="dialog_reset_message">Are you sure you want to permanently delete all your focus sessions, custom projects, and reset settings? This action cannot be undone.</string>
+    <string name="dialog_reset_positive">RESET EVERYTHING</string>
+    <string name="dialog_reset_negative">Cancel</string>
+    <string name="stats_total_time">Total Focus</string>
+    <string name="stats_sessions">Sessions</string>
+    <string name="stats_streak">Active Streak</string>
 </resources>

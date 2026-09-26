@@ -1,6 +1,7 @@
 package com.example.myapplicationtoday
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -79,6 +80,14 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Load initials from shared preferences to synchronize with ProfileFragment
+        val sharedPref = getPreferences(MODE_PRIVATE)
+        val initials = sharedPref.getString("profile_initials", "JD")
+        profileIcon.text = initials
     }
 
     private fun switchToFragment(fragment: Fragment, activeNav: TextView) {
