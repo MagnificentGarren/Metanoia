@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog_dark"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <!-- Emoji Circle -->
+    <FrameLayout
+        android:layout_width="90dp"
+        android:layout_height="90dp">
+
+        <View
+            android:id="@+id/viewDetailGlow"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_profile_avatar" />
+
+        <View
+            android:layout_width="66dp"
+            android:layout_height="66dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_search_rounded" />
+
+        <TextView
+            android:id="@+id/tvDetailEmoji"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="⏳"
+            android:textSize="36sp" />
+    </FrameLayout>
+
+    <!-- Details -->
+    <TextView
+        android:id="@+id/tvDetailTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="First Focus"
+        android:textColor="@color/text_white"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvDetailRarity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="BRONZE TIER"
+        android:textColor="@color/gold_primary"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <!-- Pure Lore Paragraph -->
+    <TextView
+        android:id="@+id/tvDetailLore"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="16dp"
+        android:text="Every great journey begins with a single moment of clear intent."
+        android:textAlignment="center"
+        android:textColor="#C0C0C0"
+        android:textSize="14sp"
+        android:textStyle="italic" />
+
+    <!-- Progress Statistics -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_card_outline"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tvDetailProgressText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Current Progress: 2 / 7 sessions"
+            android:textColor="@color/text_white"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvDetailNextTierText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Next Tier (Silver): Complete 5 sessions."
+            android:textColor="@color/text_light_grey"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnDismissDetail"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="@color/gold_primary"
+        android:text="CLOSE"
+        android:textColor="@color/bg_dark"
+        android:textStyle="bold" />
+
+</LinearLayout>

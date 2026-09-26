@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
@@ -20,13 +21,13 @@
             android:layout_height="48dp"
             android:background="@drawable/bg_card_outline"
             android:gravity="center"
-            android:text="💻"
-            android:textSize="24sp" />
+            android:textSize="24sp"
+            tools:text="💻" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="14dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
@@ -36,39 +37,68 @@
                 android:layout_height="wrap_content"
                 android:textColor="#FFFFFF"
                 android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:text="Mobile App Design" />
 
-            <TextView
-                android:id="@+id/tvProjectTime"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#8E8E93"
-                android:textSize="13sp" />
+                android:layout_marginTop="2dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvProjectTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#8E8E93"
+                    android:textSize="12sp"
+                    tools:text="02 hrs 15 mins" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="6dp"
+                    android:text="@string/bullet_point"
+                    android:textColor="#48484A"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvProjectSessions"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/gold_primary"
+                    android:textSize="12sp"
+                    tools:text="5 sessions" />
+            </LinearLayout>
         </LinearLayout>
 
         <ImageView
             android:id="@+id/btnEditProject"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="4dp"
+            android:contentDescription="@string/projects_edit_desc"
+            android:padding="6dp"
             android:src="@drawable/ic_edit"
             app:tint="#8E8E93" />
 
         <ImageView
             android:id="@+id/btnDeleteProject"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:layout_marginStart="4dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="4dp"
+            android:contentDescription="@string/projects_delete_desc"
+            android:padding="6dp"
             android:src="@drawable/ic_delete"
             app:tint="#FF5252" />
 
         <ImageView
             android:layout_width="20dp"
             android:layout_height="20dp"
-            android:layout_marginStart="6dp"
+            android:layout_marginStart="4dp"
+            android:contentDescription="@string/projects_expand_desc"
             android:rotation="-90"
             android:src="@drawable/ic_chevron_down"
             app:tint="#3A3A3C" />
@@ -80,7 +110,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:orientation="vertical"
-        android:visibility="gone">
+        android:visibility="gone"
+        tools:visibility="visible">
 
         <com.google.android.material.progressindicator.LinearProgressIndicator
             android:id="@+id/progressProjectGoal"
@@ -90,14 +121,32 @@
             app:trackCornerRadius="4dp"
             app:trackThickness="6dp" />
 
-        <TextView
-            android:id="@+id/tvGoalStatus"
-            android:layout_width="wrap_content"
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:layout_marginTop="4dp"
-            android:textColor="#8E8E93"
-            android:textSize="11sp" />
+            android:layout_marginTop="4dp">
+
+            <TextView
+                android:id="@+id/tvGoalPercentage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:textColor="@color/gold_primary"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                tools:text="60%" />
+
+            <TextView
+                android:id="@+id/tvGoalStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_toStartOf="@id/tvGoalPercentage"
+                android:layout_marginEnd="8dp"
+                android:textColor="#8E8E93"
+                android:textSize="11sp"
+                tools:text="12 / 20 hrs goal" />
+        </RelativeLayout>
     </LinearLayout>
 
 </LinearLayout>

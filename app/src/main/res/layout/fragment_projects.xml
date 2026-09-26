@@ -1,63 +1,242 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0A0A0A"
+    android:background="@color/bg_dark"
     android:padding="16dp">
 
+    <!-- Screen Title -->
     <TextView
         android:id="@+id/tvProjectsHeader"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="20dp"
-        android:text="YOUR PROJECTS"
+        android:layout_marginTop="16dp"
+        android:text="@string/projects_header"
         android:textColor="@color/gold_primary"
         android:textSize="18sp"
         android:textStyle="bold" />
 
+    <!-- Top Analytics Summary Cards Row -->
     <LinearLayout
-        android:id="@+id/layoutCumulative"
-        android:layout_width="wrap_content"
+        android:id="@+id/layoutProjectsSummary"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/tvProjectsHeader"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/bg_category_pill"
-        android:backgroundTint="#1AFFFFFF"
+        android:layout_marginTop="16dp"
+        android:baselineAligned="false"
+        android:orientation="horizontal"
+        android:weightSum="3">
+
+        <!-- Stat 1: Total Projects Count -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:background="@drawable/bg_search_rounded"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/tvStatActiveProjects"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/gold_primary"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                tools:text="4 Active" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/projects_stat_active"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Stat 2: Total Cumulative Focus Time -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:background="@drawable/bg_search_rounded"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/tvCumulativeFocus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/gold_primary"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                tools:text="14h 25m" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/projects_stat_focus"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Stat 3: Goals Reached -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:background="@drawable/bg_search_rounded"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/tvStatGoalsReached"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/gold_primary"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                tools:text="2 / 3" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/projects_stat_goals"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Real-Time Search Bar -->
+    <LinearLayout
+        android:id="@+id/layoutSearchBar"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_below="@id/layoutProjectsSummary"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/bg_search_rounded"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:contentDescription="@string/projects_search_icon_desc"
+            android:src="@drawable/ic_search"
+            app:tint="@color/text_muted" />
+
+        <EditText
+            android:id="@+id/etSearchProjects"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:autofillHints="none"
+            android:background="@android:color/transparent"
+            android:hint="@string/projects_search_hint"
+            android:imeOptions="actionDone"
+            android:inputType="text"
+            android:maxLines="1"
+            android:textColor="@color/text_white"
+            android:textColorHint="@color/text_muted"
+            android:textSize="14sp" />
+
+        <ImageView
+            android:id="@+id/btnClearSearch"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/projects_clear_search_desc"
+            android:src="@drawable/ic_cancel"
+            android:visibility="gone"
+            app:tint="@color/text_muted" />
+    </LinearLayout>
+
+    <!-- Empty State Container -->
+    <LinearLayout
+        android:id="@+id/layoutEmptyProjects"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layoutSearchBar"
+        android:layout_centerInParent="true"
+        android:layout_marginTop="40dp"
         android:gravity="center"
-        android:paddingHorizontal="12dp"
-        android:paddingVertical="4dp">
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:contentDescription="@string/projects_icon_desc"
+            android:src="@drawable/ic_projects"
+            app:tint="@color/gold_primary" />
 
         <TextView
-            android:id="@+id/tvCumulativeFocus"
+            android:id="@+id/tvEmptyTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="00h 00m Total Focus"
-            android:textColor="#D4AF37"
-            android:textSize="11sp"
+            android:layout_marginTop="16dp"
+            android:text="@string/projects_empty_title"
+            android:textColor="@color/text_white"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvEmptySubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="@string/projects_empty_subtitle"
+            android:textColor="@color/text_muted"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/btnEmptyCreateProject"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:layout_marginTop="20dp"
+            android:backgroundTint="@color/gold_primary"
+            android:text="@string/projects_empty_button"
+            android:textColor="#0A0A0A"
             android:textStyle="bold" />
     </LinearLayout>
 
+    <!-- Projects List RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvProjects"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/layoutCumulative"
-        android:layout_marginTop="24dp"
-        android:paddingBottom="100dp"
+        android:layout_below="@id/layoutSearchBar"
+        android:layout_marginTop="16dp"
         android:clipToPadding="false"
-        android:scrollbars="none"/>
+        android:paddingBottom="100dp"
+        android:scrollbars="none" />
 
+    <!-- Floating Action Button -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddProject"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
-        android:layout_marginBottom="16dp"
+        android:layout_alignParentBottom="true"
         android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:contentDescription="@string/projects_fab_desc"
         android:src="@android:drawable/ic_input_add"
         app:backgroundTint="@color/gold_primary"
         app:tint="#0A0A0A" />

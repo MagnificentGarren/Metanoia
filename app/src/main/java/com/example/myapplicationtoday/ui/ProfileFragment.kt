@@ -433,8 +433,6 @@ class ProfileFragment : Fragment() {
             tvProfileName.text = nameText
             tvProfileAvatar.text = initialsText
 
-            activity?.findViewById<TextView>(R.id.profileIcon)?.text = initialsText
-
             Toast.makeText(context, R.string.toast_profile_updated, Toast.LENGTH_SHORT).show()
             dialog.dismiss()
         }
@@ -726,9 +724,6 @@ class ProfileFragment : Fragment() {
             // 3. Reload Profile and insights instantly to update display
             loadProfileData()
             calculateAndDisplayInsights()
-
-            // 4. Update MainActivity top-right initials icon back to default
-            activity?.findViewById<TextView>(R.id.profileIcon)?.text = "JD"
 
             Toast.makeText(context, R.string.toast_reset_success, Toast.LENGTH_LONG).show()
         }

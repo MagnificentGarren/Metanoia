@@ -1,6 +1,11 @@
 package com.example.myapplicationtoday.ui
 
 import android.content.Context
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
@@ -8,6 +13,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import com.example.myapplicationtoday.AchievementItem
 import com.example.myapplicationtoday.R
 
 object DialogHelper {
@@ -136,4 +142,65 @@ object DialogHelper {
 
         dialog.show()
     }
+
+    fun showTrophyUnlockPop(context: Context, item: AchievementItem, onDismiss: () -> Unit = {}) {
+        val view = LayoutInflater.from(context).inflate(R.layout.dialog_trophy_unlock, null)
+        
+        val tvEmoji = view.findViewById<TextView>(R.id.tvTrophyPopEmoji)
+        val tvTitle = view.findViewById<TextView>(R.id.tvTrophyPopTitle)
+        val tvTier = view.findViewById<TextView>(R.id.tvTrophyPopTier)
+        val tvLore = view.findViewById<TextView>(R.id.tvTrophyPopLore)
+        val tvDescription = view.findViewById<TextView>(R.id.tvTrophyPopDescription)
+        val viewGlow = view.findViewById<View>(R.id.viewTrophyPopGlow)
+        val btnClaim = view.findViewById<Button>(R.id.btnTrophyPopClaim)
+
+        tvEmoji.text = item.emoji
+        tvTitle.text = item.title
+        tvTier.text = "${item.tierName.uppercase()} TIER UNLOCKED"
+        tvTier.setTextColor(item.glowColor)
+        tvLore.text = "\"${item.lore}\""
+        tvDescription.text = "Goal Met: ${item.currentProgress} / ${item.maxProgress} ${item.unit}"
+
+        // Set up the custom gradient glow ring
+        val gradient = GradientDrawable(
+            GradientDrawable.Orientation.TL_BR,
+            intArrayOf(item.glowColor, Color.BLACK)
+        )
+        gradient.shape = GradientDrawable.OVAL
+        viewGlow.background = gradient
+
+        val dialog = AlertDialog.Builder(context, android.R.style.Theme_Translucent_NoTitleBar)
+            .setView(view)
+            .create()
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnClaim.setOnClickListener {
+            onDismiss()
+            dialog.dismiss()
+        }
+
+        // Haptic feedback celebration vibration
+        try {
+            val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            if (vibrator != null && vibrator.hasVibrator()) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator.vibrate(
+                        VibrationEffect.createWaveform(
+                            longArrayOf(0, 150, 80, 200, 50, 100),
+                            intArrayOf(0, VibrationEffect.DEFAULT_AMPLITUDE, 0, VibrationEffect.DEFAULT_AMPLITUDE, 0, VibrationEffect.DEFAULT_AMPLITUDE),
+                            -1
+                        )
+                    )
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(400)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        dialog.show()
+    }
 }
+

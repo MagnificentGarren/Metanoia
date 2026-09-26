@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layoutAchievementCard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="6dp"
+    android:background="@drawable/bg_card_outline"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Glowing Icon Area -->
+    <FrameLayout
+        android:layout_width="85dp"
+        android:layout_height="85dp"
+        android:gravity="center">
+
+        <!-- Outer Glowing Ring -->
+        <View
+            android:id="@+id/viewGlowRing"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_profile_avatar" />
+
+        <!-- Innermost dark container for contrast -->
+        <View
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_search_rounded" />
+
+        <!-- High-res Emoji icon representation -->
+        <TextView
+            android:id="@+id/tvAchievementEmoji"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="⏳"
+            android:textSize="28sp" />
+
+        <!-- Lock overlay icon -->
+        <TextView
+            android:id="@+id/tvLockIcon"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="6dp"
+            android:layout_marginEnd="6dp"
+            android:background="#99000000"
+            android:gravity="center"
+            android:text="🔒"
+            android:textSize="12sp"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <!-- Title and details -->
+    <TextView
+        android:id="@+id/tvAchievementTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="First Focus"
+        android:textColor="@color/text_white"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <!-- Direct description of how to get the medal -->
+    <TextView
+        android:id="@+id/tvAchievementDescription"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:text="Complete a focus session of any length."
+        android:textColor="@color/text_muted"
+        android:textSize="11sp"
+        android:textAlignment="center" />
+
+    <TextView
+        android:id="@+id/tvAchievementProgress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="2 / 7"
+        android:textColor="@color/text_light_grey"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <ImageView
+        android:id="@+id/ivChevronDown"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_marginTop="4dp"
+        android:contentDescription="Expand"
+        android:src="@drawable/ic_chevron_down"
+        app:tint="@color/text_muted" />
+
+</LinearLayout>

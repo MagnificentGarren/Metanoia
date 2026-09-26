@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_dark"
+    android:padding="16dp">
+
+    <!-- Top Header -->
+    <TextView
+        android:id="@+id/tvHeader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="ACHIEVEMENTS"
+        android:textAlignment="center"
+        android:textColor="@color/gold_primary"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvCrownIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:text="👑"
+        android:textSize="22sp"
+        app:layout_constraintBottom_toBottomOf="@id/tvHeader"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tvHeader" />
+
+    <!-- Filter Tab Pills -->
+    <LinearLayout
+        android:id="@+id/layoutFilters"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/tvHeader">
+
+        <TextView
+            android:id="@+id/btnFilterAll"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="2dp"
+            android:background="@drawable/bg_calendar_selected"
+            android:gravity="center"
+            android:paddingVertical="8dp"
+            android:text="ALL"
+            android:textColor="@color/bg_dark"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnFilterStreaks"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.2"
+            android:layout_marginHorizontal="2dp"
+            android:background="@drawable/bg_calendar_unselected"
+            android:gravity="center"
+            android:paddingVertical="8dp"
+            android:text="STREAKS"
+            android:textColor="@color/text_light_grey"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnFilterProjects"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.2"
+            android:layout_marginHorizontal="2dp"
+            android:background="@drawable/bg_calendar_unselected"
+            android:gravity="center"
+            android:paddingVertical="8dp"
+            android:text="PROJECTS"
+            android:textColor="@color/text_light_grey"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnFilterMilestones"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.3"
+            android:layout_marginHorizontal="2dp"
+            android:background="@drawable/bg_calendar_unselected"
+            android:gravity="center"
+            android:paddingVertical="8dp"
+            android:text="MILESTONES"
+            android:textColor="@color/text_light_grey"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Progress Dashboard Summary Box -->
+    <LinearLayout
+        android:id="@+id/cardProgressSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/bg_card_outline"
+        android:orientation="vertical"
+        android:padding="14dp"
+        app:layout_constraintTop_toBottomOf="@id/layoutFilters">
+
+        <!-- Trophy Stats & Level Details -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/tvTrophiesUnlockedLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Trophies Unlocked: 12 / 24"
+                android:textColor="@color/text_white"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvLevelLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:text="Level 12 • 50%"
+                android:textColor="@color/gold_primary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
+
+        <!-- Progress Bar (The Gold Line) -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="8dp"
+            android:layout_marginTop="10dp"
+            android:background="#222222">
+
+            <View
+                android:id="@+id/progressBarGold"
+                android:layout_width="150dp"
+                android:layout_height="match_parent"
+                android:background="@color/gold_primary" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/tvNextLevelProgressText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Log deep sessions to earn XP and unlock the ultimate tiers."
+            android:textColor="@color/text_muted"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <!-- Achievements Grid List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvAchievements"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="4dp"
+        android:clipToPadding="false"
+        android:scrollbarStyle="outsideOverlay"
+        android:scrollbars="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/cardProgressSummary" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

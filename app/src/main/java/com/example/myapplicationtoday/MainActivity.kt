@@ -5,8 +5,10 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -14,8 +16,11 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.example.myapplicationtoday.ui.DialogHelper
 import com.example.myapplicationtoday.ui.ProfileFragment
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -23,7 +28,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navSessions: TextView
     private lateinit var navProjects: TextView
     private lateinit var navAchievements: TextView
-    private lateinit var profileIcon: TextView // Declared here
+    private lateinit var profileIcon: ImageView
+
+    private val viewModel: MainViewModel by viewModels()
 
     private val dashboardFragment = DashboardFragment()
     private val sessionsFragment = SessionsFragment()
@@ -43,12 +50,24 @@ class MainActivity : AppCompatActivity() {
         navSessions = findViewById(R.id.navSessions)
         navProjects = findViewById(R.id.navProjects)
         navAchievements = findViewById(R.id.navAchievements)
-        profileIcon = findViewById<TextView>(R.id.profileIcon) // Initialized with explicit cast
+        profileIcon = findViewById(R.id.profileIcon)
+
+        // Observe sessions and projects for Trophy Pops
+        lifecycleScope.launch {
+            viewModel.allSessionsFlow.collectLatest { sessions ->
+                val projects = viewModel.allProjectsFlow.value
+                AchievementsEngine.processTrophyPops(this@MainActivity, sessions, projects) { item ->
+                    DialogHelper.showTrophyUnlockPop(this@MainActivity, item)
+                }
+            }
+        }
 
         // Initial fragment setup
         supportFragmentManager.beginTransaction()
             .replace(R.id.container, dashboardFragment)
             .commit()
+
+        updateProfileIconState()
 
         navDashboard.setOnClickListener {
             switchToFragment(dashboardFragment, navDashboard)
@@ -84,10 +103,17 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Load initials from shared preferences to synchronize with ProfileFragment
-        val sharedPref = getPreferences(MODE_PRIVATE)
-        val initials = sharedPref.getString("profile_initials", "JD")
-        profileIcon.text = initials
+        updateProfileIconState()
+    }
+
+    private fun updateProfileIconState() {
+        if (currentFragment == profileFragment) {
+            profileIcon.setColorFilter(ContextCompat.getColor(this, R.color.gold_primary))
+            profileIcon.alpha = 1.0f
+        } else {
+            profileIcon.setColorFilter(ContextCompat.getColor(this, R.color.text_light_grey))
+            profileIcon.alpha = 0.8f
+        }
     }
 
     private fun switchToFragment(fragment: Fragment, activeNav: TextView) {
@@ -107,6 +133,8 @@ class MainActivity : AppCompatActivity() {
                 item.setTextColor(0xFF8E8E93.toInt())
             }
         }
+
+        updateProfileIconState()
     }
 
     private fun switchToProfileFragment() {
@@ -121,6 +149,7 @@ class MainActivity : AppCompatActivity() {
             item.setBackgroundColor(android.graphics.Color.TRANSPARENT)
             item.setTextColor(0xFF8E8E93.toInt())
         }
+        updateProfileIconState()
     }
 
     private fun showExitConfirmationDialog() {

@@ -45,4 +45,25 @@
     <string name="stats_total_time">Total Focus</string>
     <string name="stats_sessions">Sessions</string>
     <string name="stats_streak">Active Streak</string>
+
+    <!-- Projects Page Strings -->
+    <string name="projects_header">YOUR PROJECTS</string>
+    <string name="projects_stat_active">Projects</string>
+    <string name="projects_stat_focus">Total Focus</string>
+    <string name="projects_stat_goals">Goals Hit</string>
+    <string name="projects_search_hint">Search projects&#8230;</string>
+    <string name="projects_search_icon_desc">Search Icon</string>
+    <string name="projects_clear_search_desc">Clear Search</string>
+    <string name="projects_empty_title">No Projects Found</string>
+    <string name="projects_empty_subtitle">Group your focus sessions into projects to track progress towards your long-term goals.</string>
+    <string name="projects_empty_button">+ CREATE PROJECT</string>
+    <string name="projects_fab_desc">Add Project</string>
+    <string name="projects_icon_desc">Projects Icon</string>
+    <string name="projects_edit_desc">Edit Project</string>
+    <string name="projects_delete_desc">Delete Project</string>
+    <string name="projects_expand_desc">Expand Details</string>
+    <string name="bullet_point">•</string>
+    <string name="projects_detail_avg_session">Avg Session</string>
+    <string name="projects_detail_history_header">PROJECT SESSIONS HISTORY</string>
+    <string name="projects_detail_no_sessions">No sessions logged for this project yet.</string>
 </resources>

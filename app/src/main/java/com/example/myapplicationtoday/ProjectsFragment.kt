@@ -3,11 +3,14 @@ package com.example.myapplicationtoday
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
@@ -19,14 +22,23 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class ProjectsFragment : Fragment() {
 
     private lateinit var rvProjects: RecyclerView
     private lateinit var fabAddProject: FloatingActionButton
-    private lateinit var tvCumulative: TextView
+    private lateinit var tvStatActiveProjects: TextView
+    private lateinit var tvCumulativeFocus: TextView
+    private lateinit var tvStatGoalsReached: TextView
+    private lateinit var etSearchProjects: EditText
+    private lateinit var btnClearSearch: ImageView
+    private lateinit var layoutEmptyProjects: View
+    private lateinit var btnEmptyCreateProject: Button
     private lateinit var adapter: ProjectsAdapter
+    
     private val viewModel: MainViewModel by activityViewModels()
+    private var rawProjectsList: List<Project> = emptyList()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_projects, container, false)
@@ -36,27 +48,74 @@ class ProjectsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         rvProjects = view.findViewById(R.id.rvProjects)
         fabAddProject = view.findViewById(R.id.fabAddProject)
-        tvCumulative = view.findViewById(R.id.tvCumulativeFocus)
+        tvStatActiveProjects = view.findViewById(R.id.tvStatActiveProjects)
+        tvCumulativeFocus = view.findViewById(R.id.tvCumulativeFocus)
+        tvStatGoalsReached = view.findViewById(R.id.tvStatGoalsReached)
+        etSearchProjects = view.findViewById(R.id.etSearchProjects)
+        btnClearSearch = view.findViewById(R.id.btnClearSearch)
+        layoutEmptyProjects = view.findViewById(R.id.layoutEmptyProjects)
+        btnEmptyCreateProject = view.findViewById(R.id.btnEmptyCreateProject)
 
         adapter = ProjectsAdapter(emptyList())
         rvProjects.layoutManager = LinearLayoutManager(requireContext())
         rvProjects.adapter = adapter
 
         fabAddProject.setOnClickListener { showCreateProjectDialog(null) }
+        btnEmptyCreateProject.setOnClickListener { showCreateProjectDialog(null) }
+
+        btnClearSearch.setOnClickListener {
+            etSearchProjects.setText("")
+        }
+
+        etSearchProjects.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                btnClearSearch.visibility = if (s.isNullOrEmpty()) View.GONE else View.VISIBLE
+                filterAndRenderProjects()
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.allProjectsFlow.collect { projects ->
-                adapter.updateData(projects)
-                updateCumulativeFocus(projects)
+                rawProjectsList = projects
+                updateSummaryStats(projects)
+                filterAndRenderProjects()
             }
         }
     }
 
-    private fun updateCumulativeFocus(projects: List<Project>) {
+    private fun filterAndRenderProjects() {
+        val query = etSearchProjects.text.toString().trim()
+        val filtered = if (query.isEmpty()) {
+            rawProjectsList
+        } else {
+            rawProjectsList.filter { it.name.contains(query, ignoreCase = true) }
+        }
+
+        adapter.updateData(filtered)
+
+        if (filtered.isEmpty()) {
+            layoutEmptyProjects.visibility = View.VISIBLE
+            rvProjects.visibility = View.GONE
+        } else {
+            layoutEmptyProjects.visibility = View.GONE
+            rvProjects.visibility = View.VISIBLE
+        }
+    }
+
+    private fun updateSummaryStats(projects: List<Project>) {
+        val activeCount = projects.size
+        tvStatActiveProjects.text = "$activeCount Active"
+
         val totalMins = projects.sumOf { it.totalMinutes }
         val h = totalMins / 60
         val m = totalMins % 60
-        tvCumulative.text = String.format(java.util.Locale.getDefault(), "%02dh %02dm Total Focus", h, m)
+        tvCumulativeFocus.text = String.format(Locale.getDefault(), "%02dh %02dm", h, m)
+
+        val projectsWithGoal = projects.filter { it.goalMinutes != null && it.goalMinutes > 0 }
+        val goalsHit = projectsWithGoal.count { it.totalMinutes >= it.goalMinutes!! }
+        tvStatGoalsReached.text = "${goalsHit} / ${projectsWithGoal.size}"
     }
 
     private fun showProjectDetailDialog(project: Project) {
@@ -64,9 +123,12 @@ class ProjectsFragment : Fragment() {
         val tvEmoji = view.findViewById<TextView>(R.id.tvProjectDetailEmoji)
         val tvName = view.findViewById<TextView>(R.id.tvProjectDetailName)
         val tvTime = view.findViewById<TextView>(R.id.tvProjectDetailTotalTime)
+        val tvSessionsCount = view.findViewById<TextView>(R.id.tvProjectDetailSessionsCount)
+        val tvAvgSession = view.findViewById<TextView>(R.id.tvProjectDetailAvgSession)
         val layoutGoal = view.findViewById<View>(R.id.layoutProjectDetailGoal)
         val progress = view.findViewById<LinearProgressIndicator>(R.id.progressProjectDetail)
         val tvGoalStatus = view.findViewById<TextView>(R.id.tvProjectDetailGoalStatus)
+        val tvEmptySessions = view.findViewById<TextView>(R.id.tvEmptyProjectSessions)
         val rvSessions = view.findViewById<RecyclerView>(R.id.rvProjectSessions)
         val btnBack = view.findViewById<View>(R.id.btnBackFromProject)
 
@@ -78,7 +140,13 @@ class ProjectsFragment : Fragment() {
         tvName.text = project.name
         val h = project.totalMinutes / 60
         val m = project.totalMinutes % 60
-        tvTime.text = String.format("%02d hrs %02d mins", h, m)
+        tvTime.text = String.format(Locale.getDefault(), "%02d hrs %02d mins Total Focus", h, m)
+
+        val projectSessions = SessionRepository.memorySessions.filter { it.projectId == project.id }.toMutableList()
+        tvSessionsCount.text = "${projectSessions.size} Sessions"
+        
+        val avgMins = if (projectSessions.isNotEmpty()) project.totalMinutes / projectSessions.size else 0
+        tvAvgSession.text = "${avgMins}m avg"
 
         if (project.goalMinutes != null && project.goalMinutes > 0) {
             layoutGoal.visibility = View.VISIBLE
@@ -91,13 +159,27 @@ class ProjectsFragment : Fragment() {
             layoutGoal.visibility = View.GONE
         }
 
-        // Filter sessions for this project
-        val projectSessions = SessionRepository.memorySessions.filter { it.projectId == project.id }.toMutableList()
         lateinit var sessionAdapter: SessionAdapter
 
         fun refreshProjectSessions() {
             val updatedList = SessionRepository.memorySessions.filter { it.projectId == project.id }
             sessionAdapter.updateData(updatedList)
+            tvSessionsCount.text = "${updatedList.size} Sessions"
+            if (updatedList.isEmpty()) {
+                tvEmptySessions.visibility = View.VISIBLE
+                rvSessions.visibility = View.GONE
+            } else {
+                tvEmptySessions.visibility = View.GONE
+                rvSessions.visibility = View.VISIBLE
+            }
+        }
+
+        if (projectSessions.isEmpty()) {
+            tvEmptySessions.visibility = View.VISIBLE
+            rvSessions.visibility = View.GONE
+        } else {
+            tvEmptySessions.visibility = View.GONE
+            rvSessions.visibility = View.VISIBLE
         }
 
         sessionAdapter = SessionAdapter(
@@ -239,6 +321,8 @@ class ProjectsFragment : Fragment() {
                     viewModel.updateProject(updated)
                 }
                 dialog.dismiss()
+            } else {
+                etName.error = "Project name cannot be empty"
             }
         }
         dialog.show()
@@ -276,9 +360,11 @@ class ProjectsFragment : Fragment() {
             val emoji: TextView = v.findViewById(R.id.tvProjectEmoji)
             val name: TextView = v.findViewById(R.id.tvProjectName)
             val time: TextView = v.findViewById(R.id.tvProjectTime)
+            val sessions: TextView = v.findViewById(R.id.tvProjectSessions)
             val layoutGoal: View = v.findViewById(R.id.layoutGoalProgress)
             val progress: LinearProgressIndicator = v.findViewById(R.id.progressProjectGoal)
             val goalStatus: TextView = v.findViewById(R.id.tvGoalStatus)
+            val goalPercentage: TextView = v.findViewById(R.id.tvGoalPercentage)
             val btnEdit: View = v.findViewById(R.id.btnEditProject)
             val btnDelete: View = v.findViewById(R.id.btnDeleteProject)
         }
@@ -297,7 +383,10 @@ class ProjectsFragment : Fragment() {
             holder.name.text = p.name
             val h = p.totalMinutes / 60
             val m = p.totalMinutes % 60
-            holder.time.text = String.format("%02d hrs %02d mins", h, m)
+            holder.time.text = String.format(Locale.getDefault(), "%02d hrs %02d mins", h, m)
+
+            val sessionCount = SessionRepository.memorySessions.count { it.projectId == p.id }
+            holder.sessions.text = if (sessionCount == 1) "1 session" else "$sessionCount sessions"
 
             if (p.goalMinutes != null && p.goalMinutes > 0) {
                 holder.layoutGoal.visibility = View.VISIBLE
@@ -306,6 +395,13 @@ class ProjectsFragment : Fragment() {
                 holder.progress.setIndicatorColor(p.color)
                 val gh = p.goalMinutes / 60
                 holder.goalStatus.text = "$h / $gh hrs goal"
+
+                val pct = ((p.totalMinutes.toDouble() / p.goalMinutes) * 100).toInt()
+                if (pct >= 100) {
+                    holder.goalPercentage.text = "Goal Met 🎉"
+                } else {
+                    holder.goalPercentage.text = "$pct%"
+                }
             } else {
                 holder.layoutGoal.visibility = View.GONE
             }
@@ -343,7 +439,6 @@ class ProjectsFragment : Fragment() {
             if (isEmoji) {
                 holder.emoji.visibility = View.VISIBLE
                 holder.emoji.text = item
-                // Use a gold stroke for selected, transparent for unselected
                 if (holder.bindingAdapterPosition == selectedIdx) {
                     bg?.setStroke(4, Color.parseColor("#D4AF37"))
                     bg?.setColor(Color.parseColor("#33D4AF37"))

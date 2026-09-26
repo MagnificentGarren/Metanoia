@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog_dark"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="26dp">
+
+    <!-- Glowing Stars / Sparkles Header -->
+    <TextView
+        android:id="@+id/tvTrophyUnlockHeader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🏆 TROPHY UNLOCKED! 🏆"
+        android:textColor="@color/gold_primary"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"
+        android:textAlignment="center"/>
+
+    <!-- Huge Glowing Circle for the Emoji Trophy -->
+    <FrameLayout
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_marginBottom="16dp">
+
+        <!-- Glowing colored ring representing the unlocked rarity -->
+        <View
+            android:id="@+id/viewTrophyPopGlow"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_profile_avatar" />
+
+        <!-- Inner dark shield container -->
+        <View
+            android:layout_width="84dp"
+            android:layout_height="84dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_search_rounded" />
+
+        <!-- Big Achievement Emoji representation -->
+        <TextView
+            android:id="@+id/tvTrophyPopEmoji"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="🛡️"
+            android:textSize="44sp" />
+    </FrameLayout>
+
+    <!-- Trophy Title -->
+    <TextView
+        android:id="@+id/tvTrophyPopTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Weekend Warrior"
+        android:textColor="@color/text_white"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textAlignment="center" />
+
+    <!-- Unlocked Tier tag -->
+    <TextView
+        android:id="@+id/tvTrophyPopTier"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="GOLD TIER UNLOCKED"
+        android:textColor="#FFE600"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.1" />
+
+    <!-- Pure Lore/Narrative Paragraph -->
+    <TextView
+        android:id="@+id/tvTrophyPopLore"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:text="While others rest or wander, the warrior sharpens their sword in the quietude of the weekend."
+        android:textColor="#C0C0C0"
+        android:textSize="15sp"
+        android:textStyle="italic"
+        android:textAlignment="center" />
+
+    <!-- Unlock Method Detail -->
+    <TextView
+        android:id="@+id/tvTrophyPopDescription"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_card_outline"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:text="Goal Met: Logged 15 weekend focus sessions."
+        android:textColor="@color/text_white"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:textAlignment="center" />
+
+    <Button
+        android:id="@+id/btnTrophyPopClaim"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="24dp"
+        android:backgroundTint="@color/gold_primary"
+        android:text="CLAIM GLORY"
+        android:textColor="@color/bg_dark"
+        android:textStyle="bold" />
+
+</LinearLayout>

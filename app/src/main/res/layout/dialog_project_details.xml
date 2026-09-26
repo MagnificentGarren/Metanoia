@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0A0A0A"
+    android:background="@color/bg_dark"
     android:padding="20dp">
 
     <ImageView
         android:id="@+id/btnBackFromProject"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_marginTop="16dp"
-        android:src="@android:drawable/ic_menu_revert"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginTop="12dp"
         android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/projects_expand_desc"
+        android:padding="6dp"
+        android:src="@android:drawable/ic_menu_revert"
         app:tint="@color/gold_primary" />
 
     <TextView
@@ -20,11 +23,11 @@
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="32dp"
         android:background="@drawable/bg_circle_selectable"
         android:gravity="center"
-        android:text="💻"
-        android:textSize="40sp" />
+        android:textSize="40sp"
+        tools:text="💻" />
 
     <TextView
         android:id="@+id/tvProjectDetailName"
@@ -33,9 +36,10 @@
         android:layout_below="@id/tvProjectDetailEmoji"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="16dp"
-        android:textColor="#FFFFFF"
-        android:textSize="24sp"
-        android:textStyle="bold" />
+        android:textColor="@color/text_white"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        tools:text="Mobile App Design" />
 
     <TextView
         android:id="@+id/tvProjectDetailTotalTime"
@@ -45,16 +49,84 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="4dp"
         android:textColor="@color/gold_primary"
-        android:textSize="16sp" />
+        android:textSize="15sp"
+        tools:text="02 hrs 15 mins Total Focus" />
+
+    <!-- Project Quick Stats Cards -->
+    <LinearLayout
+        android:id="@+id/layoutProjectDetailStats"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvProjectDetailTotalTime"
+        android:layout_marginTop="20dp"
+        android:baselineAligned="false"
+        android:orientation="horizontal"
+        android:weightSum="2">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_search_rounded"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/tvProjectDetailSessionsCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/gold_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                tools:text="5 Sessions" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/stats_sessions"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_search_rounded"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/tvProjectDetailAvgSession"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/gold_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                tools:text="27m avg" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/projects_detail_avg_session"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/layoutProjectDetailGoal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/tvProjectDetailTotalTime"
-        android:layout_marginTop="24dp"
-        android:orientation="vertical"
-        android:paddingHorizontal="24dp">
+        android:layout_below="@id/layoutProjectDetailStats"
+        android:layout_marginTop="16dp"
+        android:orientation="vertical">
 
         <com.google.android.material.progressindicator.LinearProgressIndicator
             android:id="@+id/progressProjectDetail"
@@ -70,8 +142,9 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="8dp"
-            android:textColor="#8E8E93"
-            android:textSize="13sp" />
+            android:textColor="@color/text_muted"
+            android:textSize="13sp"
+            tools:text="Goal Progress: 2 / 10 hours" />
     </LinearLayout>
 
     <TextView
@@ -79,11 +152,23 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/layoutProjectDetailGoal"
-        android:layout_marginTop="40dp"
-        android:text="PROJECT HISTORY"
-        android:textColor="#8E8E93"
+        android:layout_marginTop="28dp"
+        android:text="@string/projects_detail_history_header"
+        android:textColor="@color/text_muted"
         android:textSize="12sp"
         android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvEmptyProjectSessions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvHistoryHeader"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="40dp"
+        android:text="@string/projects_detail_no_sessions"
+        android:textColor="@color/text_muted"
+        android:textSize="14sp"
+        android:visibility="gone" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvProjectSessions"
