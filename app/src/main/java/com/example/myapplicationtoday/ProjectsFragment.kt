@@ -301,29 +301,39 @@ class ProjectsFragment : Fragment() {
 
         btnCreate.setOnClickListener {
             val name = etName.text.toString().trim()
-            if (name.isNotEmpty()) {
-                val goalHrs = etGoal.text.toString().toIntOrNull()
-                if (existingProject == null) {
-                    val project = Project(
-                        name = name,
-                        emoji = selectedEmoji,
-                        color = selectedColor,
-                        goalMinutes = goalHrs?.let { it * 60 }
-                    )
-                    viewModel.addProject(project)
-                } else {
-                    val updated = existingProject.copy(
-                        name = name,
-                        emoji = selectedEmoji,
-                        color = selectedColor,
-                        goalMinutes = goalHrs?.let { it * 60 }
-                    )
-                    viewModel.updateProject(updated)
-                }
-                dialog.dismiss()
-            } else {
+            val goalText = etGoal.text.toString().trim()
+            val goalHrs = goalText.toIntOrNull()
+
+            if (name.isEmpty()) {
                 etName.error = "Project name cannot be empty"
+                return@setOnClickListener
             }
+
+            if (goalText.isNotEmpty() && (goalHrs == null || goalHrs <= 0)) {
+                etGoal.error = "Goal must be at least 1 hour (or leave blank)"
+                return@setOnClickListener
+            }
+
+            val goalMinutes = if (goalHrs != null && goalHrs > 0) goalHrs * 60 else null
+
+            if (existingProject == null) {
+                val project = Project(
+                    name = name,
+                    emoji = selectedEmoji,
+                    color = selectedColor,
+                    goalMinutes = goalMinutes
+                )
+                viewModel.addProject(project)
+            } else {
+                val updated = existingProject.copy(
+                    name = name,
+                    emoji = selectedEmoji,
+                    color = selectedColor,
+                    goalMinutes = goalMinutes
+                )
+                viewModel.updateProject(updated)
+            }
+            dialog.dismiss()
         }
         dialog.show()
     }

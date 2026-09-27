@@ -63,6 +63,8 @@
     <string name="projects_delete_desc">Delete Project</string>
     <string name="projects_expand_desc">Expand Details</string>
     <string name="bullet_point">•</string>
+    <string name="lock_screen_unlocked">🔓 Lock Screen Scroll</string>
+    <string name="lock_screen_locked">🔒 Screen Scroll Locked</string>
     <string name="projects_detail_avg_session">Avg Session</string>
     <string name="projects_detail_history_header">PROJECT SESSIONS HISTORY</string>
     <string name="projects_detail_no_sessions">No sessions logged for this project yet.</string>

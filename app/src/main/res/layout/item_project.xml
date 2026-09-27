@@ -56,19 +56,15 @@
                     tools:text="02 hrs 15 mins" />
 
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="6dp"
-                    android:text="@string/bullet_point"
-                    android:textColor="#48484A"
-                    android:textSize="12sp" />
-
-                <TextView
                     android:id="@+id/tvProjectSessions"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/bg_category_pill"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="2dp"
                     android:textColor="@color/gold_primary"
-                    android:textSize="12sp"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
                     tools:text="5 sessions" />
             </LinearLayout>
         </LinearLayout>

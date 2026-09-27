@@ -200,6 +200,7 @@ class AchievementsAdapter(private val onItemClicked: (AchievementItem) -> Unit) 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvEmoji: TextView = itemView.findViewById(R.id.tvAchievementEmoji)
         private val tvTitle: TextView = itemView.findViewById(R.id.tvAchievementTitle)
+        private val tvTierTag: TextView = itemView.findViewById(R.id.tvAchievementTierTag)
         private val tvDescription: TextView = itemView.findViewById(R.id.tvAchievementDescription)
         private val tvProgress: TextView = itemView.findViewById(R.id.tvAchievementProgress)
         private val viewGlowRing: View = itemView.findViewById(R.id.viewGlowRing)
@@ -214,13 +215,25 @@ class AchievementsAdapter(private val onItemClicked: (AchievementItem) -> Unit) 
             val borderGlow = GradientDrawable()
             borderGlow.shape = GradientDrawable.OVAL
             
+            val tierNumber = when (item.tierName) {
+                "Bronze" -> 1
+                "Silver" -> 2
+                "Gold" -> 3
+                "Diamond" -> 4
+                else -> 0
+            }
+
             if (item.isLocked) {
                 borderGlow.setColor(Color.parseColor("#151515"))
                 tvLockIcon.visibility = View.VISIBLE
+                tvTierTag.text = "LOCKED • 4 TIERS"
+                tvTierTag.setTextColor(Color.parseColor("#8E8E93"))
                 itemView.alpha = 0.5f
             } else {
                 borderGlow.setColor(item.glowColor)
                 tvLockIcon.visibility = View.GONE
+                tvTierTag.text = "${item.tierName.uppercase()} • TIER $tierNumber/4"
+                tvTierTag.setTextColor(item.glowColor)
                 itemView.alpha = 1.0f
             }
             viewGlowRing.background = borderGlow

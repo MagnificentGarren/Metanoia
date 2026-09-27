@@ -9,6 +9,7 @@ import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -20,6 +21,7 @@ import com.example.myapplicationtoday.ui.SessionUIManager
 import com.example.myapplicationtoday.ui.TimePickerManager
 import com.example.myapplicationtoday.ui.TimerDisplayFormatter
 import com.example.myapplicationtoday.ui.TimerServiceController
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.switchmaterial.SwitchMaterial
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -30,7 +32,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
 
     private lateinit var tvDashboardStreak: TextView
     private lateinit var btnEditDailyGoal: TextView
-    private lateinit var pbDailyGoal: ProgressBar
+    private lateinit var pbDailyGoal: LinearProgressIndicator
     private lateinit var tvDailyGoalProgress: TextView
 
     private lateinit var tvTimerDisplay: TextView
@@ -150,6 +152,26 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
             requireContext(), view.findViewById(R.id.pickerHours), view.findViewById(R.id.pickerMinutes),
             view.findViewById(R.id.pickerSeconds), chips
         ) { readTimeFromPickers() }
+
+        var isScreenLocked = false
+        val nestedScrollView = view.findViewById<androidx.core.widget.NestedScrollView>(R.id.nestedScrollViewDashboard)
+        val btnToggleScreenLock = view.findViewById<TextView>(R.id.btnToggleScreenLock)
+        btnToggleScreenLock?.setOnClickListener {
+            isScreenLocked = !isScreenLocked
+            if (isScreenLocked) {
+                nestedScrollView?.setOnTouchListener { _, _ -> true }
+                btnToggleScreenLock.text = getString(R.string.lock_screen_locked)
+                btnToggleScreenLock.setBackgroundResource(R.drawable.bg_chip_selected)
+                btnToggleScreenLock.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
+                Toast.makeText(requireContext(), "Screen locked in place", Toast.LENGTH_SHORT).show()
+            } else {
+                nestedScrollView?.setOnTouchListener(null)
+                btnToggleScreenLock.text = getString(R.string.lock_screen_unlocked)
+                btnToggleScreenLock.setBackgroundResource(R.drawable.bg_calendar_unselected)
+                btnToggleScreenLock.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_white))
+                Toast.makeText(requireContext(), "Screen scrolling unlocked", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         serviceController = TimerServiceController(requireContext(), this).apply {
             onServiceSynced = { service -> syncUiWithService(service) }

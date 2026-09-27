@@ -71,6 +71,19 @@
         android:textSize="14sp"
         android:textStyle="bold" />
 
+    <!-- Multi-Tier Indicator Badge -->
+    <TextView
+        android:id="@+id/tvAchievementTierTag"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/bg_category_pill"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="2dp"
+        android:textColor="@color/gold_primary"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+
     <!-- Direct description of how to get the medal -->
     <TextView
         android:id="@+id/tvAchievementDescription"

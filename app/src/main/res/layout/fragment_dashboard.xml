@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nestedScrollViewDashboard"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true">
@@ -80,16 +81,17 @@
                     android:textSize="11sp" />
             </RelativeLayout>
 
-            <ProgressBar
+            <com.google.android.material.progressindicator.LinearProgressIndicator
                 android:id="@+id/pbDailyGoal"
-                style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="match_parent"
-                android:layout_height="8dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:max="100"
                 android:progress="0"
-                android:progressDrawable="@drawable/bg_category_pill"
-                android:progressTint="@color/gold_primary" />
+                app:indicatorColor="@color/purple_primary"
+                app:trackColor="#2A2824"
+                app:trackCornerRadius="4dp"
+                app:trackThickness="8dp" />
 
             <TextView
                 android:id="@+id/tvDailyGoalProgress"
@@ -213,6 +215,22 @@
                     android:textSize="13sp"
                     android:textStyle="bold" />
             </LinearLayout>
+
+            <!-- Screen Hold / Lock Toggle Button -->
+            <TextView
+                android:id="@+id/btnToggleScreenLock"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_calendar_unselected"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="5dp"
+                android:text="@string/lock_screen_unlocked"
+                android:textColor="@color/text_white"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
             <!-- Time Picker / Circular Timer Container -->
             <FrameLayout

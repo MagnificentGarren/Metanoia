@@ -61,6 +61,19 @@ class WheelPicker @JvmOverloads constructor(
         updateView(child)
     }
 
+    @android.annotation.SuppressLint("ClickableViewAccessibility")
+    override fun onTouchEvent(ev: android.view.MotionEvent): Boolean {
+        when (ev.action) {
+            android.view.MotionEvent.ACTION_DOWN, android.view.MotionEvent.ACTION_MOVE -> {
+                parent?.requestDisallowInterceptTouchEvent(true)
+            }
+            android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                parent?.requestDisallowInterceptTouchEvent(false)
+            }
+        }
+        return super.onTouchEvent(ev)
+    }
+
     private fun updateView(view: View?) {
         if (view is EditText) {
             view.isFocusable = false

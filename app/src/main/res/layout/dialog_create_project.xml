@@ -1,110 +1,117 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/bg_dialog_dark"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:fillViewport="true"
+    android:overScrollMode="never">
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp">
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:id="@+id/tvProjectsHeader"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="NEW PROJECT"
+                android:textColor="@color/gold_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/btnCancelCreate"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                app:tint="#8E8E93" />
+        </RelativeLayout>
+
+        <EditText
+            android:id="@+id/etProjectName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_search_rounded"
+            android:hint="Project Name"
+            android:inputType="textCapWords"
+            android:minHeight="48dp"
+            android:paddingHorizontal="16dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#8E8E93" />
 
         <TextView
-            android:id="@+id/tvProjectsHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="NEW PROJECT"
-            android:textColor="@color/gold_primary"
-            android:textSize="18sp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="12dp"
+            android:text="CHOOSE EMOJI"
+            android:textColor="#8E8E93"
+            android:textSize="11sp"
             android:textStyle="bold" />
 
-        <ImageView
-            android:id="@+id/btnCancelCreate"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
-            app:tint="#8E8E93" />
-    </RelativeLayout>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvEmojiPicker"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
-    <EditText
-        android:id="@+id/etProjectName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/bg_search_rounded"
-        android:hint="Project Name"
-        android:inputType="textCapWords"
-        android:minHeight="48dp"
-        android:paddingHorizontal="16dp"
-        android:textColor="#FFFFFF"
-        android:textColorHint="#8E8E93" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="12dp"
+            android:text="CHOOSE COLOR"
+            android:textColor="#8E8E93"
+            android:textSize="11sp"
+            android:textStyle="bold" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="12dp"
-        android:text="CHOOSE EMOJI"
-        android:textColor="#8E8E93"
-        android:textSize="11sp"
-        android:textStyle="bold" />
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvColorPicker"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvEmojiPicker"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="8dp"
+            android:text="GOAL (HOURS) - OPTIONAL"
+            android:textColor="#8E8E93"
+            android:textSize="11sp"
+            android:textStyle="bold" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="12dp"
-        android:text="CHOOSE COLOR"
-        android:textColor="#8E8E93"
-        android:textSize="11sp"
-        android:textStyle="bold" />
+        <EditText
+            android:id="@+id/etProjectGoal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_search_rounded"
+            android:hint="e.g. 100"
+            android:inputType="number"
+            android:minHeight="48dp"
+            android:paddingHorizontal="16dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#8E8E93" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvColorPicker"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/btnCreateProject"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="32dp"
+            android:backgroundTint="@color/gold_primary"
+            android:text="CREATE PROJECT"
+            android:textColor="#0A0A0A"
+            android:textStyle="bold" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="8dp"
-        android:text="GOAL (HOURS) - OPTIONAL"
-        android:textColor="#8E8E93"
-        android:textSize="11sp"
-        android:textStyle="bold" />
-
-    <EditText
-        android:id="@+id/etProjectGoal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/bg_search_rounded"
-        android:hint="e.g. 100"
-        android:inputType="number"
-        android:minHeight="48dp"
-        android:paddingHorizontal="16dp"
-        android:textColor="#FFFFFF"
-        android:textColorHint="#8E8E93" />
-
-    <Button
-        android:id="@+id/btnCreateProject"
-        android:layout_width="match_parent"
-        android:layout_height="54dp"
-        android:layout_marginTop="32dp"
-        android:backgroundTint="@color/gold_primary"
-        android:text="CREATE PROJECT"
-        android:textColor="#0A0A0A"
-        android:textStyle="bold" />
-
-</LinearLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

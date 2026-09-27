@@ -51,7 +51,6 @@ class TimerService : Service() {
             if (isTimerRunning) {
                 val now = System.currentTimeMillis()
                 countUpTimeInSeconds = (now - countUpStartTime) / 1000L
-                playTickFeedback()
                 updateNotification()
                 timerListener?.onTick(countUpTimeInSeconds * 1000L)
                 handler.postDelayed(this, 1000)
@@ -172,7 +171,6 @@ class TimerService : Service() {
         countDownTimer = object : CountDownTimer(timeLeftInMillis, 1000) {
             override fun onTick(millisUntilFinished: Long) {
                 timeLeftInMillis = millisUntilFinished
-                playTickFeedback()
                 updateNotification()
                 timerListener?.onTick(millisUntilFinished)
             }
@@ -246,6 +244,7 @@ class TimerService : Service() {
         }
     }
 
+    @Suppress("unused")
     private fun playTickFeedback() {
         val metanoiaPrefs = getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
         val mainActivityPrefs = getSharedPreferences("com.example.myapplicationtoday.MainActivity", Context.MODE_PRIVATE)

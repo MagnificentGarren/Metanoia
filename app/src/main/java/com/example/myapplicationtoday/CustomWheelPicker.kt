@@ -101,6 +101,7 @@ class CustomWheelPicker @JvmOverloads constructor(
         }
     }
 
+    @android.annotation.SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (velocityTracker == null) {
             velocityTracker = VelocityTracker.obtain()
@@ -109,18 +110,21 @@ class CustomWheelPicker @JvmOverloads constructor(
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
+                parent?.requestDisallowInterceptTouchEvent(true)
                 if (!scroller.isFinished) scroller.forceFinished(true)
                 lastTouchY = event.y
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
+                parent?.requestDisallowInterceptTouchEvent(true)
                 val deltaY = lastTouchY - event.y
                 currentScrollY += deltaY.toInt()
                 lastTouchY = event.y
                 invalidate()
                 return true
             }
-            MotionEvent.ACTION_UP -> {
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                parent?.requestDisallowInterceptTouchEvent(false)
                 velocityTracker?.computeCurrentVelocity(1000)
                 val vY = velocityTracker?.yVelocity ?: 0f
                 scroller.fling(0, currentScrollY, 0, (-vY).toInt(), 0, 0, Int.MIN_VALUE, Int.MAX_VALUE)
