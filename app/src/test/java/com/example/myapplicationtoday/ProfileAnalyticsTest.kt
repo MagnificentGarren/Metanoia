@@ -1,6 +1,8 @@
 package com.example.myapplicationtoday
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.Calendar
 
@@ -40,5 +42,50 @@ class ProfileAnalyticsTest {
         val readingMins = sessions.filter { it.category == "Reading" }
             .sumOf { SessionRepository.parseDurationToMinutes(it.durationText) }
         assertEquals(30, readingMins)
+    }
+
+    @Test
+    fun testDynamicStreakCalculation() {
+        val today = Calendar.getInstance()
+        val yesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
+        val twoDaysAgo = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -2) }
+
+        val sessions = listOf(
+            Session(title = "Today Focus", durationText = "25 mins", startTime = "09:00", date = today),
+            Session(title = "Yesterday Focus", durationText = "30 mins", startTime = "10:00", date = yesterday),
+            Session(title = "2 Days Ago Focus", durationText = "45 mins", startTime = "11:00", date = twoDaysAgo)
+        )
+
+        val streak = AchievementsEngine.calculateStreak(sessions)
+        assertEquals(3, streak)
+    }
+
+    @Test
+    fun testTagsMaxLimitEnforcement() {
+        val defaultTags = MainViewModel.DEFAULT_TAGS.toMutableList()
+        assertEquals(5, defaultTags.size)
+
+        val limit = MainViewModel.MAX_TAGS_LIMIT
+        assertEquals(10, limit)
+
+        for (i in 1..5) {
+            defaultTags.add("Custom Tag $i")
+        }
+        assertEquals(10, defaultTags.size)
+
+        // Attempting to add 11th tag should exceed limit
+        val allow11th = defaultTags.size < limit
+        assertFalse(allow11th)
+
+        // Deleting a default tag allows adding a new tag
+        defaultTags.remove("Deep Work")
+        assertEquals(9, defaultTags.size)
+        assertTrue(defaultTags.size < limit)
+    }
+
+    @Test
+    fun testDefaultDailyGoal() {
+        val defaultGoal = MainViewModel.DEFAULT_DAILY_GOAL_MILLIS
+        assertEquals(7200000L, defaultGoal) // 2 hours = 120 minutes
     }
 }

@@ -31,6 +31,12 @@
             </intent-filter>
         </activity>
 
+        <!-- Authentication Activity -->
+        <activity
+            android:name=".AuthActivity"
+            android:exported="true"
+            android:theme="@style/Theme.MyApplicationToday" />
+
         <service
             android:name=".TimerService"
             android:enabled="true"

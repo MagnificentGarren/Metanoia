@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "851229961159",
+    "project_id": "metanoia-cb30b",
+    "storage_bucket": "metanoia-cb30b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:851229961159:android:7272cf2c505262777787e2",
+        "android_client_info": {
+          "package_name": "com.example.myapplicationtoday"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "851229961159-4bc0d57729puksb7rjti9v4opvb2v0ar.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.myapplicationtoday",
+            "certificate_hash": "942a9cee34d32dcf5f605e6868b9cbd29ab99b7a"
+          }
+        },
+        {
+          "client_id": "851229961159-39oiud6tlcgujvrm6bl6h890ul9lp5ra.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBNjCI2rr_sYb7v40zHv6068KoynSf2nkY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "851229961159-39oiud6tlcgujvrm6bl6h890ul9lp5ra.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

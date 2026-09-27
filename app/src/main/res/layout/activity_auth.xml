@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0A0A0A"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="24dp">
+
+        <!-- App Logo & Header -->
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginTop="32dp"
+            android:background="@drawable/bg_profile_avatar"
+            android:padding="12dp"
+            android:src="@drawable/ic_metanoia_logo"
+            android:contentDescription="Metanoia Logo" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="METANOIA"
+            android:textColor="#D4AF37"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.15"
+            android:layout_marginTop="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mindful Focus &amp; Productivity"
+            android:textColor="#8E8E93"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="32dp" />
+
+        <!-- Segmented Tab Bar (Log In vs Sign Up) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_segmented_container"
+            android:orientation="horizontal"
+            android:padding="4dp"
+            android:layout_marginBottom="24dp">
+
+            <Button
+                android:id="@+id/btnTabLogIn"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/bg_tab_selected"
+                android:text="LOG IN"
+                android:textColor="#0A0A0A"
+                android:textStyle="bold"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/btnTabSignUp"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/bg_tab_unselected"
+                android:text="SIGN UP"
+                android:textColor="#8E8E93"
+                android:textStyle="bold"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- Input Form Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card_outline"
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:layout_marginBottom="20dp">
+
+            <!-- Full Name (Sign Up only) -->
+            <TextView
+                android:id="@+id/lblAuthName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="FULL NAME"
+                android:textColor="#D4AF37"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                android:layout_marginBottom="6dp" />
+
+            <EditText
+                android:id="@+id/etAuthName"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_search_rounded"
+                android:hint="John Doe"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#555555"
+                android:paddingHorizontal="16dp"
+                android:inputType="textPersonName"
+                android:visibility="gone"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Email Address -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="EMAIL ADDRESS"
+                android:textColor="#D4AF37"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="6dp" />
+
+            <EditText
+                android:id="@+id/etAuthEmail"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_search_rounded"
+                android:hint="user@example.com"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#555555"
+                android:paddingHorizontal="16dp"
+                android:inputType="textEmailAddress"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Password -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PASSWORD"
+                android:textColor="#D4AF37"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="6dp" />
+
+            <EditText
+                android:id="@+id/etAuthPassword"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_search_rounded"
+                android:hint="••••••••"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#555555"
+                android:paddingHorizontal="16dp"
+                android:inputType="textPassword"
+                android:layout_marginBottom="20dp" />
+
+            <!-- Primary Action Button -->
+            <Button
+                android:id="@+id/btnAuthSubmit"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:backgroundTint="#D4AF37"
+                android:text="LOG IN"
+                android:textColor="#0A0A0A"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Continue as Guest / Skip -->
+        <Button
+            android:id="@+id/btnAuthGuest"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:backgroundTint="#1C1C1E"
+            android:text="CONTINUE AS GUEST"
+            android:textColor="#D4AF37"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Security & Email Verification Notice -->
+        <TextView
+            android:id="@+id/tvAuthNotice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Production Email Verification required for synced accounts."
+            android:textColor="#8E8E93"
+            android:textSize="11sp" />
+
+    </LinearLayout>
+</ScrollView>

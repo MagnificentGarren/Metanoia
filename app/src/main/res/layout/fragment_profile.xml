@@ -43,7 +43,7 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:padding="8dp"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="8dp">
 
                 <TextView
                     android:id="@+id/tvProfileAvatar"
@@ -73,9 +73,10 @@
                         tools:text="John Doe" />
 
                     <TextView
+                        android:id="@+id/tvAccountEmail"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Metanoia Focus Champion"
+                        android:text="Guest Account"
                         android:textColor="@color/text_muted"
                         android:textSize="13sp" />
                 </LinearLayout>
@@ -91,6 +92,39 @@
                     android:src="@drawable/ic_edit"
                     app:tint="@color/gold_primary"
                     android:contentDescription="Edit Profile" />
+            </LinearLayout>
+
+            <!-- Account Authentication Status Row -->
+            <LinearLayout
+                android:id="@+id/cardAccountStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_search_rounded"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="12dp"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:id="@+id/tvAccountStatus"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Status: Guest Mode"
+                    android:textColor="@color/gold_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btnAuthAction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:backgroundTint="@color/gold_primary"
+                    android:text="LOG IN / SIGN UP"
+                    android:textColor="#0A0A0A"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:paddingHorizontal="12dp" />
             </LinearLayout>
 
             <!-- Focus Statistics Section -->
@@ -288,9 +322,9 @@
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp"/>
 
-            <!-- Haptic & Sound Feedback -->
+            <!-- Haptic Feedback -->
             <LinearLayout
-                android:id="@+id/llHapticSound"
+                android:id="@+id/llHapticFeedback"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_search_rounded"
@@ -307,7 +341,7 @@
                     android:layout_height="24dp"
                     android:src="@drawable/ic_volume"
                     app:tint="@color/gold_primary"
-                    android:contentDescription="Volume Icon" />
+                    android:contentDescription="Haptics Icon" />
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -320,7 +354,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/settings_haptic_sound"
+                        android:text="Haptic Feedback"
                         android:textColor="@color/text_white"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -328,17 +362,126 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Toggle tick sounds and timer vibration"
+                        android:text="Vibration feedback on actions &amp; completion"
                         android:textColor="@color/text_muted"
                         android:textSize="12sp"
                         android:layout_marginTop="2dp" />
                 </LinearLayout>
 
                 <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/switchHapticSound"
+                    android:id="@+id/switchHapticFeedback"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:theme="@style/Widget.AppCompat.CompoundButton.Switch" />
+            </LinearLayout>
+
+            <!-- Sound Effects -->
+            <LinearLayout
+                android:id="@+id/llSoundEffects"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_search_rounded"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="14dp"
+                android:layout_marginBottom="8dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_volume"
+                    app:tint="@color/gold_primary"
+                    android:contentDescription="Sound Icon" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="1"
+                    android:layout_marginStart="14dp"
+                    android:layout_marginEnd="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Sound Effects"
+                        android:textColor="@color/text_white"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Audio chimes and completion alerts"
+                        android:textColor="@color/text_muted"
+                        android:textSize="12sp"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchSoundEffects"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:theme="@style/Widget.AppCompat.CompoundButton.Switch" />
+            </LinearLayout>
+
+            <!-- Focus Music Tracks & Playback -->
+            <LinearLayout
+                android:id="@+id/llFocusMusic"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_search_rounded"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="14dp"
+                android:layout_marginBottom="8dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_head"
+                    app:tint="@color/gold_primary"
+                    android:contentDescription="Focus Music Icon" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="1"
+                    android:layout_marginStart="14dp"
+                    android:layout_marginEnd="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Focus Music Track"
+                        android:textColor="@color/text_white"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Ambient music for timer sessions"
+                        android:textColor="@color/text_muted"
+                        android:textSize="12sp"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvFocusMusicValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Silence"
+                    android:textColor="@color/gold_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
             </LinearLayout>
 
             <!-- Custom Alert Sound Selector -->

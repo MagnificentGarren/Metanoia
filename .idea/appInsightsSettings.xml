@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.example.myapplicationtoday" />
+                  <option name="mobileSdkAppId" value="1:851229961159:android:7272cf2c505262777787e2" />
+                  <option name="projectId" value="metanoia-cb30b" />
+                  <option name="projectNumber" value="851229961159" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

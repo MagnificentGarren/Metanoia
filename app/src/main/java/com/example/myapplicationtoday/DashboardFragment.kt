@@ -391,21 +391,23 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         }
 
         tvCategoryLabel.setOnClickListener {
-            val customTags = viewModel.getCustomTags()
-            val baseCategories = arrayOf("Deep Work", "Study", "Workout", "Coding", "Reading")
-            val allOptions = (baseCategories.toList() + customTags).distinct().toTypedArray()
+            val tags = viewModel.getTags()
 
             DialogHelper.showCategoryPicker(
                 requireContext(),
-                allOptions
-            ) { category ->
-                selectedCategory = category
-                viewModel.draftCategory = category
-                tvCategoryLabel.text = "• $selectedCategory ▾"
-                if (!baseCategories.contains(category)) {
-                    viewModel.saveCustomTag(category)
+                tags,
+                onCategorySelected = { category ->
+                    selectedCategory = category
+                    viewModel.draftCategory = category
+                    tvCategoryLabel.text = "• $selectedCategory ▾"
+                },
+                onDeleteTag = { tag ->
+                    viewModel.deleteTag(tag)
+                },
+                onAddTag = { newTag ->
+                    viewModel.addTag(newTag)
                 }
-            }
+            )
         }
 
         switchTimerMode.setOnCheckedChangeListener { buttonView, isChecked ->

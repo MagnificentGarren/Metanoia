@@ -2,10 +2,10 @@ package com.example.myapplicationtoday.ui
 
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.Ringtone
 import android.media.RingtoneManager
-import android.media.AudioAttributes
 import android.media.ToneGenerator
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -22,11 +22,18 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
+import com.example.myapplicationtoday.AchievementsEngine
+import com.example.myapplicationtoday.AuthActivity
 import com.example.myapplicationtoday.BackupManager
 import com.example.myapplicationtoday.MainActivity
+import com.example.myapplicationtoday.MainViewModel
 import com.example.myapplicationtoday.R
 import com.example.myapplicationtoday.ReminderScheduler
 import com.example.myapplicationtoday.SessionRepository
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -34,9 +41,15 @@ import java.util.Locale
 
 class ProfileFragment : Fragment() {
 
+    private val viewModel: MainViewModel by activityViewModels()
+
     private lateinit var tvProfileAvatar: TextView
     private lateinit var tvProfileName: TextView
     private lateinit var btnEditProfile: ImageView
+
+    private lateinit var tvAccountEmail: TextView
+    private lateinit var tvAccountStatus: TextView
+    private lateinit var btnAuthAction: Button
 
     private lateinit var llInsightsContainer: LinearLayout
     private lateinit var tvStatTotalFocus: TextView
@@ -45,8 +58,14 @@ class ProfileFragment : Fragment() {
     private lateinit var tvStatBestDay: TextView
     private lateinit var tvStatDailyAvg: TextView
 
-    private lateinit var llHapticSound: LinearLayout
-    private lateinit var switchHapticSound: SwitchCompat
+    private lateinit var llHapticFeedback: LinearLayout
+    private lateinit var switchHapticFeedback: SwitchCompat
+
+    private lateinit var llSoundEffects: LinearLayout
+    private lateinit var switchSoundEffects: SwitchCompat
+
+    private lateinit var llFocusMusic: LinearLayout
+    private lateinit var tvFocusMusicValue: TextView
 
     private lateinit var llAlertSound: LinearLayout
     private lateinit var tvAlertSoundValue: TextView
@@ -67,10 +86,12 @@ class ProfileFragment : Fragment() {
     private var previewToneGenerator: ToneGenerator? = null
     private var previewRingtone: Ringtone? = null
 
-    private val STREAK_COUNT_KEY = "streak_count"
     private val DAILY_FOCUS_GOAL_KEY = "daily_focus_goal"
-    private val HAPTIC_SOUND_KEY = "haptic_sound"
+    private val HAPTIC_FEEDBACK_KEY = "haptic_feedback_enabled"
+    private val SOUND_EFFECTS_KEY = "sound_effects_enabled"
     private val ALERT_SOUND_KEY = "alert_sound"
+    private val FOCUS_MUSIC_TRACK_KEY = "focus_music_track"
+    private val FOCUS_MUSIC_MODE_KEY = "focus_music_mode"
     private val REMINDER_HOUR_KEY = "reminder_hour"
     private val REMINDER_MINUTE_KEY = "reminder_minute"
     private val PROFILE_USERNAME_KEY = "profile_username"
@@ -87,10 +108,14 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Bind profile header
+        // Bind profile header & account status
         tvProfileAvatar = view.findViewById(R.id.tvProfileAvatar)
         tvProfileName = view.findViewById(R.id.tvProfileName)
         btnEditProfile = view.findViewById(R.id.btnEditProfile)
+
+        tvAccountEmail = view.findViewById(R.id.tvAccountEmail)
+        tvAccountStatus = view.findViewById(R.id.tvAccountStatus)
+        btnAuthAction = view.findViewById(R.id.btnAuthAction)
 
         // Bind stats grid
         llInsightsContainer = view.findViewById(R.id.llInsightsContainer)
@@ -100,9 +125,15 @@ class ProfileFragment : Fragment() {
         tvStatBestDay = view.findViewById(R.id.tvStatBestDay)
         tvStatDailyAvg = view.findViewById(R.id.tvStatDailyAvg)
 
-        // Bind buttons and toggles
-        llHapticSound = view.findViewById(R.id.llHapticSound)
-        switchHapticSound = view.findViewById(R.id.switchHapticSound)
+        // Bind settings switches and options
+        llHapticFeedback = view.findViewById(R.id.llHapticFeedback)
+        switchHapticFeedback = view.findViewById(R.id.switchHapticFeedback)
+
+        llSoundEffects = view.findViewById(R.id.llSoundEffects)
+        switchSoundEffects = view.findViewById(R.id.switchSoundEffects)
+
+        llFocusMusic = view.findViewById(R.id.llFocusMusic)
+        tvFocusMusicValue = view.findViewById(R.id.tvFocusMusicValue)
 
         llAlertSound = view.findViewById(R.id.llAlertSound)
         tvAlertSoundValue = view.findViewById(R.id.tvAlertSoundValue)
@@ -123,16 +154,24 @@ class ProfileFragment : Fragment() {
         // Load data
         loadProfileData()
         calculateAndDisplayInsights()
+        observeDailyGoalFlow()
 
         // Set up listeners
         btnEditProfile.setOnClickListener { showEditProfileDialog() }
+        btnAuthAction.setOnClickListener { handleAuthAction() }
         llInsightsContainer.setOnClickListener { showEnlargedStatsDialog() }
 
-        llHapticSound.setOnClickListener { switchHapticSound.toggle() }
-        switchHapticSound.setOnCheckedChangeListener { _, isChecked ->
-            saveHapticPreference(isChecked)
+        llHapticFeedback.setOnClickListener { switchHapticFeedback.toggle() }
+        switchHapticFeedback.setOnCheckedChangeListener { _, isChecked ->
+            saveSetting(HAPTIC_FEEDBACK_KEY, isChecked)
         }
 
+        llSoundEffects.setOnClickListener { switchSoundEffects.toggle() }
+        switchSoundEffects.setOnCheckedChangeListener { _, isChecked ->
+            saveSetting(SOUND_EFFECTS_KEY, isChecked)
+        }
+
+        llFocusMusic.setOnClickListener { showFocusMusicPicker() }
         llAlertSound.setOnClickListener { showCustomAlertSoundPicker() }
 
         llDailyFocusGoal.setOnClickListener { showDailyFocusGoalPicker() }
@@ -146,11 +185,25 @@ class ProfileFragment : Fragment() {
         llSupportFeedback.setOnClickListener { sendSupportFeedbackEmail() }
     }
 
+    override fun onResume() {
+        super.onResume()
+        loadProfileData()
+        calculateAndDisplayInsights()
+    }
+
     private fun getAppPreferences() =
         requireContext().getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
 
     private fun getAltPreferences() =
         activity?.getPreferences(Context.MODE_PRIVATE)
+
+    private fun observeDailyGoalFlow() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.dailyFocusGoalMillis.collectLatest { goalMillis ->
+                tvDailyFocusGoalValue.text = TimerDisplayFormatter.formatHoursMinutesFromMillis(goalMillis)
+            }
+        }
+    }
 
     private fun loadProfileData() {
         val prefs = getAppPreferences()
@@ -161,16 +214,39 @@ class ProfileFragment : Fragment() {
         tvProfileName.text = username
         tvProfileAvatar.text = initials
 
-        // Sound Preference
-        val hapticSoundEnabled = prefs.getBoolean(HAPTIC_SOUND_KEY, altPrefs?.getBoolean(HAPTIC_SOUND_KEY, true) ?: true)
-        switchHapticSound.isChecked = hapticSoundEnabled
+        // Account / Login Status
+        val isLoggedIn = prefs.getBoolean("auth_logged_in", false)
+        val isGuest = prefs.getBoolean("auth_is_guest", true)
+        val email = prefs.getString("auth_user_email", "guest@metanoia.local") ?: "guest@metanoia.local"
+        val isVerified = prefs.getBoolean("auth_email_verified", false)
+
+        if (isLoggedIn && !isGuest) {
+            tvAccountEmail.text = email
+            tvAccountStatus.text = if (isVerified) "Status: Email Verified ✓" else "Status: Pending Verification"
+            btnAuthAction.text = "LOG OUT"
+        } else {
+            tvAccountEmail.text = "Guest Account"
+            tvAccountStatus.text = "Status: Guest Mode"
+            btnAuthAction.text = "LOG IN / SIGN UP"
+        }
+
+        // Haptic & Sound Preferences
+        val hapticEnabled = prefs.getBoolean(HAPTIC_FEEDBACK_KEY, prefs.getBoolean("haptic_sound", true))
+        val soundEnabled = prefs.getBoolean(SOUND_EFFECTS_KEY, prefs.getBoolean("haptic_sound", true))
+        switchHapticFeedback.isChecked = hapticEnabled
+        switchSoundEffects.isChecked = soundEnabled
+
+        // Focus Music Track Display
+        val trackChoice = prefs.getString(FOCUS_MUSIC_TRACK_KEY, "silence") ?: "silence"
+        val modeChoice = prefs.getString(FOCUS_MUSIC_MODE_KEY, "loop") ?: "loop"
+        tvFocusMusicValue.text = formatFocusMusicDisplay(trackChoice, modeChoice)
 
         // Alert Sound Preference
         val alertSound = prefs.getString(ALERT_SOUND_KEY, altPrefs?.getString(ALERT_SOUND_KEY, "Zen Bell")) ?: "Zen Bell"
         tvAlertSoundValue.text = alertSound
 
-        // Focus Goal Display
-        val dailyGoalMillis = prefs.getLong(DAILY_FOCUS_GOAL_KEY, altPrefs?.getLong(DAILY_FOCUS_GOAL_KEY, 3600000L) ?: 3600000L)
+        // Daily Goal Display
+        val dailyGoalMillis = viewModel.dailyFocusGoalMillis.value
         tvDailyFocusGoalValue.text = TimerDisplayFormatter.formatHoursMinutesFromMillis(dailyGoalMillis)
 
         // Reminder Time Display
@@ -179,14 +255,31 @@ class ProfileFragment : Fragment() {
         tvDailyReminderTimeValue.text = formatReminderTime(remHour, remMin)
     }
 
-    private fun calculateAndDisplayInsights() {
+    private fun handleAuthAction() {
         val prefs = getAppPreferences()
-        val altPrefs = getAltPreferences()
+        val isLoggedIn = prefs.getBoolean("auth_logged_in", false)
+        val isGuest = prefs.getBoolean("auth_is_guest", true)
 
+        if (isLoggedIn && !isGuest) {
+            prefs.edit()
+                .putBoolean("auth_logged_in", false)
+                .putBoolean("auth_is_guest", true)
+                .putString("auth_user_email", "guest@metanoia.local")
+                .putString("auth_user_name", "John Doe")
+                .putString("profile_username", "John Doe")
+                .putString("profile_initials", "JD")
+                .apply()
+            loadProfileData()
+            Toast.makeText(context, "Logged out successfully", Toast.LENGTH_SHORT).show()
+        } else {
+            startActivity(Intent(requireContext(), AuthActivity::class.java))
+        }
+    }
+
+    private fun calculateAndDisplayInsights() {
         SessionRepository.init(requireContext())
         val sessions = SessionRepository.memorySessions
 
-        // Calculate stats
         val totalSessions = sessions.size
         var totalMinutes = 0
 
@@ -205,9 +298,9 @@ class ProfileFragment : Fragment() {
         val m = totalMinutes % 60
         val focusFormatted = if (h > 0) "${h}h ${m}m" else "${m}m"
 
-        val streakCount = prefs.getInt(STREAK_COUNT_KEY, altPrefs?.getInt(STREAK_COUNT_KEY, 0) ?: 0)
+        // Dynamic Streak Calculation (Fixed bug where active streak showed 0)
+        val streakCount = AchievementsEngine.calculateStreak(sessions)
 
-        // Best Focus Day
         var bestDayStr = "0m"
         if (dailyMinutesMap.isNotEmpty()) {
             val maxEntry = dailyMinutesMap.maxByOrNull { it.value }
@@ -219,14 +312,12 @@ class ProfileFragment : Fragment() {
             }
         }
 
-        // Average Daily Focus
         val activeDaysCount = if (dailyMinutesMap.keys.isEmpty()) 1 else dailyMinutesMap.keys.size
         val avgMins = totalMinutes / activeDaysCount
         val ah = avgMins / 60
         val am = avgMins % 60
         val avgFormatted = if (ah > 0) "${ah}h ${am}m / day" else "${am}m / day"
 
-        // Update Text
         tvStatTotalFocus.text = focusFormatted
         tvStatTotalSessions.text = totalSessions.toString()
         tvStatStreak.text = getString(R.string.streak_count_display, streakCount)
@@ -241,8 +332,6 @@ class ProfileFragment : Fragment() {
     private fun showEnlargedStatsDialog() {
         SessionRepository.init(requireContext())
         val sessions = SessionRepository.memorySessions
-        val prefs = getAppPreferences()
-        val altPrefs = getAltPreferences()
 
         var totalMins = 0
         var todayMins = 0
@@ -275,11 +364,11 @@ class ProfileFragment : Fragment() {
         val totalHours = totalMins / 60
         val remainingMins = totalMins % 60
 
-        val dailyGoalMillis = prefs.getLong(DAILY_FOCUS_GOAL_KEY, altPrefs?.getLong(DAILY_FOCUS_GOAL_KEY, 3600000L) ?: 3600000L)
+        val dailyGoalMillis = viewModel.dailyFocusGoalMillis.value
         val dailyGoalMins = (dailyGoalMillis / (1000 * 60)).toInt()
         val progressPercent = if (dailyGoalMins > 0) ((todayMins.toFloat() / dailyGoalMins) * 100).toInt().coerceAtMost(100) else 0
 
-        val streakCount = prefs.getInt(STREAK_COUNT_KEY, altPrefs?.getInt(STREAK_COUNT_KEY, 0) ?: 0)
+        val streakCount = AchievementsEngine.calculateStreak(sessions)
 
         val totalSessions = sessions.size
         val avgSessionMins = if (totalSessions > 0) totalMins / totalSessions else 0
@@ -346,7 +435,6 @@ class ProfileFragment : Fragment() {
         tvBestDay.text = bestDayStr
         tvTopCategory.text = topCategoryStr
 
-        // Populate Category Breakdown Progress Rows
         containerCategoryBreakdown.removeAllViews()
         if (categoryMinutesMap.isEmpty()) {
             val emptyTv = TextView(requireContext()).apply {
@@ -384,9 +472,6 @@ class ProfileFragment : Fragment() {
             .create()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
-
-
-
         btnClose.setOnClickListener { dialog.dismiss() }
         dialog.show()
     }
@@ -410,8 +495,6 @@ class ProfileFragment : Fragment() {
             .setView(view)
             .create()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-
-
 
         btnClose.setOnClickListener { dialog.dismiss() }
         btnSave.setOnClickListener {
@@ -468,8 +551,60 @@ class ProfileFragment : Fragment() {
         altPrefs?.apply()
     }
 
-    private fun saveHapticPreference(enabled: Boolean) {
-        saveSetting(HAPTIC_SOUND_KEY, enabled)
+    private fun showFocusMusicPicker() {
+        val options = arrayOf(
+            "Silence (None)",
+            "Track 1: Deep Focus Ambient (Loop)",
+            "Track 2: Zen Rain Stream (Loop)",
+            "Track 3: Celestial Binaural (Loop)",
+            "Shuffle All Focus Tracks"
+        )
+
+        val prefs = getAppPreferences()
+        val currentTrack = prefs.getString(FOCUS_MUSIC_TRACK_KEY, "silence") ?: "silence"
+        val currentMode = prefs.getString(FOCUS_MUSIC_MODE_KEY, "loop") ?: "loop"
+
+        var selectedIndex = when {
+            currentTrack == "shuffle" -> 4
+            currentTrack == "track_3" -> 3
+            currentTrack == "track_2" -> 2
+            currentTrack == "track_1" -> 1
+            else -> 0
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Select Focus Music")
+            .setSingleChoiceItems(options, selectedIndex) { _, which ->
+                selectedIndex = which
+            }
+            .setPositiveButton("SAVE") { dialog, _ ->
+                val (track, mode) = when (selectedIndex) {
+                    1 -> "track_1" to "loop"
+                    2 -> "track_2" to "loop"
+                    3 -> "track_3" to "loop"
+                    4 -> "shuffle" to "shuffle"
+                    else -> "silence" to "loop"
+                }
+
+                saveSetting(FOCUS_MUSIC_TRACK_KEY, track)
+                saveSetting(FOCUS_MUSIC_MODE_KEY, mode)
+
+                tvFocusMusicValue.text = formatFocusMusicDisplay(track, mode)
+                Toast.makeText(context, "Focus music set to ${options[selectedIndex]}", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+            .setNegativeButton("CANCEL") { dialog, _ -> dialog.dismiss() }
+            .show()
+    }
+
+    private fun formatFocusMusicDisplay(track: String, mode: String): String {
+        return when (track) {
+            "track_1" -> "Deep Focus (Loop)"
+            "track_2" -> "Zen Rain (Loop)"
+            "track_3" -> "Celestial Binaural"
+            "shuffle" -> "Shuffle All"
+            else -> "Silence"
+        }
     }
 
     private fun showCustomAlertSoundPicker() {
@@ -511,7 +646,7 @@ class ProfileFragment : Fragment() {
                 }
                 "Digital Chime" -> {
                     previewToneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
-                    previewToneGenerator?.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 1000)
+                    previewToneGenerator?.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 100)
                 }
                 "Gentle Chime" -> {
                     previewToneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
@@ -551,9 +686,7 @@ class ProfileFragment : Fragment() {
     }
 
     private fun showDailyFocusGoalPicker() {
-        val prefs = getAppPreferences()
-        val altPrefs = getAltPreferences()
-        val currentGoalMillis = prefs.getLong(DAILY_FOCUS_GOAL_KEY, altPrefs?.getLong(DAILY_FOCUS_GOAL_KEY, 3600000L) ?: 3600000L)
+        val currentGoalMillis = viewModel.dailyFocusGoalMillis.value
 
         val currentHours = (currentGoalMillis / (1000 * 60 * 60)).toInt()
         val currentMinutes = ((currentGoalMillis / (1000 * 60)) % 60).toInt()
@@ -561,6 +694,7 @@ class ProfileFragment : Fragment() {
         DialogHelper.showTimePicker(requireContext(), currentHours, currentMinutes) { hours, minutes ->
             val newGoalMillis = (hours * 60 * 60 * 1000 + minutes * 60 * 1000).toLong()
             saveSetting(DAILY_FOCUS_GOAL_KEY, newGoalMillis)
+            viewModel.saveDailyFocusGoal(newGoalMillis)
             tvDailyFocusGoalValue.text = TimerDisplayFormatter.formatHoursMinutesFromMillis(newGoalMillis)
             calculateAndDisplayInsights()
         }
@@ -654,8 +788,6 @@ class ProfileFragment : Fragment() {
             .create()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
-
-
         btnNegative.setOnClickListener {
             dialog.dismiss()
             val exportIntent = BackupManager.exportBackupFile(requireContext())
@@ -700,8 +832,6 @@ class ProfileFragment : Fragment() {
             .setView(view)
             .create()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-
-
 
         btnNegative.setOnClickListener { dialog.dismiss() }
         btnPositive.setOnClickListener {
@@ -748,8 +878,6 @@ class ProfileFragment : Fragment() {
             .setView(view)
             .create()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-
-
 
         btnPositive.setOnClickListener { dialog.dismiss() }
         dialog.show()

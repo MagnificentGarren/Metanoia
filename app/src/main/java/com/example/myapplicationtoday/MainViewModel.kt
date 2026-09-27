@@ -12,11 +12,16 @@ import android.content.SharedPreferences
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
+    companion object {
+        const val DEFAULT_DAILY_GOAL_MILLIS = 7200000L // 2 hours = 120 minutes
+        const val MAX_TAGS_LIMIT = 10
+        val DEFAULT_TAGS = listOf("Deep Work", "Study", "Workout", "Coding", "Reading")
+    }
+
     private val DAILY_FOCUS_GOAL_KEY = "daily_focus_goal"
     private val GLOBAL_PREFS_NAME = "metanoia_prefs"
 
-
-    private val _dailyFocusGoalMillis = MutableStateFlow(0L)
+    private val _dailyFocusGoalMillis = MutableStateFlow(DEFAULT_DAILY_GOAL_MILLIS)
     val dailyFocusGoalMillis: StateFlow<Long> = _dailyFocusGoalMillis
     
     private val _allSessionsFlow = MutableStateFlow<List<Session>>(emptyList())
@@ -148,39 +153,64 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return streak
     }
 
-    // Persistent Custom Tags Management (Max 5)
-    fun getCustomTags(): List<String> {
+    // Tag Management (Max 10 Tags Limit, Users can delete any tag including default)
+    fun getTags(): List<String> {
         val app = getApplication<Application>()
-        val prefs = app.getSharedPreferences("metanoia_tags_pref", android.content.Context.MODE_PRIVATE)
-        val jsonString = prefs.getString("custom_tags_list", null) ?: return emptyList()
+        val prefs = app.getSharedPreferences("metanoia_tags_pref", Context.MODE_PRIVATE)
+        val jsonString = prefs.getString("saved_tags_list", null) ?: prefs.getString("custom_tags_list", null)
+        if (jsonString == null) return DEFAULT_TAGS
         return try {
             val array = JSONArray(jsonString)
             val list = mutableListOf<String>()
             for (i in 0 until array.length()) {
-                list.add(array.getString(i))
+                val tagStr = array.getString(i).trim()
+                if (tagStr.isNotEmpty() && !list.contains(tagStr)) {
+                    list.add(tagStr)
+                }
             }
-            list
+            if (list.isEmpty()) DEFAULT_TAGS else list
         } catch (e: Exception) {
-            emptyList()
+            DEFAULT_TAGS
         }
     }
 
-    fun saveCustomTag(tag: String) {
+    fun addTag(tag: String): Boolean {
         val trimmed = tag.trim()
-        if (trimmed.isEmpty()) return
-        val currentTags = getCustomTags().toMutableList()
-        currentTags.remove(trimmed)
-        currentTags.add(0, trimmed)
-        if (currentTags.size > 5) {
-            currentTags.removeAt(currentTags.size - 1)
+        if (trimmed.isEmpty()) return false
+        val current = getTags().toMutableList()
+        if (current.any { it.equals(trimmed, ignoreCase = true) }) return true
+        if (current.size >= MAX_TAGS_LIMIT) return false
+
+        current.add(trimmed)
+        saveTags(current)
+        return true
+    }
+
+    fun deleteTag(tag: String) {
+        val current = getTags().toMutableList()
+        val removed = current.removeAll { it.equals(tag.trim(), ignoreCase = true) }
+        if (removed) {
+            saveTags(current)
         }
+    }
+
+    private fun saveTags(tags: List<String>) {
         val app = getApplication<Application>()
-        val prefs = app.getSharedPreferences("metanoia_tags_pref", android.content.Context.MODE_PRIVATE)
+        val prefs = app.getSharedPreferences("metanoia_tags_pref", Context.MODE_PRIVATE)
         val array = JSONArray()
-        for (t in currentTags) {
+        for (t in tags) {
             array.put(t)
         }
-        prefs.edit().putString("custom_tags_list", array.toString()).apply()
+        prefs.edit()
+            .putString("saved_tags_list", array.toString())
+            .putString("custom_tags_list", array.toString())
+            .apply()
+    }
+
+    fun getCustomTags(): List<String> = getTags()
+
+    fun saveCustomTag(tag: String) {
+        addTag(tag)
     }
 
     // Daily Focus Goal Management
@@ -192,6 +222,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun loadDailyFocusGoal() {
         val sharedPref = getApplication<Application>().getSharedPreferences(GLOBAL_PREFS_NAME, Context.MODE_PRIVATE)
-        _dailyFocusGoalMillis.value = sharedPref.getLong(DAILY_FOCUS_GOAL_KEY, 0L)
+        val saved = sharedPref.getLong(DAILY_FOCUS_GOAL_KEY, DEFAULT_DAILY_GOAL_MILLIS)
+        _dailyFocusGoalMillis.value = if (saved > 0) saved else DEFAULT_DAILY_GOAL_MILLIS
     }
 }

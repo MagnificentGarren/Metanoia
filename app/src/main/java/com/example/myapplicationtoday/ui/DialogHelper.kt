@@ -20,8 +20,10 @@ object DialogHelper {
 
     fun showCategoryPicker(
         context: Context,
-        categories: Array<String>,
-        onCategorySelected: (String) -> Unit
+        categories: List<String>,
+        onCategorySelected: (String) -> Unit,
+        onDeleteTag: ((String) -> Unit)? = null,
+        onAddTag: ((String) -> Boolean)? = null
     ) {
         val view = LayoutInflater.from(context).inflate(R.layout.dialog_category_picker, null)
         val container = view.findViewById<LinearLayout>(R.id.layoutCategoriesContainer)
@@ -39,12 +41,22 @@ object DialogHelper {
         fun populateCategories() {
             container.removeAllViews()
             for (category in currentCategories) {
-                val row = LayoutInflater.from(context).inflate(R.layout.item_category_row, container, false) as TextView
-                row.text = category
-                row.setOnClickListener {
+                val row = LayoutInflater.from(context).inflate(R.layout.item_category_row, container, false)
+                val tvName = row.findViewById<TextView>(R.id.tvCategoryName)
+                val btnDelete = row.findViewById<TextView>(R.id.btnDeleteCategoryTag)
+
+                tvName.text = category
+                tvName.setOnClickListener {
                     onCategorySelected(category)
                     dialog.dismiss()
                 }
+
+                btnDelete.setOnClickListener {
+                    onDeleteTag?.invoke(category)
+                    currentCategories.remove(category)
+                    populateCategories()
+                }
+
                 container.addView(row)
             }
         }
@@ -54,12 +66,35 @@ object DialogHelper {
         btnAdd.setOnClickListener {
             val custom = etCustom.text.toString().trim()
             if (custom.isNotEmpty()) {
-                onCategorySelected(custom)
-                dialog.dismiss()
+                if (currentCategories.size >= 10) {
+                    android.widget.Toast.makeText(context, "Maximum limit of 10 tags reached. Delete a tag to add a new one.", android.widget.Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                val success = onAddTag?.invoke(custom) ?: true
+                if (success) {
+                    onCategorySelected(custom)
+                    dialog.dismiss()
+                } else {
+                    android.widget.Toast.makeText(context, "Maximum limit of 10 tags reached.", android.widget.Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
         dialog.show()
+    }
+
+    fun showCategoryPicker(
+        context: Context,
+        categories: Array<String>,
+        onCategorySelected: (String) -> Unit
+    ) {
+        showCategoryPicker(
+            context = context,
+            categories = categories.toList(),
+            onCategorySelected = onCategorySelected,
+            onDeleteTag = null,
+            onAddTag = null
+        )
     }
 
     fun showCancelConfirmation(context: Context, onConfirm: () -> Unit) {
