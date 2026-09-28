@@ -292,7 +292,8 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_horizontal"
                         android:layout_marginTop="4dp"
-                        android:gravity="bottom">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
                         <TextView
                             android:id="@+id/tvWorkedHours"
@@ -300,15 +301,15 @@
                             android:layout_height="wrap_content"
                             android:text="00"
                             android:textColor="#D4AF37"
-                            android:textSize="22sp"
+                            android:textSize="18sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text=" hrs "
+                            android:text="h "
                             android:textColor="#8E8E93"
-                            android:textSize="12sp" />
+                            android:textSize="11sp" />
 
                         <TextView
                             android:id="@+id/tvWorkedMins"
@@ -316,15 +317,15 @@
                             android:layout_height="wrap_content"
                             android:text="00"
                             android:textColor="#D4AF37"
-                            android:textSize="22sp"
+                            android:textSize="18sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text=" mins"
+                            android:text="m"
                             android:textColor="#8E8E93"
-                            android:textSize="12sp" />
+                            android:textSize="11sp" />
                     </LinearLayout>
 
                     <!-- Dynamic Visual 7-Bar Weekly Focus Chart -->

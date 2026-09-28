@@ -1,8 +1,6 @@
 package com.example.myapplicationtoday
 
 import android.content.Context
-import java.util.Calendar
-import java.util.Collections
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -20,18 +18,11 @@ class SessionDaoReplacement(private val context: Context) {
     }
 
     fun refresh() {
-        // Retrieve sessions safely using shared preferences repository
-        val dummyCal = Calendar.getInstance()
-        val all = mutableListOf<Session>()
-        // Let's grab all from memory sessions
-        all.addAll(SessionRepository.getSessionsForDate(context, dummyCal))
-        // Since getSessionsForDate filters by same day, let's make sure we expose the full list or let's support all items via the original memory structure
-        // Let's fetch all items by accessing the repository's internal data safely or expanding standard lookup
-        _sessionsFlow.value = SessionRepository.getSessionsForDate(context, dummyCal)
+        _sessionsFlow.value = SessionRepository.getAllSessions(context)
     }
 
     fun getAllSessions(): List<Session> {
-        return SessionRepository.getSessionsForDate(context, Calendar.getInstance())
+        return SessionRepository.getAllSessions(context)
     }
 
     fun insertSession(session: Session) {

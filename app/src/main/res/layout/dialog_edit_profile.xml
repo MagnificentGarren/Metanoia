@@ -1,91 +1,352 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_dialog_dark"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:background="@drawable/bg_dialog_dark">
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp">
+        android:orientation="vertical"
+        android:padding="24dp">
 
+        <!-- Header -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:id="@+id/tvEditProfileHeader"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="Edit Profile &amp; Avatar"
+                android:textColor="@color/gold_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/btnCancelEditProfile"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                app:tint="#8E8E93"
+                android:contentDescription="Cancel" />
+        </RelativeLayout>
+
+        <!-- Live Avatar Preview Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:background="@drawable/bg_search_rounded"
+            android:padding="16dp"
+            android:layout_marginBottom="20dp">
+
+            <FrameLayout
+                android:id="@+id/flEditAvatarPreviewBg"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/bg_profile_avatar">
+
+                <TextView
+                    android:id="@+id/tvEditAvatarPreviewText"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="JD"
+                    android:textColor="@color/gold_primary"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:id="@+id/ivEditAvatarPreviewIcon"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/a_friendly_astronaut"
+                    android:visibility="gone"
+                    android:contentDescription="Preview Icon" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="LIVE PREVIEW"
+                android:textColor="#8E8E93"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Username -->
         <TextView
-            android:id="@+id/tvEditProfileHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="@string/dialog_edit_profile_title"
-            android:textColor="@color/gold_primary"
-            android:textSize="18sp"
+            android:layout_marginBottom="6dp"
+            android:text="USERNAME"
+            android:textColor="#8E8E93"
+            android:textSize="11sp"
             android:textStyle="bold" />
 
-        <ImageView
-            android:id="@+id/btnCancelEditProfile"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
-            app:tint="#8E8E93"
-            android:contentDescription="Cancel" />
-    </RelativeLayout>
+        <EditText
+            android:id="@+id/etProfileNameInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_search_rounded"
+            android:hint="Enter username"
+            android:inputType="textPersonName|textCapWords"
+            android:minHeight="48dp"
+            android:paddingHorizontal="16dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#8E8E93"
+            android:layout_marginBottom="16dp" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:text="USERNAME"
-        android:textColor="#8E8E93"
-        android:textSize="11sp"
-        android:textStyle="bold" />
+        <!-- Avatar Type -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:text="AVATAR TYPE"
+            android:textColor="#8E8E93"
+            android:textSize="11sp"
+            android:textStyle="bold" />
 
-    <EditText
-        android:id="@+id/etProfileNameInput"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/bg_search_rounded"
-        android:hint="@string/dialog_edit_name_hint"
-        android:inputType="textPersonName|textCapWords"
-        android:minHeight="48dp"
-        android:paddingHorizontal="16dp"
-        android:textColor="#FFFFFF"
-        android:textColorHint="#8E8E93" />
+        <RadioGroup
+            android:id="@+id/rgAvatarType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp"
-        android:text="INITIALS (1-3 CHARACTERS)"
-        android:textColor="#8E8E93"
-        android:textSize="11sp"
-        android:textStyle="bold" />
+            <RadioButton
+                android:id="@+id/rbTypeInitials"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:checked="true"
+                android:text="Text Initials"
+                android:textColor="#FFFFFF" />
 
-    <EditText
-        android:id="@+id/etProfileInitialsInput"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/bg_search_rounded"
-        android:hint="@string/dialog_edit_initials_hint"
-        android:inputType="textCapCharacters"
-        android:maxLength="3"
-        android:minHeight="48dp"
-        android:paddingHorizontal="16dp"
-        android:textColor="#FFFFFF"
-        android:textColorHint="#8E8E93" />
+            <RadioButton
+                android:id="@+id/rbTypeIcon"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Character Icon"
+                android:textColor="#FFFFFF" />
+        </RadioGroup>
 
-    <Button
-        android:id="@+id/btnSaveProfile"
-        android:layout_width="match_parent"
-        android:layout_height="54dp"
-        android:layout_marginTop="28dp"
-        android:backgroundTint="@color/gold_primary"
-        android:text="@string/dialog_edit_save_button"
-        android:textColor="#0A0A0A"
-        android:textStyle="bold" />
+        <!-- Initials Container -->
+        <LinearLayout
+            android:id="@+id/llInitialsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp">
 
-</LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp"
+                android:text="INITIALS (1-3 CHARACTERS)"
+                android:textColor="#8E8E93"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/etProfileInitialsInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_search_rounded"
+                android:hint="JD"
+                android:inputType="textCapCharacters"
+                android:maxLength="3"
+                android:minHeight="48dp"
+                android:paddingHorizontal="16dp"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#8E8E93" />
+        </LinearLayout>
+
+        <!-- Character Icon Grid Container -->
+        <LinearLayout
+            android:id="@+id/llCharacterIconContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="SELECT CHARACTER ICON"
+                android:textColor="#8E8E93"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="3"
+                android:alignmentMode="alignMargins"
+                android:rowOrderPreserved="true">
+
+                <!-- 1. Astronaut -->
+                <ImageView
+                    android:id="@+id/iconAstronaut"
+                    android:layout_width="0dp"
+                    android:layout_height="64dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_avatar_icon_unselected"
+                    android:padding="12dp"
+                    android:src="@drawable/a_friendly_astronaut"
+                    app:tint="@color/gold_primary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="Astronaut" />
+
+                <!-- 2. Chef -->
+                <ImageView
+                    android:id="@+id/iconChef"
+                    android:layout_width="0dp"
+                    android:layout_height="64dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_avatar_icon_unselected"
+                    android:padding="12dp"
+                    android:src="@drawable/a_friendly_chef"
+                    app:tint="@color/gold_primary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="Chef" />
+
+                <!-- 3. Detective -->
+                <ImageView
+                    android:id="@+id/iconDetective"
+                    android:layout_width="0dp"
+                    android:layout_height="64dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_avatar_icon_unselected"
+                    android:padding="12dp"
+                    android:src="@drawable/a_friendly_detective"
+                    app:tint="@color/gold_primary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="Detective" />
+
+                <!-- 4. Knight -->
+                <ImageView
+                    android:id="@+id/iconKnight"
+                    android:layout_width="0dp"
+                    android:layout_height="64dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_avatar_icon_unselected"
+                    android:padding="12dp"
+                    android:src="@drawable/a_friendly_knight"
+                    app:tint="@color/gold_primary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="Knight" />
+
+                <!-- 5. Robot -->
+                <ImageView
+                    android:id="@+id/iconRobot"
+                    android:layout_width="0dp"
+                    android:layout_height="64dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_avatar_icon_unselected"
+                    android:padding="12dp"
+                    android:src="@drawable/a_friendly_robot"
+                    app:tint="@color/gold_primary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="Robot" />
+
+                <!-- 6. Viking -->
+                <ImageView
+                    android:id="@+id/iconViking"
+                    android:layout_width="0dp"
+                    android:layout_height="64dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_avatar_icon_unselected"
+                    android:padding="12dp"
+                    android:src="@drawable/a_friendly_viking"
+                    app:tint="@color/gold_primary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="Viking" />
+            </GridLayout>
+        </LinearLayout>
+
+        <!-- Avatar Background Color Swatches -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="AVATAR BACKGROUND COLOR"
+            android:textColor="#8E8E93"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:id="@+id/llBgColorSwatches"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingVertical="4dp" />
+        </HorizontalScrollView>
+
+        <!-- Icon / Text Tint Color Swatches -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="ICON / TEXT TINT COLOR"
+            android:textColor="#8E8E93"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:layout_marginBottom="24dp">
+
+            <LinearLayout
+                android:id="@+id/llTintColorSwatches"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingVertical="4dp" />
+        </HorizontalScrollView>
+
+        <Button
+            android:id="@+id/btnSaveProfile"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:backgroundTint="@color/gold_primary"
+            android:text="SAVE PROFILE"
+            android:textColor="#0A0A0A"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+</ScrollView>

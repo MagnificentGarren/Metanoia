@@ -3,9 +3,14 @@ package com.example.myapplicationtoday
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -18,12 +23,11 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.myapplicationtoday.ui.DialogHelper
 import com.example.myapplicationtoday.ui.ProfileFragment
-import kotlinx.coroutines.flow.collect
+import com.example.myapplicationtoday.ui.TimerServiceController
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), TimerService.TimerListener {
 
     private lateinit var navDashboard: TextView
     private lateinit var navSessions: TextView
@@ -31,13 +35,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navAchievements: TextView
     private lateinit var profileIcon: TextView
 
+    private lateinit var timerServiceController: TimerServiceController
+    private var isFocusSessionActive = false
+
     private val viewModel: MainViewModel by viewModels()
 
     private val dashboardFragment = DashboardFragment()
     private val sessionsFragment = SessionsFragment()
     private val projectsFragment = ProjectsFragment()
     private val achievementsFragment = AchievementsFragment()
-    private val profileFragment = ProfileFragment() // New profile fragment instance
+    private val profileFragment = ProfileFragment()
     private var currentFragment: Fragment = dashboardFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,29 +77,45 @@ class MainActivity : AppCompatActivity() {
 
         updateProfileIconState()
 
-        navDashboard.setOnClickListener {
-            switchToFragment(dashboardFragment, navDashboard)
+        timerServiceController = TimerServiceController(this, this).apply {
+            onServiceSynced = { ts ->
+                isFocusSessionActive = ts.isTimerRunning || ts.isPaused || ts.isAlarmRinging
+                updateStrictFocusLockState()
+            }
+        }
+        timerServiceController.bind()
+
+        val navigationClickListener = View.OnClickListener { v ->
+            val prefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
+            val strictModeEnabled = prefs.getBoolean("strict_focus_mode_enabled", false)
+            if (strictModeEnabled && isFocusSessionActive) {
+                Toast.makeText(this, "🔒 Strict Focus Lockdown Active! Finish or end session to navigate.", Toast.LENGTH_SHORT).show()
+                return@OnClickListener
+            }
+            when (v) {
+                navDashboard -> switchToFragment(dashboardFragment, navDashboard)
+                navSessions -> switchToFragment(sessionsFragment, navSessions)
+                navProjects -> switchToFragment(projectsFragment, navProjects)
+                navAchievements -> switchToFragment(achievementsFragment, navAchievements)
+                profileIcon -> switchToProfileFragment()
+            }
         }
 
-        navSessions.setOnClickListener {
-            switchToFragment(sessionsFragment, navSessions)
-        }
-
-        navProjects.setOnClickListener {
-            switchToFragment(projectsFragment, navProjects)
-        }
-
-        navAchievements.setOnClickListener {
-            switchToFragment(achievementsFragment, navAchievements)
-        }
-
-        profileIcon.setOnClickListener {
-            switchToProfileFragment() // Call the new function
-        }
+        navDashboard.setOnClickListener(navigationClickListener)
+        navSessions.setOnClickListener(navigationClickListener)
+        navProjects.setOnClickListener(navigationClickListener)
+        navAchievements.setOnClickListener(navigationClickListener)
+        profileIcon.setOnClickListener(navigationClickListener)
 
         // Handle custom deterministic back/exit confirmation dialog
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
+                val prefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
+                val strictModeEnabled = prefs.getBoolean("strict_focus_mode_enabled", false)
+                if (strictModeEnabled && isFocusSessionActive) {
+                    Toast.makeText(this@MainActivity, "🔒 Strict Focus Lockdown Active! Complete your timer session to unlock.", Toast.LENGTH_SHORT).show()
+                    return
+                }
                 if (currentFragment != dashboardFragment) {
                     switchToFragment(dashboardFragment, navDashboard)
                 } else {
@@ -102,22 +125,106 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    override fun onDestroy() {
+        timerServiceController.unbind()
+        super.onDestroy()
+    }
+
+    override fun onTick(timeLeftMillis: Long) {
+        isFocusSessionActive = true
+        updateStrictFocusLockState()
+    }
+
+    override fun onFinish() {
+        isFocusSessionActive = false
+        updateStrictFocusLockState()
+    }
+
+    override fun onStateChanged(isRunning: Boolean, isPaused: Boolean) {
+        isFocusSessionActive = isRunning || isPaused
+        updateStrictFocusLockState()
+    }
+
+    private fun updateStrictFocusLockState() {
+        val prefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
+        val strictModeEnabled = prefs.getBoolean("strict_focus_mode_enabled", false)
+        val isLocked = strictModeEnabled && isFocusSessionActive
+
+        val navItems = listOf(navSessions, navProjects, navAchievements, profileIcon)
+        for (item in navItems) {
+            item.alpha = if (isLocked) 0.3f else 1.0f
+        }
+
+        if (isLocked && currentFragment != dashboardFragment) {
+            switchToFragment(dashboardFragment, navDashboard)
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         updateProfileIconState()
+        updateStrictFocusLockState()
     }
 
     fun updateProfileIconState() {
-        val prefs = getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
-        val altPrefs = getPreferences(Context.MODE_PRIVATE)
-        val initials = prefs.getString("profile_initials", altPrefs?.getString("profile_initials", "JD")) ?: "JD"
-        profileIcon.text = initials
+        val prefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
+        val altPrefs = getPreferences(MODE_PRIVATE)
+        val avatarMode = prefs.getString("avatar_mode", "initials") ?: "initials"
+        val bgColor = prefs.getInt("avatar_bg_color", 0xFF2A2824.toInt())
+        val tintColor = prefs.getInt("avatar_tint_color", ContextCompat.getColor(this, R.color.gold_primary))
+
+        if (avatarMode == "icon") {
+            val iconName = prefs.getString("avatar_icon", "astronaut") ?: "astronaut"
+            val drawableRes = when (iconName) {
+                "chef" -> R.drawable.a_friendly_chef
+                "detective" -> R.drawable.a_friendly_detective
+                "knight" -> R.drawable.a_friendly_knight
+                "robot" -> R.drawable.a_friendly_robot
+                "viking" -> R.drawable.a_friendly_viking
+                else -> R.drawable.a_friendly_astronaut
+            }
+            val bgDrawable = ContextCompat.getDrawable(this, R.drawable.bg_profile_avatar)?.mutate()
+            if (bgDrawable is GradientDrawable) {
+                bgDrawable.setColor(bgColor)
+            } else {
+                bgDrawable?.setTint(bgColor)
+            }
+
+            val iconDrawable = ContextCompat.getDrawable(this, drawableRes)?.mutate()
+            iconDrawable?.setTint(tintColor)
+
+            if (bgDrawable != null && iconDrawable != null) {
+                val insetPx = (8 * resources.displayMetrics.density).toInt()
+                val layerDrawable = LayerDrawable(arrayOf(bgDrawable, iconDrawable)).apply {
+                    setLayerInset(1, insetPx, insetPx, insetPx, insetPx)
+                }
+                profileIcon.background = layerDrawable
+            }
+            profileIcon.setCompoundDrawablesWithIntrinsicBounds(null, null, null, null)
+            profileIcon.text = ""
+        } else {
+            val bgDrawable = ContextCompat.getDrawable(this, R.drawable.bg_profile_avatar)?.mutate()
+            if (bgDrawable is GradientDrawable) {
+                bgDrawable.setColor(bgColor)
+            } else {
+                bgDrawable?.setTint(bgColor)
+            }
+            profileIcon.background = bgDrawable
+
+            profileIcon.setCompoundDrawablesWithIntrinsicBounds(null, null, null, null)
+            val initials = prefs.getString("profile_initials", altPrefs?.getString("profile_initials", "JD")) ?: "JD"
+            profileIcon.text = initials
+            profileIcon.setTextColor(tintColor)
+        }
+
+        val strictModeEnabled = prefs.getBoolean("strict_focus_mode_enabled", false)
+        val isLocked = strictModeEnabled && isFocusSessionActive
 
         if (currentFragment == profileFragment) {
-            profileIcon.setTextColor(ContextCompat.getColor(this, R.color.gold_primary))
             profileIcon.alpha = 1.0f
+        } else if (isLocked) {
+            profileIcon.alpha = 0.3f
         } else {
-            profileIcon.setTextColor(ContextCompat.getColor(this, R.color.text_white))
             profileIcon.alpha = 0.85f
         }
     }
@@ -135,7 +242,7 @@ class MainActivity : AppCompatActivity() {
                 item.setBackgroundResource(R.drawable.bg_card_outline)
                 item.setTextColor(ContextCompat.getColor(this, R.color.gold_primary))
             } else {
-                item.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                item.setBackgroundColor(Color.TRANSPARENT)
                 item.setTextColor(0xFF8E8E93.toInt())
             }
         }
@@ -152,7 +259,7 @@ class MainActivity : AppCompatActivity() {
         // Ensure all bottom navigation items are unselected
         val navItems = listOf(navDashboard, navSessions, navProjects, navAchievements)
         for (item in navItems) {
-            item.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+            item.setBackgroundColor(Color.TRANSPARENT)
             item.setTextColor(0xFF8E8E93.toInt())
         }
         updateProfileIconState()

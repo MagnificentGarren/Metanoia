@@ -45,16 +45,30 @@
                 android:padding="8dp"
                 android:layout_marginBottom="8dp">
 
-                <TextView
-                    android:id="@+id/tvProfileAvatar"
+                <FrameLayout
+                    android:id="@+id/flProfileAvatarContainer"
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    android:background="@drawable/bg_profile_avatar"
-                    android:gravity="center"
-                    android:textColor="@color/text_white"
-                    android:textSize="22sp"
-                    android:textStyle="bold"
-                    tools:text="JD" />
+                    android:background="@drawable/bg_profile_avatar">
+
+                    <TextView
+                        android:id="@+id/tvProfileAvatar"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:textColor="@color/text_white"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        tools:text="JD" />
+
+                    <ImageView
+                        android:id="@+id/ivProfileAvatarIcon"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:layout_gravity="center"
+                        android:visibility="gone"
+                        android:contentDescription="Profile Avatar Icon" />
+                </FrameLayout>
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -428,9 +442,9 @@
                     android:theme="@style/Widget.AppCompat.CompoundButton.Switch" />
             </LinearLayout>
 
-            <!-- Focus Music Tracks & Playback -->
+            <!-- Curate Focus Playlist -->
             <LinearLayout
-                android:id="@+id/llFocusMusic"
+                android:id="@+id/llCuratePlaylist"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_search_rounded"
@@ -447,7 +461,7 @@
                     android:layout_height="24dp"
                     android:src="@drawable/ic_head"
                     app:tint="@color/gold_primary"
-                    android:contentDescription="Focus Music Icon" />
+                    android:contentDescription="Curate Playlist Icon" />
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -460,7 +474,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Focus Music Track"
+                        android:text="Curate Focus Playlist"
                         android:textColor="@color/text_white"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -468,20 +482,28 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Ambient music for timer sessions"
+                        android:text="Configure ambient &amp; lofi focus songs"
                         android:textColor="@color/text_muted"
                         android:textSize="12sp"
                         android:layout_marginTop="2dp" />
                 </LinearLayout>
 
                 <TextView
-                    android:id="@+id/tvFocusMusicValue"
+                    android:id="@+id/tvCuratePlaylistValue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Silence"
                     android:textColor="@color/gold_primary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:layout_marginEnd="6dp"
+                    tools:text="4 Songs Active" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_arrow_right"
+                    app:tint="@color/text_muted"
+                    android:contentDescription="Arrow" />
             </LinearLayout>
 
             <!-- Custom Alert Sound Selector -->
@@ -496,7 +518,7 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:padding="14dp"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="8dp">
 
                 <ImageView
                     android:layout_width="24dp"
@@ -545,6 +567,59 @@
                     android:layout_marginStart="8dp"
                     app:tint="@color/text_muted"
                     android:contentDescription="Arrow" />
+            </LinearLayout>
+
+            <!-- Strict Focus Mode -->
+            <LinearLayout
+                android:id="@+id/llStrictFocusMode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_search_rounded"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="14dp"
+                android:layout_marginBottom="16dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_clock"
+                    app:tint="@color/gold_primary"
+                    android:contentDescription="Strict Mode Icon" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="1"
+                    android:layout_marginStart="14dp"
+                    android:layout_marginEnd="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Strict Focus Mode"
+                        android:textColor="@color/text_white"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Block app navigation during active focus sessions"
+                        android:textColor="@color/text_muted"
+                        android:textSize="12sp"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchStrictFocusMode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:theme="@style/Widget.AppCompat.CompoundButton.Switch" />
             </LinearLayout>
 
             <!-- Notifications & Reminders Header -->

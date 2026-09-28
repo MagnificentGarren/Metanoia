@@ -1,5 +1,6 @@
 package com.example.myapplicationtoday
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -76,6 +77,8 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
     private var timeLeftInMillis: Long = 0L
     private var countUpTimeInSeconds: Long = 0L
 
+    private var tvStrictLockdownBadge: TextView? = null
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
@@ -97,6 +100,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         circularTimerView = view.findViewById(R.id.circularTimerView)
         layoutRunningHero = view.findViewById(R.id.layoutRunningHero)
         cardQuickLaunch = view.findViewById(R.id.cardQuickLaunch)
+        tvStrictLockdownBadge = view.findViewById(R.id.tvStrictLockdownBadge)
 
         // Controls
         btnToggleTimer = view.findViewById(R.id.btnToggleTimer)
@@ -322,6 +326,25 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         serviceController.unbind()
     }
 
+    private fun updateStrictLockdownBadgeState() {
+        val ctx = context ?: return
+        val prefs = ctx.getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
+        val strictModeEnabled = prefs.getBoolean("strict_focus_mode_enabled", false)
+        val ts = serviceController.timerService
+        val isActive = ts?.isTimerRunning == true || ts?.isPaused == true || isTimerRunning || isPaused
+
+        if (strictModeEnabled && isActive) {
+            tvStrictLockdownBadge?.visibility = View.VISIBLE
+        } else {
+            tvStrictLockdownBadge?.visibility = View.GONE
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateStrictLockdownBadgeState()
+    }
+
     private fun syncUiWithService(ts: TimerService) {
         isCountUpMode = ts.isCountUpMode
         switchTimerMode.isChecked = isCountUpMode
@@ -373,6 +396,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
                 resetUiToInitialState()
             }
         }
+        updateStrictLockdownBadgeState()
     }
 
     private fun setupListeners(chips: List<TextView>, root: View) {
@@ -631,6 +655,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
             isTimerRunning = true
             isPaused = false
             btnToggleTimer.text = "PAUSE SESSION ❚❚"
+            updateStrictLockdownBadgeState()
         }
     }
 
@@ -644,6 +669,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
             isSessionComplete = true
             uiManager.showCompletionState()
             btnToggleTimer.text = "DISMISS ALARM ✕"
+            updateStrictLockdownBadgeState()
         }
     }
 
@@ -666,6 +692,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
                     resetUiToInitialState()
                 }
             }
+            updateStrictLockdownBadgeState()
         }
     }
 }

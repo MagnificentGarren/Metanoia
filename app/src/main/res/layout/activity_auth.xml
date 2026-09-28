@@ -108,6 +108,16 @@
                 android:visibility="gone"
                 android:layout_marginBottom="16dp" />
 
+            <TextView
+                android:id="@+id/tvErrorAuthName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#FF5252"
+                android:textSize="12sp"
+                android:visibility="gone"
+                android:layout_marginTop="-12dp"
+                android:layout_marginBottom="12dp" />
+
             <!-- Email Address -->
             <TextView
                 android:layout_width="wrap_content"
@@ -130,6 +140,16 @@
                 android:inputType="textEmailAddress"
                 android:layout_marginBottom="16dp" />
 
+            <TextView
+                android:id="@+id/tvErrorAuthEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#FF5252"
+                android:textSize="12sp"
+                android:visibility="gone"
+                android:layout_marginTop="-12dp"
+                android:layout_marginBottom="12dp" />
+
             <!-- Password -->
             <TextView
                 android:layout_width="wrap_content"
@@ -151,6 +171,27 @@
                 android:paddingHorizontal="16dp"
                 android:inputType="textPassword"
                 android:layout_marginBottom="20dp" />
+
+            <TextView
+                android:id="@+id/tvErrorAuthPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#FF5252"
+                android:textSize="12sp"
+                android:visibility="gone"
+                android:layout_marginTop="-16dp"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:id="@+id/tvAuthGlobalError"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#FF5252"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:visibility="gone"
+                android:layout_marginBottom="12dp" />
 
             <!-- Primary Action Button -->
             <Button

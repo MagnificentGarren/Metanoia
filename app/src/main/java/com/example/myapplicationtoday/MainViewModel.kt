@@ -42,9 +42,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun refreshSessions() {
         val app = getApplication<Application>()
-        SessionRepository.init(app)
-        _allSessionsFlow.value = ArrayList(SessionRepository.memorySessions)
-        _allProjectsFlow.value = ArrayList(SessionRepository.memoryProjects)
+        _allSessionsFlow.value = SessionRepository.getAllSessions(app)
+        _allProjectsFlow.value = SessionRepository.getAllProjects(app)
     }
 
     fun addSession(session: Session) {
@@ -90,25 +89,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun updateProject(project: Project) {
         viewModelScope.launch {
             val app = getApplication<Application>()
-            val index = SessionRepository.memoryProjects.indexOfFirst { it.id == project.id }
-            if (index != -1) {
-                SessionRepository.memoryProjects[index] = project
-                // In a real app we'd have SessionRepository.updateProject, let's just re-save
-                val prefs = app.getSharedPreferences("metanoia_sessions_pref", android.content.Context.MODE_PRIVATE)
-                val projectArray = org.json.JSONArray()
-                for (p in SessionRepository.memoryProjects) {
-                    projectArray.put(org.json.JSONObject().apply {
-                        put("id", p.id)
-                        put("name", p.name)
-                        put("emoji", p.emoji)
-                        put("color", p.color)
-                        p.goalMinutes?.let { put("goalMinutes", it) }
-                        put("totalMinutes", p.totalMinutes)
-                    })
-                }
-                prefs.edit().putString("saved_projects_json", projectArray.toString()).apply()
-                refreshSessions()
-            }
+            SessionRepository.updateProject(app, project)
+            refreshSessions()
         }
     }
 

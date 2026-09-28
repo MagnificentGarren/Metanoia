@@ -7,6 +7,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
+import android.media.MediaPlayer
 import android.media.Ringtone
 import android.media.RingtoneManager
 import android.media.ToneGenerator
@@ -244,38 +245,58 @@ class TimerService : Service() {
         timerListener?.onStateChanged(isRunning = false, isPaused = false)
     }
 
+    private var currentAssetTrackIndex = 0
+    private var playlistAssetTracks = listOf<String>()
+
     private fun playFocusMusic() {
         stopFocusMusic()
 
         val prefs = getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
-        val trackSetting = prefs.getString("focus_music_track", "silence") ?: "silence"
+        val isMusicEnabled = prefs.getBoolean("focus_music_enabled", true)
+        if (!isMusicEnabled) return
+
         val modeSetting = prefs.getString("focus_music_mode", "loop") ?: "loop"
 
-        if (trackSetting == "silence") return
+        val defaultBeats = listOf("lo-fi_beat_A.mp3", "lo-fi_beat_B.mp3", "lo-fi_beat_C.mp3", "trap_beat_1.mp3")
+        val curatedSet = prefs.getStringSet("curated_playlist_tracks", null)
+        val curatedStr = prefs.getString("curated_playlist_tracks_str", null)
 
-        val tracks = listOf(R.raw.focus_track_1, R.raw.focus_track_2, R.raw.focus_track_3)
-
-        val targetRes = when (trackSetting) {
-            "track_1" -> R.raw.focus_track_1
-            "track_2" -> R.raw.focus_track_2
-            "track_3" -> R.raw.focus_track_3
-            "shuffle" -> tracks.random()
-            else -> R.raw.focus_track_1
+        playlistAssetTracks = when {
+            curatedSet != null && curatedSet.isNotEmpty() -> curatedSet.toList()
+            curatedStr != null && curatedStr.isNotBlank() -> curatedStr.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+            else -> defaultBeats
         }
 
-        startMusicTrack(targetRes, modeSetting, tracks)
+        if (playlistAssetTracks.isEmpty()) playlistAssetTracks = defaultBeats
+
+        currentAssetTrackIndex = if (modeSetting == "shuffle") {
+            playlistAssetTracks.indices.random()
+        } else {
+            0
+        }
+
+        startAssetMusicTrack(playlistAssetTracks[currentAssetTrackIndex], modeSetting)
     }
 
-    private fun startMusicTrack(resId: Int, modeSetting: String, tracks: List<Int>) {
+    private fun startAssetMusicTrack(assetFileName: String, modeSetting: String) {
         try {
-            currentMusicTrackRes = resId
-            focusMusicPlayer = android.media.MediaPlayer.create(this, resId)?.apply {
-                isLooping = (modeSetting == "loop" && modeSetting != "shuffle")
+            stopFocusMusic()
+
+            val afd = assets.openFd(assetFileName)
+            focusMusicPlayer = MediaPlayer().apply {
+                setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                afd.close()
+                prepare()
+                isLooping = (playlistAssetTracks.size == 1)
                 setOnCompletionListener {
-                    if (modeSetting == "shuffle") {
-                        val nextTrack = tracks.filter { it != currentMusicTrackRes }.ifEmpty { tracks }.random()
-                        startMusicTrack(nextTrack, modeSetting, tracks)
-                    } else if (modeSetting == "loop") {
+                    if (playlistAssetTracks.size > 1) {
+                        currentAssetTrackIndex = if (modeSetting == "shuffle") {
+                            playlistAssetTracks.indices.random()
+                        } else {
+                            (currentAssetTrackIndex + 1) % playlistAssetTracks.size
+                        }
+                        startAssetMusicTrack(playlistAssetTracks[currentAssetTrackIndex], modeSetting)
+                    } else {
                         start()
                     }
                 }

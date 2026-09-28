@@ -3,17 +3,19 @@ package com.example.myapplicationtoday
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 
 /**
  * AuthActivity handles Log In, Sign Up, and Guest Access for Metanoia using Firebase Authentication.
+ * Features persistent inline validation errors replacing auto-dismissing Toast popups.
  */
 class AuthActivity : AppCompatActivity() {
 
@@ -24,6 +26,11 @@ class AuthActivity : AppCompatActivity() {
     private lateinit var etAuthName: EditText
     private lateinit var etAuthEmail: EditText
     private lateinit var etAuthPassword: EditText
+
+    private lateinit var tvErrorAuthName: TextView
+    private lateinit var tvErrorAuthEmail: TextView
+    private lateinit var tvErrorAuthPassword: TextView
+    private lateinit var tvAuthGlobalError: TextView
 
     private lateinit var btnAuthSubmit: Button
     private lateinit var btnAuthGuest: Button
@@ -43,6 +50,11 @@ class AuthActivity : AppCompatActivity() {
         etAuthEmail = findViewById(R.id.etAuthEmail)
         etAuthPassword = findViewById(R.id.etAuthPassword)
 
+        tvErrorAuthName = findViewById(R.id.tvErrorAuthName)
+        tvErrorAuthEmail = findViewById(R.id.tvErrorAuthEmail)
+        tvErrorAuthPassword = findViewById(R.id.tvErrorAuthPassword)
+        tvAuthGlobalError = findViewById(R.id.tvAuthGlobalError)
+
         btnAuthSubmit = findViewById(R.id.btnAuthSubmit)
         btnAuthGuest = findViewById(R.id.btnAuthGuest)
         tvAuthNotice = findViewById(R.id.tvAuthNotice)
@@ -58,11 +70,38 @@ class AuthActivity : AppCompatActivity() {
             handleGuestAccess()
         }
 
+        setupTextWatchers()
         setMode(signUp = false)
+    }
+
+    private fun setupTextWatchers() {
+        val watcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                clearInlineErrors()
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        }
+        etAuthName.addTextChangedListener(watcher)
+        etAuthEmail.addTextChangedListener(watcher)
+        etAuthPassword.addTextChangedListener(watcher)
+    }
+
+    private fun clearInlineErrors() {
+        tvErrorAuthName.visibility = View.GONE
+        tvErrorAuthName.text = ""
+        tvErrorAuthEmail.visibility = View.GONE
+        tvErrorAuthEmail.text = ""
+        tvErrorAuthPassword.visibility = View.GONE
+        tvErrorAuthPassword.text = ""
+        tvAuthGlobalError.visibility = View.GONE
+        tvAuthGlobalError.text = ""
     }
 
     private fun setMode(signUp: Boolean) {
         isSignUpMode = signUp
+        clearInlineErrors()
+
         if (isSignUpMode) {
             btnTabSignUp.setBackgroundResource(R.drawable.bg_tab_selected)
             btnTabSignUp.setTextColor(0xFF0A0A0A.toInt())
@@ -87,13 +126,30 @@ class AuthActivity : AppCompatActivity() {
     }
 
     private fun handleLogIn() {
+        clearInlineErrors()
+
         val email = etAuthEmail.text.toString().trim()
         val password = etAuthPassword.text.toString().trim()
 
-        if (email.isEmpty() || password.isEmpty()) {
-            Toast.makeText(this, "Please enter email and password", Toast.LENGTH_SHORT).show()
-            return
+        var hasError = false
+
+        if (email.isEmpty()) {
+            tvErrorAuthEmail.text = "Please enter your email address"
+            tvErrorAuthEmail.visibility = View.VISIBLE
+            hasError = true
+        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            tvErrorAuthEmail.text = "Please enter a valid email address"
+            tvErrorAuthEmail.visibility = View.VISIBLE
+            hasError = true
         }
+
+        if (password.isEmpty()) {
+            tvErrorAuthPassword.text = "Please enter your password"
+            tvErrorAuthPassword.visibility = View.VISIBLE
+            hasError = true
+        }
+
+        if (hasError) return
 
         val auth = FirebaseAuth.getInstance()
 
@@ -107,7 +163,6 @@ class AuthActivity : AppCompatActivity() {
                         if (user.isEmailVerified) {
                             // User verified their real email! Save session and enter main app
                             saveAuthSession(email = email, name = user.displayName ?: extractNameFromEmail(email), isGuest = false, isVerified = true)
-                            Toast.makeText(this, "Welcome back to Metanoia!", Toast.LENGTH_SHORT).show()
                             startActivity(Intent(this, MainActivity::class.java))
                             finish()
                         } else {
@@ -117,20 +172,48 @@ class AuthActivity : AppCompatActivity() {
                         }
                     }
                 } else {
-                    Toast.makeText(this, "Log In Failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                    tvAuthGlobalError.text = "Log In Failed: ${task.exception?.message ?: "Unknown error"}"
+                    tvAuthGlobalError.visibility = View.VISIBLE
                 }
             }
     }
 
     private fun handleSignUp() {
+        clearInlineErrors()
+
         val name = etAuthName.text.toString().trim()
         val email = etAuthEmail.text.toString().trim()
         val password = etAuthPassword.text.toString().trim()
 
-        if (name.isEmpty() || email.isEmpty() || password.length < 6) {
-            Toast.makeText(this, "Please check your inputs (Password min 6 chars)", Toast.LENGTH_SHORT).show()
-            return
+        var hasError = false
+
+        if (name.isEmpty()) {
+            tvErrorAuthName.text = "Please enter your full name"
+            tvErrorAuthName.visibility = View.VISIBLE
+            hasError = true
         }
+
+        if (email.isEmpty()) {
+            tvErrorAuthEmail.text = "Please enter your email address"
+            tvErrorAuthEmail.visibility = View.VISIBLE
+            hasError = true
+        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            tvErrorAuthEmail.text = "Please enter a valid email address"
+            tvErrorAuthEmail.visibility = View.VISIBLE
+            hasError = true
+        }
+
+        if (password.isEmpty()) {
+            tvErrorAuthPassword.text = "Please enter a password"
+            tvErrorAuthPassword.visibility = View.VISIBLE
+            hasError = true
+        } else if (password.length < 6) {
+            tvErrorAuthPassword.text = "Password must be at least 6 characters"
+            tvErrorAuthPassword.visibility = View.VISIBLE
+            hasError = true
+        }
+
+        if (hasError) return
 
         val auth = FirebaseAuth.getInstance()
 
@@ -148,18 +231,19 @@ class AuthActivity : AppCompatActivity() {
                             // Sign out until verified
                             auth.signOut()
                         } else {
-                            Toast.makeText(this, "Failed to send verification email: ${verifyTask.exception?.message}", Toast.LENGTH_LONG).show()
+                            tvAuthGlobalError.text = "Failed to send verification email: ${verifyTask.exception?.message}"
+                            tvAuthGlobalError.visibility = View.VISIBLE
                         }
                     }
                 } else {
-                    Toast.makeText(this, "Sign Up Failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                    tvAuthGlobalError.text = "Sign Up Failed: ${task.exception?.message ?: "Unknown error"}"
+                    tvAuthGlobalError.visibility = View.VISIBLE
                 }
             }
     }
 
     private fun handleGuestAccess() {
         saveAuthSession(email = "guest@metanoia.local", name = "Guest User", isGuest = true, isVerified = false)
-        Toast.makeText(this, "Continuing in Guest Mode", Toast.LENGTH_SHORT).show()
         startActivity(Intent(this, MainActivity::class.java))
         finish()
     }
@@ -184,7 +268,7 @@ class AuthActivity : AppCompatActivity() {
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
         btnNegative.setOnClickListener {
-            Toast.makeText(this, "Verification email resent to $email", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
         }
 
         btnPositive.setOnClickListener {
@@ -214,7 +298,6 @@ class AuthActivity : AppCompatActivity() {
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
         btnNegative.setOnClickListener {
-            Toast.makeText(this, "New verification link sent to $email", Toast.LENGTH_SHORT).show()
             dialog.dismiss()
         }
 

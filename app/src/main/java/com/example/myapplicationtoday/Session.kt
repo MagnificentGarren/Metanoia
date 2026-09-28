@@ -14,7 +14,11 @@ data class Session(
     val date: Calendar,
     val category: String = "Deep Work",
     val projectId: String? = null
-)
+) {
+    val durationMinutes: Int by lazy {
+        SessionRepository.parseDurationToMinutes(durationText)
+    }
+}
 
 data class Project(
     val id: String = UUID.randomUUID().toString(),
@@ -29,90 +33,118 @@ object SessionRepository {
     private const val PREF_NAME = "metanoia_sessions_pref"
     private const val KEY_SESSIONS = "saved_sessions_json"
     private const val KEY_PROJECTS = "saved_projects_json"
+
+    // Pre-compiled regular expressions for maximum performance & zero allocations on query calls
+    private val HOUR_REGEX = "(\\d+)\\s*(?:h|hr|hrs|hour|hours)".toRegex()
+    private val MIN_REGEX = "(\\d+)\\s*(?:m|min|mins|minute|minutes)".toRegex()
+    private val NON_DIGIT_REGEX = "[^0-9]".toRegex()
+
     val memorySessions = mutableListOf<Session>()
     val memoryProjects = mutableListOf<Project>()
+    @Volatile
     private var isInitialized = false
 
     fun init(context: Context) {
         if (isInitialized) return
-        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        
-        // Load Sessions
-        val sessionJson = prefs.getString(KEY_SESSIONS, null)
-        if (sessionJson != null) {
-            try {
-                val jsonArray = JSONArray(sessionJson)
-                memorySessions.clear()
-                for (i in 0 until jsonArray.length()) {
-                    val obj = jsonArray.getJSONObject(i)
-                    val cal = Calendar.getInstance().apply {
-                        timeInMillis = obj.getLong("timeInMillis")
-                    }
-                    memorySessions.add(
-                        Session(
-                            id = obj.optString("id", UUID.randomUUID().toString()),
-                            title = obj.getString("title"),
-                            durationText = obj.getString("durationText"),
-                            startTime = obj.getString("startTime"),
-                            date = cal,
-                            category = obj.optString("category", "Deep Work"),
-                            projectId = if (obj.has("projectId") && !obj.isNull("projectId")) {
-                                val pid = obj.getString("projectId")
-                                if (pid == "null" || pid.isEmpty()) null else pid
-                            } else null
-                        )
-                    )
-                }
-            } catch (e: Exception) { e.printStackTrace() }
-        }
+        synchronized(this) {
+            if (isInitialized) return
+            val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
-        // Load Projects
-        val projectJson = prefs.getString(KEY_PROJECTS, null)
-        if (projectJson != null) {
-            try {
-                val jsonArray = JSONArray(projectJson)
-                memoryProjects.clear()
-                for (i in 0 until jsonArray.length()) {
-                    val obj = jsonArray.getJSONObject(i)
-                    memoryProjects.add(
-                        Project(
-                            id = obj.getString("id"),
-                            name = obj.getString("name"),
-                            emoji = obj.getString("emoji"),
-                            color = obj.getInt("color"),
-                            goalMinutes = if (obj.has("goalMinutes")) obj.getInt("goalMinutes") else null,
-                            totalMinutes = obj.optInt("totalMinutes", 0)
+            // Load Sessions
+            val sessionJson = prefs.getString(KEY_SESSIONS, null)
+            if (sessionJson != null) {
+                try {
+                    val jsonArray = JSONArray(sessionJson)
+                    memorySessions.clear()
+                    for (i in 0 until jsonArray.length()) {
+                        val obj = jsonArray.getJSONObject(i)
+                        val cal = Calendar.getInstance().apply {
+                            timeInMillis = obj.getLong("timeInMillis")
+                        }
+                        memorySessions.add(
+                            Session(
+                                id = obj.optString("id", UUID.randomUUID().toString()),
+                                title = obj.getString("title"),
+                                durationText = obj.getString("durationText"),
+                                startTime = obj.getString("startTime"),
+                                date = cal,
+                                category = obj.optString("category", "Deep Work"),
+                                projectId = if (obj.has("projectId") && !obj.isNull("projectId")) {
+                                    val pid = obj.getString("projectId")
+                                    if (pid == "null" || pid.isEmpty()) null else pid
+                                } else null
+                            )
                         )
-                    )
-                }
-            } catch (e: Exception) { e.printStackTrace() }
+                    }
+                } catch (e: Exception) { e.printStackTrace() }
+            }
+
+            // Load Projects
+            val projectJson = prefs.getString(KEY_PROJECTS, null)
+            if (projectJson != null) {
+                try {
+                    val jsonArray = JSONArray(projectJson)
+                    memoryProjects.clear()
+                    for (i in 0 until jsonArray.length()) {
+                        val obj = jsonArray.getJSONObject(i)
+                        memoryProjects.add(
+                            Project(
+                                id = obj.getString("id"),
+                                name = obj.getString("name"),
+                                emoji = obj.getString("emoji"),
+                                color = obj.getInt("color"),
+                                goalMinutes = if (obj.has("goalMinutes")) obj.getInt("goalMinutes") else null,
+                                totalMinutes = obj.optInt("totalMinutes", 0)
+                            )
+                        )
+                    }
+                } catch (e: Exception) { e.printStackTrace() }
+            }
+            isInitialized = true
         }
-        isInitialized = true
+    }
+
+    fun getAllSessions(context: Context): List<Session> {
+        init(context)
+        synchronized(this) {
+            return ArrayList(memorySessions)
+        }
+    }
+
+    fun getAllProjects(context: Context): List<Project> {
+        init(context)
+        synchronized(this) {
+            return ArrayList(memoryProjects)
+        }
     }
 
     fun addSession(context: Context, session: Session) {
-        init(context)
-        memorySessions.add(0, session)
-        
-        // Update Project total time if linked
-        session.projectId?.let { pId ->
-            val index = memoryProjects.indexOfFirst { it.id == pId }
-            if (index != -1) {
-                val durationMins = parseDurationToMinutes(session.durationText)
-                val p = memoryProjects[index]
-                memoryProjects[index] = p.copy(totalMinutes = p.totalMinutes + durationMins)
+        synchronized(this) {
+            init(context)
+            memorySessions.add(0, session)
+
+            // Update Project total time if linked
+            session.projectId?.let { pId ->
+                val index = memoryProjects.indexOfFirst { it.id == pId }
+                if (index != -1) {
+                    val durationMins = parseDurationToMinutes(session.durationText)
+                    val p = memoryProjects[index]
+                    memoryProjects[index] = p.copy(totalMinutes = p.totalMinutes + durationMins)
+                }
             }
+
+            saveToDiskInternal(context)
         }
-        
-        saveToDisk(context)
     }
 
     fun reset(context: Context) {
-        memorySessions.clear()
-        memoryProjects.clear()
-        isInitialized = false
-        val sessionPrefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        sessionPrefs.edit().clear().apply()
+        synchronized(this) {
+            memorySessions.clear()
+            memoryProjects.clear()
+            isInitialized = false
+            val sessionPrefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            sessionPrefs.edit().clear().apply()
+        }
     }
 
     fun parseDurationToMinutes(durationText: String): Int {
@@ -139,20 +171,18 @@ object SessionRepository {
             }
 
             var totalMinutes = 0
-            val hourRegex = "(\\d+)\\s*(?:h|hr|hrs|hour|hours)".toRegex()
-            val hourMatch = hourRegex.find(text)
+            val hourMatch = HOUR_REGEX.find(text)
             if (hourMatch != null) {
                 totalMinutes += (hourMatch.groupValues[1].toIntOrNull() ?: 0) * 60
             }
 
-            val minRegex = "(\\d+)\\s*(?:m|min|mins|minute|minutes)".toRegex()
-            val minMatch = minRegex.find(text)
+            val minMatch = MIN_REGEX.find(text)
             if (minMatch != null) {
                 totalMinutes += (minMatch.groupValues[1].toIntOrNull() ?: 0)
             }
 
             if (hourMatch == null && minMatch == null) {
-                val digits = text.replace("[^0-9]".toRegex(), "")
+                val digits = text.replace(NON_DIGIT_REGEX, "")
                 totalMinutes = digits.toIntOrNull() ?: 0
             }
 
@@ -161,29 +191,41 @@ object SessionRepository {
     }
 
     fun addProject(context: Context, project: Project) {
-        init(context)
-        memoryProjects.add(project)
-        saveToDisk(context)
+        synchronized(this) {
+            init(context)
+            memoryProjects.add(project)
+            saveToDiskInternal(context)
+        }
+    }
+
+    fun updateProject(context: Context, updatedProject: Project) {
+        synchronized(this) {
+            init(context)
+            val index = memoryProjects.indexOfFirst { it.id == updatedProject.id }
+            if (index != -1) {
+                memoryProjects[index] = updatedProject
+                saveToDiskInternal(context)
+            }
+        }
     }
 
     fun deleteProject(context: Context, projectId: String) {
-        init(context)
-        memoryProjects.removeAll { it.id == projectId }
-        // Optional: Null out projectIds in sessions? For now, we'll keep history as is.
-        saveToDisk(context)
+        synchronized(this) {
+            init(context)
+            memoryProjects.removeAll { it.id == projectId }
+            saveToDiskInternal(context)
+        }
     }
 
     fun updateSession(context: Context, updatedSession: Session) {
-        init(context)
-        val index = memorySessions.indexOfFirst { it.id == updatedSession.id }
-        if (index != -1) {
-            val oldSession = memorySessions[index]
-            memorySessions[index] = updatedSession
-            
-            // Recalculate project totals if project changed or duration changed
-            recalculateProjectTotals()
-            
-            saveToDisk(context)
+        synchronized(this) {
+            init(context)
+            val index = memorySessions.indexOfFirst { it.id == updatedSession.id }
+            if (index != -1) {
+                memorySessions[index] = updatedSession
+                recalculateProjectTotals()
+                saveToDiskInternal(context)
+            }
         }
     }
 
@@ -205,26 +247,32 @@ object SessionRepository {
     }
 
     fun deleteSession(context: Context, sessionId: String) {
-        init(context)
-        val session = memorySessions.find { it.id == sessionId }
-        memorySessions.removeAll { it.id == sessionId }
-        if (session?.projectId != null) {
-            recalculateProjectTotals()
+        synchronized(this) {
+            init(context)
+            val session = memorySessions.find { it.id == sessionId }
+            memorySessions.removeAll { it.id == sessionId }
+            if (session?.projectId != null) {
+                recalculateProjectTotals()
+            }
+            saveToDiskInternal(context)
         }
-        saveToDisk(context)
     }
 
     fun getSessionsForDate(context: Context, date: Calendar): List<Session> {
         init(context)
-        return memorySessions.filter {
-            it.date.get(Calendar.YEAR) == date.get(Calendar.YEAR) &&
-                    it.date.get(Calendar.DAY_OF_YEAR) == date.get(Calendar.DAY_OF_YEAR)
+        synchronized(this) {
+            return memorySessions.filter {
+                it.date.get(Calendar.YEAR) == date.get(Calendar.YEAR) &&
+                        it.date.get(Calendar.DAY_OF_YEAR) == date.get(Calendar.DAY_OF_YEAR)
+            }
         }
     }
 
     fun getSessionsForMonth(context: Context, calendar: Calendar): List<Session> {
         init(context)
-        return getSessionsForMonth(memorySessions, calendar)
+        synchronized(this) {
+            return getSessionsForMonth(memorySessions, calendar)
+        }
     }
 
     fun getSessionsForMonth(sessions: List<Session>, calendar: Calendar): List<Session> {
@@ -246,7 +294,7 @@ object SessionRepository {
         return resultMap
     }
 
-    private fun saveToDisk(context: Context) {
+    private fun saveToDiskInternal(context: Context) {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         val editor = prefs.edit()
 
