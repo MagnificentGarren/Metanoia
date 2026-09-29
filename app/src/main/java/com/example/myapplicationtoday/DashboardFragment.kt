@@ -45,6 +45,7 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
     private lateinit var btnToggleTimer: Button
     private lateinit var btnEndSession: Button
     private lateinit var btnCancelSession: Button
+    private lateinit var btnToggleFocusMusic: Button
     private lateinit var etSessionName: EditText
     private lateinit var tvCategoryLabel: TextView
 
@@ -112,10 +113,19 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         btnToggleTimer = view.findViewById(R.id.btnToggleTimer)
         btnEndSession = view.findViewById(R.id.btnEndSession)
         btnCancelSession = view.findViewById(R.id.btnCancelSession)
+        btnToggleFocusMusic = view.findViewById(R.id.btnToggleFocusMusic)
         etSessionName = view.findViewById(R.id.etSessionName)
         switchTimerMode = view.findViewById(R.id.switchTimerMode)
         tvCategoryLabel = view.findViewById(R.id.tvCategoryTag)
         rvProjectPicker = view.findViewById(R.id.rvDashboardProjectPicker)
+
+        btnToggleFocusMusic.setOnClickListener {
+            val ts = serviceController.timerService
+            if (ts != null) {
+                ts.toggleMusicMute()
+                updateFocusMusicButtonState(ts)
+            }
+        }
 
         // Summary Stats
         cardTodaySummary = view.findViewById(R.id.cardTodaySummary)
@@ -334,12 +344,29 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         serviceController.unbind()
     }
 
+    private fun updateFocusMusicButtonState(ts: TimerService? = serviceController.timerService) {
+        val ctx = context ?: return
+        val active = isTimerRunning || isPaused || ts?.isTimerRunning == true || ts?.isPaused == true
+        val prefs = ctx.getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
+        val musicEnabled = prefs.getBoolean("focus_music_enabled", true)
+
+        if (active && musicEnabled) {
+            btnToggleFocusMusic.visibility = View.VISIBLE
+            val isMuted = ts?.isMusicMuted ?: false
+            btnToggleFocusMusic.text = if (isMuted) "🔇 Music: OFF" else "🔊 Music: ON"
+        } else {
+            btnToggleFocusMusic.visibility = View.GONE
+        }
+    }
+
     private fun updateStrictLockdownBadgeState() {
         val ctx = context ?: return
         val prefs = ctx.getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
         val strictModeEnabled = prefs.getBoolean("strict_focus_mode_enabled", false)
         val ts = serviceController.timerService
         val isActive = ts?.isTimerRunning == true || ts?.isPaused == true || isTimerRunning || isPaused
+
+        updateFocusMusicButtonState(ts)
 
         if (strictModeEnabled && isActive) {
             tvStrictLockdownBadge?.visibility = View.VISIBLE

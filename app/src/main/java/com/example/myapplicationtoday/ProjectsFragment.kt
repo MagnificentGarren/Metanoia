@@ -13,6 +13,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -197,6 +198,12 @@ class ProjectsFragment : Fragment() {
             layoutGoal.visibility = View.GONE
         }
 
+        val etSearchSessions = view.findViewById<EditText>(R.id.etSearchProjectSessions)
+        val btnSortSessions = view.findViewById<TextView>(R.id.btnSortProjectSessions)
+
+        var searchQuery = ""
+        var currentSort = "NEWEST" // "NEWEST", "OLDEST", "LONGEST", "SHORTEST"
+
         // Map session index (1..N) chronologically for this project
         fun buildSessionIndexMap(sessions: List<Session>): Map<String, Int> {
             val sortedAsc = sessions.sortedBy { it.date.timeInMillis }
@@ -207,16 +214,35 @@ class ProjectsFragment : Fragment() {
             return map
         }
 
-        val sessionIndexMap = buildSessionIndexMap(projectSessions)
-
         lateinit var sessionAdapter: SessionAdapter
 
+        fun getFilteredAndSortedSessions(): MutableList<Session> {
+            val baseList = SessionRepository.memorySessions.filter { it.projectId == project.id }
+            var list = if (searchQuery.isBlank()) {
+                baseList
+            } else {
+                baseList.filter { s ->
+                    s.title.contains(searchQuery, ignoreCase = true) ||
+                    s.category.contains(searchQuery, ignoreCase = true) ||
+                    s.durationText.contains(searchQuery, ignoreCase = true)
+                }
+            }
+            list = when (currentSort) {
+                "OLDEST" -> list.sortedBy { it.date.timeInMillis }
+                "LONGEST" -> list.sortedByDescending { it.durationMinutes }
+                "SHORTEST" -> list.sortedBy { it.durationMinutes }
+                else -> list.sortedByDescending { it.date.timeInMillis } // NEWEST
+            }
+            return list.toMutableList()
+        }
+
         fun refreshProjectSessions() {
-            val updatedList = SessionRepository.memorySessions.filter { it.projectId == project.id }
-            val updatedIndexMap = buildSessionIndexMap(updatedList)
-            sessionAdapter.updateData(updatedList, updatedIndexMap)
-            tvSessionsCount.text = "${updatedList.size} Sessions"
-            if (updatedList.isEmpty()) {
+            val allList = SessionRepository.memorySessions.filter { it.projectId == project.id }
+            val displayList = getFilteredAndSortedSessions()
+            val updatedIndexMap = buildSessionIndexMap(allList)
+            sessionAdapter.updateData(displayList, updatedIndexMap)
+            tvSessionsCount.text = "${allList.size} Sessions"
+            if (displayList.isEmpty()) {
                 tvEmptySessions.visibility = View.VISIBLE
                 rvSessions.visibility = View.GONE
             } else {
@@ -225,7 +251,10 @@ class ProjectsFragment : Fragment() {
             }
         }
 
-        if (projectSessions.isEmpty()) {
+        val initialList = getFilteredAndSortedSessions()
+        val sessionIndexMap = buildSessionIndexMap(SessionRepository.memorySessions.filter { it.projectId == project.id })
+
+        if (initialList.isEmpty()) {
             tvEmptySessions.visibility = View.VISIBLE
             rvSessions.visibility = View.GONE
         } else {
@@ -234,7 +263,7 @@ class ProjectsFragment : Fragment() {
         }
 
         sessionAdapter = SessionAdapter(
-            projectSessions,
+            initialList,
             onEditClick = { session ->
                 showEditSessionDialog(session) { refreshProjectSessions() }
             },
@@ -245,6 +274,35 @@ class ProjectsFragment : Fragment() {
         )
         rvSessions.layoutManager = LinearLayoutManager(requireContext())
         rvSessions.adapter = sessionAdapter
+
+        etSearchSessions.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                searchQuery = s?.toString()?.trim() ?: ""
+                refreshProjectSessions()
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        btnSortSessions.setOnClickListener { anchor ->
+            val popup = PopupMenu(requireContext(), anchor)
+            popup.menu.add(0, 1, 0, if (currentSort == "NEWEST") "✓ Newest First" else "Newest First")
+            popup.menu.add(0, 2, 1, if (currentSort == "OLDEST") "✓ Oldest First" else "Oldest First")
+            popup.menu.add(0, 3, 2, if (currentSort == "LONGEST") "✓ Longest Duration" else "Longest Duration")
+            popup.menu.add(0, 4, 3, if (currentSort == "SHORTEST") "✓ Shortest Duration" else "Shortest Duration")
+
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    1 -> { currentSort = "NEWEST"; btnSortSessions.text = "Sort ▾" }
+                    2 -> { currentSort = "OLDEST"; btnSortSessions.text = "Oldest ▾" }
+                    3 -> { currentSort = "LONGEST"; btnSortSessions.text = "Longest ▾" }
+                    4 -> { currentSort = "SHORTEST"; btnSortSessions.text = "Shortest ▾" }
+                }
+                refreshProjectSessions()
+                true
+            }
+            popup.show()
+        }
 
         val dialog = AlertDialog.Builder(requireContext(), android.R.style.Theme_NoTitleBar_Fullscreen)
             .setView(view)

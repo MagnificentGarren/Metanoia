@@ -448,6 +448,16 @@
                 android:textColor="#FF5252"
                 android:visibility="gone" />
 
+            <Button
+                android:id="@+id/btnToggleFocusMusic"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="🔊 Focus Music: ON"
+                android:textColor="@color/gold_primary"
+                android:visibility="gone" />
+
         </LinearLayout>
 
         <!-- Quick Focus Launchers (1-Tap Workflows) -->

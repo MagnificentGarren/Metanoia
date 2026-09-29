@@ -42,7 +42,6 @@ class SessionsFragment : Fragment() {
     private lateinit var tvMonthTitle: TextView
     private lateinit var btnPrevMonth: ImageButton
     private lateinit var btnNextMonth: ImageButton
-    private lateinit var btnToday: Button
 
     private lateinit var tvWorkedHours: TextView
     private lateinit var tvWorkedMins: TextView
@@ -90,7 +89,6 @@ class SessionsFragment : Fragment() {
         tvMonthTitle = view.findViewById(R.id.tvMonthTitle)
         btnPrevMonth = view.findViewById(R.id.btnPrevMonth)
         btnNextMonth = view.findViewById(R.id.btnNextMonth)
-        btnToday = view.findViewById(R.id.btnToday)
 
         tvWorkedHours = view.findViewById(R.id.tvWorkedHours)
         tvWorkedMins = view.findViewById(R.id.tvWorkedMins)
@@ -213,14 +211,6 @@ class SessionsFragment : Fragment() {
         btnNextMonth.setOnClickListener {
             currentMonthCalendar.add(Calendar.MONTH, 1)
             updateMonthGrid()
-        }
-
-        btnToday.setOnClickListener {
-            selectedDate = Calendar.getInstance()
-            currentMonthCalendar = Calendar.getInstance()
-            setupCalendar()
-            updateMonthGrid()
-            updateSessionsForSelectedDate()
         }
     }
 

@@ -25,14 +25,14 @@ class TimerServiceController(
             val binder = service as TimerService.LocalBinder
             val ts = binder.getService()
             timerService = ts
-            ts.timerListener = listener
+            ts.addListener(listener)
             isBound = true
 
             onServiceSynced?.invoke(ts)
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
-            timerService?.timerListener = null
+            timerService?.removeListener(listener)
             isBound = false
         }
     }
@@ -47,6 +47,7 @@ class TimerServiceController(
 
     fun unbind() {
         if (isBound) {
+            timerService?.removeListener(listener)
             context.unbindService(serviceConnection)
             isBound = false
         }

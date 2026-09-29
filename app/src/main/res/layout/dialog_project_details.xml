@@ -147,12 +147,54 @@
             tools:text="Goal Progress: 2 / 10 hours" />
     </LinearLayout>
 
+    <!-- Search & Sort Controls for Project History -->
+    <LinearLayout
+        android:id="@+id/layoutProjectDetailSearchSort"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layoutProjectDetailGoal"
+        android:layout_marginTop="16dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/etSearchProjectSessions"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_search_rounded"
+            android:drawableStart="@android:drawable/ic_menu_search"
+            android:drawablePadding="8dp"
+            android:hint="Search sessions..."
+            android:inputType="text"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#6C6C70"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/btnSortProjectSessions"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_search_rounded"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:paddingHorizontal="12dp"
+            android:text="Sort ▾"
+            android:textColor="@color/gold_primary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
     <TextView
         android:id="@+id/tvHistoryHeader"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/layoutProjectDetailGoal"
-        android:layout_marginTop="28dp"
+        android:layout_below="@id/layoutProjectDetailSearchSort"
+        android:layout_marginTop="16dp"
         android:text="@string/projects_detail_history_header"
         android:textColor="@color/text_muted"
         android:textSize="12sp"

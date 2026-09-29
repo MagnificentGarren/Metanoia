@@ -651,7 +651,7 @@ class ProfileFragment : Fragment() {
 
         fun updateIconSelectionHighlights() {
             for ((iv, name) in iconViews) {
-                iv.setColorFilter(selectedTintColor)
+                iv.setColorFilter(ContextCompat.getColor(requireContext(), R.color.gold_primary))
                 if (name == selectedAvatarIcon) {
                     iv.setBackgroundResource(R.drawable.bg_avatar_icon_selected)
                 } else {

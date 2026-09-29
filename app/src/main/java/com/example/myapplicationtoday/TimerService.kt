@@ -22,6 +22,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 import java.util.Calendar
+import java.util.concurrent.CopyOnWriteArraySet
 
 class TimerService : Service() {
 
@@ -31,7 +32,33 @@ class TimerService : Service() {
         fun onStateChanged(isRunning: Boolean, isPaused: Boolean)
     }
 
-    var timerListener: TimerListener? = null
+    private val listeners = CopyOnWriteArraySet<TimerListener>()
+
+    var timerListener: TimerListener?
+        get() = listeners.firstOrNull()
+        set(value) {
+            value?.let { listeners.add(it) }
+        }
+
+    fun addListener(listener: TimerListener) {
+        listeners.add(listener)
+    }
+
+    fun removeListener(listener: TimerListener) {
+        listeners.remove(listener)
+    }
+
+    private fun notifyTick(timeLeftMillis: Long) {
+        listeners.forEach { it.onTick(timeLeftMillis) }
+    }
+
+    private fun notifyFinish() {
+        listeners.forEach { it.onFinish() }
+    }
+
+    private fun notifyStateChanged(isRunning: Boolean, isPaused: Boolean) {
+        listeners.forEach { it.onStateChanged(isRunning, isPaused) }
+    }
 
     private val binder = LocalBinder()
     private var countDownTimer: CountDownTimer? = null
@@ -80,7 +107,7 @@ class TimerService : Service() {
                 val now = System.currentTimeMillis()
                 countUpTimeInSeconds = (now - countUpStartTime) / 1000L
                 updateNotification()
-                timerListener?.onTick(countUpTimeInSeconds * 1000L)
+                notifyTick(countUpTimeInSeconds * 1000L)
                 handler.postDelayed(this, 1000)
             }
         }
@@ -151,7 +178,7 @@ class TimerService : Service() {
         SessionRepository.init(this)
         SessionRepository.addSession(this, newSession)
 
-        timerListener?.onStateChanged(isRunning = false, isPaused = false)
+        notifyStateChanged(isRunning = false, isPaused = false)
 
         stopTimerAndService()
     }
@@ -205,7 +232,7 @@ class TimerService : Service() {
             override fun onTick(millisUntilFinished: Long) {
                 timeLeftInMillis = millisUntilFinished
                 updateNotification()
-                timerListener?.onTick(millisUntilFinished)
+                notifyTick(millisUntilFinished)
             }
 
             override fun onFinish() {
@@ -215,7 +242,7 @@ class TimerService : Service() {
                 stopFocusMusic()
                 playAlarmSound()
                 updateNotification("Session Complete!")
-                timerListener?.onFinish()
+                notifyFinish()
             }
         }.start()
 
@@ -244,7 +271,7 @@ class TimerService : Service() {
         }
 
         updateNotification("Paused")
-        timerListener?.onStateChanged(isRunning = false, isPaused = true)
+        notifyStateChanged(isRunning = false, isPaused = true)
     }
 
     fun resumeTimer() {
@@ -254,7 +281,7 @@ class TimerService : Service() {
             startTimer(timeLeftInMillis)
         }
 
-        timerListener?.onStateChanged(isRunning = true, isPaused = false)
+        notifyStateChanged(isRunning = true, isPaused = false)
     }
 
     fun stopTimerAndService() {
@@ -267,7 +294,30 @@ class TimerService : Service() {
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
 
-        timerListener?.onStateChanged(isRunning = false, isPaused = false)
+        notifyStateChanged(isRunning = false, isPaused = false)
+    }
+
+    var isMusicMuted: Boolean = false
+        private set
+
+    fun setMusicMuted(muted: Boolean) {
+        isMusicMuted = muted
+        try {
+            if (muted) {
+                activePlayer?.setVolume(0f, 0f)
+                nextPlayer?.setVolume(0f, 0f)
+            } else {
+                activePlayer?.setVolume(1f, 1f)
+                nextPlayer?.setVolume(1f, 1f)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun toggleMusicMute(): Boolean {
+        setMusicMuted(!isMusicMuted)
+        return isMusicMuted
     }
 
     private var currentAssetTrackIndex = 0
@@ -334,8 +384,9 @@ class TimerService : Service() {
             override fun run() {
                 val elapsed = System.currentTimeMillis() - startTime
                 val progress = (elapsed.toFloat() / durationMs).coerceIn(0f, 1f)
+                val targetVol = if (isMusicMuted) 0f else progress
                 try {
-                    player.setVolume(progress, progress)
+                    player.setVolume(targetVol, targetVol)
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
