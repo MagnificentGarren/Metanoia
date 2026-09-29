@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="10dp"
+    android:layout_marginBottom="12dp"
     android:background="@drawable/bg_search_rounded"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:paddingEnd="16dp">
+    android:padding="18dp">
 
     <!-- Slim Vertical Category Accent Bar -->
     <View
@@ -17,10 +18,33 @@
         android:background="#D4AF37"
         android:visibility="gone" />
 
+    <!-- Circular Session Index Tag (Displayed on Left of Card in Project Details) -->
     <FrameLayout
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_marginStart="16dp">
+        android:id="@+id/flSessionIndexContainer"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginEnd="4dp"
+        android:background="@drawable/bg_profile_avatar"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <TextView
+            android:id="@+id/tvSessionIndex"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textColor="@color/gold_primary"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            tools:text="7" />
+    </FrameLayout>
+
+    <!-- Standard Icon/Emoji Frame -->
+    <FrameLayout
+        android:id="@+id/flCategoryIconContainer"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginEnd="4dp">
 
         <ImageView
             android:id="@+id/ivCategoryIcon"
@@ -40,33 +64,68 @@
             android:visibility="gone" />
     </FrameLayout>
 
+    <!-- Thicker Card Details Column -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="6dp"
         android:layout_weight="1"
-        android:orientation="vertical"
-        android:paddingVertical="16dp">
+        android:orientation="vertical">
 
+        <!-- Line 1: Name of the Session -->
         <TextView
-            android:id="@+id/tvItemTimestamp"
+            android:id="@+id/tvItemTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
             android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:text="Mobile UI Wireframing" />
 
+        <!-- Line 2: Time Started and Ended -->
         <TextView
-            android:id="@+id/tvItemTitle"
+            android:id="@+id/tvItemStartEndTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
+            android:layout_marginTop="3dp"
             android:ellipsize="end"
             android:maxLines="1"
             android:textColor="#8E8E93"
-            android:textSize="13sp" />
+            android:textSize="13sp"
+            tools:text="Started: 10:30 AM • Ended: 11:15 AM" />
+
+        <!-- Line 3: Duration of the Session -->
+        <TextView
+            android:id="@+id/tvItemDuration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/gold_primary"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            tools:text="Duration: 45 mins" />
+
+        <!-- Line 4: Pill Label Tag -->
+        <TextView
+            android:id="@+id/tvItemCategoryTag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:maxWidth="130dp"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:background="@drawable/bg_category_pill"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="3dp"
+            android:textColor="#D4AF37"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            tools:text="Deep Work" />
     </LinearLayout>
 
     <LinearLayout
@@ -75,37 +134,23 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/tvItemCategoryTag"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:maxWidth="110dp"
-            android:ellipsize="end"
-            android:singleLine="true"
-            android:background="@drawable/bg_category_pill"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="4dp"
-            android:textColor="#D4AF37"
-            android:textSize="11sp"
-            android:textStyle="bold" />
-
         <ImageView
             android:id="@+id/btnEditSession"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:layout_marginStart="6dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="4dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="4dp"
+            android:padding="6dp"
             android:src="@drawable/ic_edit"
             app:tint="#8E8E93" />
 
         <ImageView
             android:id="@+id/btnDeleteSession"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:layout_marginStart="2dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="4dp"
+            android:padding="6dp"
             android:src="@drawable/ic_delete"
             app:tint="#FF5252" />
     </LinearLayout>

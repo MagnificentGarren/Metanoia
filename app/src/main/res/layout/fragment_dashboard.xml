@@ -14,6 +14,7 @@
 
         <!-- Top Header & Streak Pill -->
         <LinearLayout
+            android:id="@+id/layoutDashboardHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
@@ -594,6 +595,7 @@
 
         <!-- Today's Stats Snapshot (2x2 Grid) -->
         <LinearLayout
+            android:id="@+id/cardTodaySummary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
@@ -730,6 +732,7 @@
 
         <!-- Today's Activity Feed -->
         <LinearLayout
+            android:id="@+id/cardTodaySessions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"

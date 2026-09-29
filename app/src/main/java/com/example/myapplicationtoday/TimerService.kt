@@ -39,8 +39,33 @@ class TimerService : Service() {
     private var tickToneGenerator: ToneGenerator? = null
     private var previewToneGenerator: ToneGenerator? = null // New ToneGenerator for preview
     private var alarmToneGenerator: ToneGenerator? = null
-    private var focusMusicPlayer: android.media.MediaPlayer? = null
-    private var currentMusicTrackRes: Int = 0
+    private var activePlayer: MediaPlayer? = null
+    private var nextPlayer: MediaPlayer? = null
+    private var isCrossfading = false
+    private val crossfadeHandler = Handler(Looper.getMainLooper())
+    private val FADE_DURATION_MS = 4000L
+
+    private val fadeCheckRunnable = object : Runnable {
+        override fun run() {
+            val player = activePlayer
+            if (player != null && !isCrossfading) {
+                try {
+                    if (player.isPlaying) {
+                        val duration = player.duration
+                        val currentPos = player.currentPosition
+                        val fadeStartPos = if (duration > FADE_DURATION_MS * 2) (duration - FADE_DURATION_MS).toInt() else duration / 2
+                        if (duration > 0 && currentPos >= fadeStartPos) {
+                            triggerCrossfade()
+                        }
+                    }
+                } catch (_: Exception) {
+                }
+            }
+            if (activePlayer != null || isCrossfading) {
+                crossfadeHandler.postDelayed(this, 100L)
+            }
+        }
+    }
 
     private val handler = Handler(Looper.getMainLooper())
     private val autoStopRunnable = Runnable { stopAlarmSound() }
@@ -275,42 +300,128 @@ class TimerService : Service() {
             0
         }
 
-        startAssetMusicTrack(playlistAssetTracks[currentAssetTrackIndex], modeSetting)
+        startAssetMusicTrack(playlistAssetTracks[currentAssetTrackIndex], modeSetting, initialFadeIn = true)
     }
 
-    private fun startAssetMusicTrack(assetFileName: String, modeSetting: String) {
+    private fun startAssetMusicTrack(assetFileName: String, modeSetting: String, initialFadeIn: Boolean = true) {
         try {
             stopFocusMusic()
 
             val afd = assets.openFd(assetFileName)
-            focusMusicPlayer = MediaPlayer().apply {
+            activePlayer = MediaPlayer().apply {
                 setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
                 afd.close()
                 prepare()
-                isLooping = (playlistAssetTracks.size == 1)
-                setOnCompletionListener {
-                    if (playlistAssetTracks.size > 1) {
-                        currentAssetTrackIndex = if (modeSetting == "shuffle") {
-                            playlistAssetTracks.indices.random()
-                        } else {
-                            (currentAssetTrackIndex + 1) % playlistAssetTracks.size
-                        }
-                        startAssetMusicTrack(playlistAssetTracks[currentAssetTrackIndex], modeSetting)
-                    } else {
-                        start()
-                    }
+                if (initialFadeIn) {
+                    setVolume(0f, 0f)
+                    start()
+                    fadeInPlayer(this, FADE_DURATION_MS)
+                } else {
+                    setVolume(1f, 1f)
+                    start()
                 }
-                start()
             }
+            crossfadeHandler.removeCallbacks(fadeCheckRunnable)
+            crossfadeHandler.post(fadeCheckRunnable)
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
+    private fun fadeInPlayer(player: MediaPlayer, durationMs: Long) {
+        val startTime = System.currentTimeMillis()
+        val fadeInRunnable = object : Runnable {
+            override fun run() {
+                val elapsed = System.currentTimeMillis() - startTime
+                val progress = (elapsed.toFloat() / durationMs).coerceIn(0f, 1f)
+                try {
+                    player.setVolume(progress, progress)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+                if (progress < 1f && player == activePlayer) {
+                    crossfadeHandler.postDelayed(this, 50L)
+                }
+            }
+        }
+        crossfadeHandler.post(fadeInRunnable)
+    }
+
+    private fun triggerCrossfade() {
+        if (isCrossfading || playlistAssetTracks.isEmpty()) return
+        isCrossfading = true
+
+        val prefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
+        val modeSetting = prefs.getString("focus_music_mode", "loop") ?: "loop"
+
+        if (playlistAssetTracks.size > 1) {
+            currentAssetTrackIndex = if (modeSetting == "shuffle") {
+                playlistAssetTracks.indices.random()
+            } else {
+                (currentAssetTrackIndex + 1) % playlistAssetTracks.size
+            }
+        }
+        val nextAssetFileName = playlistAssetTracks[currentAssetTrackIndex]
+
+        try {
+            val afd = assets.openFd(nextAssetFileName)
+            val newPlayer = MediaPlayer().apply {
+                setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                afd.close()
+                prepare()
+                setVolume(0f, 0f)
+                start()
+            }
+            nextPlayer = newPlayer
+
+            val startTime = System.currentTimeMillis()
+            val crossfadeRunnable = object : Runnable {
+                override fun run() {
+                    val elapsed = System.currentTimeMillis() - startTime
+                    val progress = (elapsed.toFloat() / FADE_DURATION_MS).coerceIn(0f, 1f)
+
+                    try {
+                        activePlayer?.setVolume(1f - progress, 1f - progress)
+                        nextPlayer?.setVolume(progress, progress)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
+                    if (progress < 1f) {
+                        crossfadeHandler.postDelayed(this, 50L)
+                    } else {
+                        try {
+                            activePlayer?.stop()
+                            activePlayer?.release()
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                        activePlayer = nextPlayer
+                        nextPlayer = null
+                        try {
+                            activePlayer?.setVolume(1f, 1f)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                        isCrossfading = false
+                    }
+                }
+            }
+            crossfadeHandler.post(crossfadeRunnable)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            isCrossfading = false
+        }
+    }
+
     private fun pauseFocusMusic() {
         try {
-            if (focusMusicPlayer?.isPlaying == true) {
-                focusMusicPlayer?.pause()
+            crossfadeHandler.removeCallbacksAndMessages(null)
+            if (activePlayer?.isPlaying == true) {
+                activePlayer?.pause()
+            }
+            if (nextPlayer?.isPlaying == true) {
+                nextPlayer?.pause()
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -319,8 +430,12 @@ class TimerService : Service() {
 
     private fun resumeFocusMusic() {
         try {
-            if (focusMusicPlayer != null) {
-                focusMusicPlayer?.start()
+            if (activePlayer != null) {
+                activePlayer?.start()
+                if (nextPlayer != null) {
+                    nextPlayer?.start()
+                }
+                crossfadeHandler.post(fadeCheckRunnable)
             } else {
                 playFocusMusic()
             }
@@ -331,9 +446,15 @@ class TimerService : Service() {
 
     private fun stopFocusMusic() {
         try {
-            focusMusicPlayer?.stop()
-            focusMusicPlayer?.release()
-            focusMusicPlayer = null
+            crossfadeHandler.removeCallbacksAndMessages(null)
+            isCrossfading = false
+            activePlayer?.stop()
+            activePlayer?.release()
+            activePlayer = null
+
+            nextPlayer?.stop()
+            nextPlayer?.release()
+            nextPlayer = null
         } catch (e: Exception) {
             e.printStackTrace()
         }

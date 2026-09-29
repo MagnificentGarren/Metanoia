@@ -78,6 +78,10 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
     private var countUpTimeInSeconds: Long = 0L
 
     private var tvStrictLockdownBadge: TextView? = null
+    private var layoutDashboardHeader: View? = null
+    private var cardDailyGoal: View? = null
+    private var cardTodaySummary: View? = null
+    private var cardTodaySessions: View? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -89,10 +93,12 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         super.onViewCreated(view, savedInstanceState)
 
         // Headers & Goal
+        layoutDashboardHeader = view.findViewById(R.id.layoutDashboardHeader)
         tvDashboardStreak = view.findViewById(R.id.tvDashboardStreak)
         btnEditDailyGoal = view.findViewById(R.id.btnEditDailyGoal)
         pbDailyGoal = view.findViewById(R.id.pbDailyGoal)
         tvDailyGoalProgress = view.findViewById(R.id.tvDailyGoalProgress)
+        cardDailyGoal = view.findViewById(R.id.cardDailyGoal)
 
         // Hero Timer
         tvTimerDisplay = view.findViewById(R.id.tvTimerDisplay)
@@ -112,12 +118,14 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         rvProjectPicker = view.findViewById(R.id.rvDashboardProjectPicker)
 
         // Summary Stats
+        cardTodaySummary = view.findViewById(R.id.cardTodaySummary)
         tvStatTotalToday = view.findViewById(R.id.tvStatTotalToday)
         tvStatSessionsToday = view.findViewById(R.id.tvStatSessionsToday)
         tvStatStreak = view.findViewById(R.id.tvStatStreak)
         tvStatLevel = view.findViewById(R.id.tvStatLevel)
 
         // Today Activity Feed
+        cardTodaySessions = view.findViewById(R.id.cardTodaySessions)
         rvTodaySessions = view.findViewById(R.id.rvTodaySessions)
         tvEmptyTodaySessions = view.findViewById(R.id.tvEmptyTodaySessions)
         rvTodaySessions.layoutManager = LinearLayoutManager(requireContext())
@@ -335,8 +343,18 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
 
         if (strictModeEnabled && isActive) {
             tvStrictLockdownBadge?.visibility = View.VISIBLE
+            layoutDashboardHeader?.visibility = View.GONE
+            cardDailyGoal?.visibility = View.GONE
+            cardQuickLaunch.visibility = View.GONE
+            cardTodaySummary?.visibility = View.GONE
+            cardTodaySessions?.visibility = View.GONE
         } else {
             tvStrictLockdownBadge?.visibility = View.GONE
+            layoutDashboardHeader?.visibility = View.VISIBLE
+            cardDailyGoal?.visibility = View.VISIBLE
+            cardQuickLaunch.visibility = View.VISIBLE
+            cardTodaySummary?.visibility = View.VISIBLE
+            cardTodaySessions?.visibility = View.VISIBLE
         }
     }
 

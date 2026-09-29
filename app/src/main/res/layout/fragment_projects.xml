@@ -7,24 +7,45 @@
     android:background="@color/bg_dark"
     android:padding="16dp">
 
-    <!-- Screen Title -->
-    <TextView
-        android:id="@+id/tvProjectsHeader"
-        android:layout_width="wrap_content"
+    <!-- Top Header Bar with Title and Top Right Sort Icon -->
+    <RelativeLayout
+        android:id="@+id/layoutProjectsHeaderBar"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="16dp"
-        android:text="@string/projects_header"
-        android:textColor="@color/gold_primary"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:layout_marginTop="12dp">
+
+        <TextView
+            android:id="@+id/tvProjectsHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:text="@string/projects_header"
+            android:textColor="@color/gold_primary"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/btnSortProjects"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/bg_search_rounded"
+            android:clickable="true"
+            android:contentDescription="Sort Projects"
+            android:focusable="true"
+            android:padding="8dp"
+            android:src="@drawable/ic_sort"
+            app:tint="@color/gold_primary" />
+    </RelativeLayout>
 
     <!-- Top Analytics Summary Cards Row -->
     <LinearLayout
         android:id="@+id/layoutProjectsSummary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/tvProjectsHeader"
+        android:layout_below="@id/layoutProjectsHeaderBar"
         android:layout_marginTop="16dp"
         android:baselineAligned="false"
         android:orientation="horizontal"

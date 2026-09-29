@@ -11,7 +11,8 @@
         android:id="@+id/layoutTopHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="56dp">
 
         <TextView
             android:id="@+id/tvSessionsHeader"
@@ -20,14 +21,15 @@
             android:layout_alignParentStart="true"
             android:layout_toStartOf="@id/layoutViewToggle"
             android:layout_centerVertical="true"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="6dp"
             android:ellipsize="end"
             android:maxLines="1"
+            android:singleLine="true"
             android:text="SESSION HISTORY"
             android:textColor="@color/gold_primary"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:textStyle="bold"
-            android:letterSpacing="0.05" />
+            android:letterSpacing="0.03" />
 
         <!-- Segmented Week/Month Mode Switcher Bar -->
         <LinearLayout
@@ -46,7 +48,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:background="@drawable/bg_chip_selected"
-                android:paddingHorizontal="12dp"
+                android:paddingHorizontal="10dp"
                 android:paddingVertical="0dp"
                 android:text="Week"
                 android:textAllCaps="false"
@@ -60,7 +62,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:background="@android:color/transparent"
-                android:paddingHorizontal="12dp"
+                android:paddingHorizontal="10dp"
                 android:paddingVertical="0dp"
                 android:text="Month"
                 android:textAllCaps="false"
@@ -76,6 +78,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/layoutTopHeader"
         android:layout_marginTop="12dp"
+        android:layout_marginEnd="56dp"
         android:visibility="gone">
 
         <ImageButton

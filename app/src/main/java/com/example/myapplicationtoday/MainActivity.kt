@@ -34,6 +34,7 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
     private lateinit var navProjects: TextView
     private lateinit var navAchievements: TextView
     private lateinit var profileIcon: TextView
+    private lateinit var layoutBottomNav: View
 
     private lateinit var timerServiceController: TimerServiceController
     private var isFocusSessionActive = false
@@ -59,6 +60,7 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
         navProjects = findViewById(R.id.navProjects)
         navAchievements = findViewById(R.id.navAchievements)
         profileIcon = findViewById(R.id.profileIcon)
+        layoutBottomNav = findViewById(R.id.layoutBottomNav)
 
         // Observe sessions and projects for Trophy Pops
         lifecycleScope.launch {
@@ -150,13 +152,19 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
         val strictModeEnabled = prefs.getBoolean("strict_focus_mode_enabled", false)
         val isLocked = strictModeEnabled && isFocusSessionActive
 
-        val navItems = listOf(navSessions, navProjects, navAchievements, profileIcon)
-        for (item in navItems) {
-            item.alpha = if (isLocked) 0.3f else 1.0f
-        }
-
-        if (isLocked && currentFragment != dashboardFragment) {
-            switchToFragment(dashboardFragment, navDashboard)
+        if (isLocked) {
+            layoutBottomNav.visibility = View.GONE
+            profileIcon.visibility = View.GONE
+            if (currentFragment != dashboardFragment) {
+                switchToFragment(dashboardFragment, navDashboard)
+            }
+        } else {
+            layoutBottomNav.visibility = View.VISIBLE
+            profileIcon.visibility = View.VISIBLE
+            val navItems = listOf(navSessions, navProjects, navAchievements, profileIcon)
+            for (item in navItems) {
+                item.alpha = 1.0f
+            }
         }
     }
 
@@ -194,7 +202,7 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
             iconDrawable?.setTint(tintColor)
 
             if (bgDrawable != null && iconDrawable != null) {
-                val insetPx = (8 * resources.displayMetrics.density).toInt()
+                val insetPx = (3 * resources.displayMetrics.density).toInt()
                 val layerDrawable = LayerDrawable(arrayOf(bgDrawable, iconDrawable)).apply {
                     setLayerInset(1, insetPx, insetPx, insetPx, insetPx)
                 }
@@ -220,12 +228,11 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
         val strictModeEnabled = prefs.getBoolean("strict_focus_mode_enabled", false)
         val isLocked = strictModeEnabled && isFocusSessionActive
 
-        if (currentFragment == profileFragment) {
-            profileIcon.alpha = 1.0f
-        } else if (isLocked) {
-            profileIcon.alpha = 0.3f
+        if (isLocked || currentFragment == profileFragment) {
+            profileIcon.visibility = View.GONE
         } else {
-            profileIcon.alpha = 0.85f
+            profileIcon.visibility = View.VISIBLE
+            profileIcon.alpha = 1.0f
         }
     }
 

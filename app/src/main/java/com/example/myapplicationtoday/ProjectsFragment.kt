@@ -33,12 +33,14 @@ class ProjectsFragment : Fragment() {
     private lateinit var tvStatGoalsReached: TextView
     private lateinit var etSearchProjects: EditText
     private lateinit var btnClearSearch: ImageView
+    private lateinit var btnSortProjects: ImageView
     private lateinit var layoutEmptyProjects: View
     private lateinit var btnEmptyCreateProject: Button
     private lateinit var adapter: ProjectsAdapter
     
     private val viewModel: MainViewModel by activityViewModels()
     private var rawProjectsList: List<Project> = emptyList()
+    private var selectedSortOrder: String = "Name (A to Z)"
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_projects, container, false)
@@ -53,6 +55,7 @@ class ProjectsFragment : Fragment() {
         tvStatGoalsReached = view.findViewById(R.id.tvStatGoalsReached)
         etSearchProjects = view.findViewById(R.id.etSearchProjects)
         btnClearSearch = view.findViewById(R.id.btnClearSearch)
+        btnSortProjects = view.findViewById(R.id.btnSortProjects)
         layoutEmptyProjects = view.findViewById(R.id.layoutEmptyProjects)
         btnEmptyCreateProject = view.findViewById(R.id.btnEmptyCreateProject)
 
@@ -65,6 +68,10 @@ class ProjectsFragment : Fragment() {
 
         btnClearSearch.setOnClickListener {
             etSearchProjects.setText("")
+        }
+
+        btnSortProjects.setOnClickListener {
+            showSortProjectsDialog()
         }
 
         etSearchProjects.addTextChangedListener(object : TextWatcher {
@@ -85,12 +92,43 @@ class ProjectsFragment : Fragment() {
         }
     }
 
+    private fun showSortProjectsDialog() {
+        val sortOptions = arrayOf(
+            "Name (A to Z)",
+            "Name (Z to A)",
+            "Most Focus Time",
+            "Least Focus Time",
+            "Newest First",
+            "Oldest First"
+        )
+        val selectedIdx = sortOptions.indexOf(selectedSortOrder).coerceAtLeast(0)
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Sort Projects")
+            .setSingleChoiceItems(sortOptions, selectedIdx) { dialog, which ->
+                selectedSortOrder = sortOptions[which]
+                filterAndRenderProjects()
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
     private fun filterAndRenderProjects() {
         val query = etSearchProjects.text.toString().trim()
-        val filtered = if (query.isEmpty()) {
+        var filtered = if (query.isEmpty()) {
             rawProjectsList
         } else {
             rawProjectsList.filter { it.name.contains(query, ignoreCase = true) }
+        }
+
+        filtered = when (selectedSortOrder) {
+            "Name (A to Z)" -> filtered.sortedBy { it.name.lowercase(Locale.getDefault()) }
+            "Name (Z to A)" -> filtered.sortedByDescending { it.name.lowercase(Locale.getDefault()) }
+            "Most Focus Time" -> filtered.sortedByDescending { it.totalMinutes }
+            "Least Focus Time" -> filtered.sortedBy { it.totalMinutes }
+            "Oldest First" -> filtered.reversed()
+            else -> filtered // Newest First
         }
 
         adapter.updateData(filtered)
@@ -159,11 +197,24 @@ class ProjectsFragment : Fragment() {
             layoutGoal.visibility = View.GONE
         }
 
+        // Map session index (1..N) chronologically for this project
+        fun buildSessionIndexMap(sessions: List<Session>): Map<String, Int> {
+            val sortedAsc = sessions.sortedBy { it.date.timeInMillis }
+            val map = mutableMapOf<String, Int>()
+            sortedAsc.forEachIndexed { index, session ->
+                map[session.id] = index + 1
+            }
+            return map
+        }
+
+        val sessionIndexMap = buildSessionIndexMap(projectSessions)
+
         lateinit var sessionAdapter: SessionAdapter
 
         fun refreshProjectSessions() {
             val updatedList = SessionRepository.memorySessions.filter { it.projectId == project.id }
-            sessionAdapter.updateData(updatedList)
+            val updatedIndexMap = buildSessionIndexMap(updatedList)
+            sessionAdapter.updateData(updatedList, updatedIndexMap)
             tvSessionsCount.text = "${updatedList.size} Sessions"
             if (updatedList.isEmpty()) {
                 tvEmptySessions.visibility = View.VISIBLE
@@ -189,7 +240,8 @@ class ProjectsFragment : Fragment() {
             },
             onDeleteClick = { session ->
                 showDeleteSessionConfirmation(session) { refreshProjectSessions() }
-            }
+            },
+            sessionIndexMap = sessionIndexMap
         )
         rvSessions.layoutManager = LinearLayoutManager(requireContext())
         rvSessions.adapter = sessionAdapter

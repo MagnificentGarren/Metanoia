@@ -41,7 +41,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="⏳"
-            android:textSize="26sp" />
+            android:textSize="35sp" />
 
         <!-- Lock overlay icon -->
         <TextView
