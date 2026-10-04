@@ -300,16 +300,14 @@ class TimerService : Service() {
     var isMusicMuted: Boolean = false
         private set
 
+    private fun getTargetVolume(baseVol: Float = 1f): Float = if (isMusicMuted) 0f else baseVol
+
     fun setMusicMuted(muted: Boolean) {
         isMusicMuted = muted
         try {
-            if (muted) {
-                activePlayer?.setVolume(0f, 0f)
-                nextPlayer?.setVolume(0f, 0f)
-            } else {
-                activePlayer?.setVolume(1f, 1f)
-                nextPlayer?.setVolume(1f, 1f)
-            }
+            val vol = getTargetVolume(1f)
+            activePlayer?.setVolume(vol, vol)
+            nextPlayer?.setVolume(vol, vol)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -367,7 +365,8 @@ class TimerService : Service() {
                     start()
                     fadeInPlayer(this, FADE_DURATION_MS)
                 } else {
-                    setVolume(1f, 1f)
+                    val initVol = getTargetVolume(1f)
+                    setVolume(initVol, initVol)
                     start()
                 }
             }
@@ -384,7 +383,7 @@ class TimerService : Service() {
             override fun run() {
                 val elapsed = System.currentTimeMillis() - startTime
                 val progress = (elapsed.toFloat() / durationMs).coerceIn(0f, 1f)
-                val targetVol = if (isMusicMuted) 0f else progress
+                val targetVol = getTargetVolume(progress)
                 try {
                     player.setVolume(targetVol, targetVol)
                 } catch (e: Exception) {
@@ -430,10 +429,11 @@ class TimerService : Service() {
                 override fun run() {
                     val elapsed = System.currentTimeMillis() - startTime
                     val progress = (elapsed.toFloat() / FADE_DURATION_MS).coerceIn(0f, 1f)
+                    val volScale = if (isMusicMuted) 0f else 1f
 
                     try {
-                        activePlayer?.setVolume(1f - progress, 1f - progress)
-                        nextPlayer?.setVolume(progress, progress)
+                        activePlayer?.setVolume((1f - progress) * volScale, (1f - progress) * volScale)
+                        nextPlayer?.setVolume(progress * volScale, progress * volScale)
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
@@ -450,7 +450,8 @@ class TimerService : Service() {
                         activePlayer = nextPlayer
                         nextPlayer = null
                         try {
-                            activePlayer?.setVolume(1f, 1f)
+                            val finalVol = getTargetVolume(1f)
+                            activePlayer?.setVolume(finalVol, finalVol)
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }
@@ -707,12 +708,12 @@ class TimerService : Service() {
             val hours = countUpTimeInSeconds / 3600
             val minutes = (countUpTimeInSeconds % 3600) / 60
             val seconds = countUpTimeInSeconds % 60
-            String.format("%02d:%02d:%02d", hours, minutes, seconds)
+            if (hours > 0) String.format("%02d:%02d:%02d", hours, minutes, seconds) else String.format("%02d:%02d", minutes, seconds)
         } else {
             val seconds = (timeLeftInMillis / 1000) % 60
             val minutes = (timeLeftInMillis / 1000 / 60) % 60
             val hours = (timeLeftInMillis / 1000) / 3600
-            String.format("%02d:%02d:%02d", hours, minutes, seconds)
+            if (hours > 0) String.format("%02d:%02d:%02d", hours, minutes, seconds) else String.format("%02d:%02d", minutes, seconds)
         }
 
         val intent = Intent(this, MainActivity::class.java).apply {
@@ -731,29 +732,40 @@ class TimerService : Service() {
             PendingIntent.FLAG_IMMUTABLE
         )
 
+        val headerTitle = "🧠 METANOIA • $sessionTitle"
+        val categoryTag = "🏷️ $sessionCategory"
+
+        val dynamicStatusText = when {
+            isAlarmRinging -> "🎉 Focus Session Complete! Phenomenal work. Tap to dismiss alarm & log stats."
+            isPaused -> "⏸️ Paused at $timeFormatted • Tap Resume to continue your momentum"
+            isCountUpMode -> "⏱️ Elapsed: $timeFormatted • Deep Focus Active ⚡"
+            else -> "⏳ Remaining: $timeFormatted • Stay present and locked in ⚡"
+        }
+
+        val bigTextSummary = "$dynamicStatusText\n\nCategory: $sessionCategory | Metanoia Mindful Focus"
+
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(sessionTitle)
-            .setSubText(sessionCategory)
-            .setColor(0xD4A359)
+            .setContentTitle(headerTitle)
+            .setContentText(statusText ?: dynamicStatusText)
+            .setSubText(categoryTag)
+            .setColor(0xD4AF37)
             .setSmallIcon(R.drawable.ic_head)
             .setContentIntent(pendingIntent)
             .setOngoing(isTimerRunning || isAlarmRinging)
             .setOnlyAlertOnce(true)
-            .setStyle(NotificationCompat.BigTextStyle())
+            .setStyle(NotificationCompat.BigTextStyle().bigText(bigTextSummary))
 
         if (isAlarmRinging) {
             val stopAlarmIntent = PendingIntent.getService(
                 this, 3, Intent(this, TimerService::class.java).apply { action = ACTION_STOP_ALARM },
                 PendingIntent.FLAG_IMMUTABLE
             )
-            builder.setContentText("✨ Session complete! Phenomenal focus. Tap to dismiss alarm.")
-                .addAction(0, "🔕 SILENCE ALARM", stopAlarmIntent)
+            builder.addAction(0, "🔕 SILENCE ALARM", stopAlarmIntent)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
         } else {
-            val label = if (isCountUpMode) "⏱️ Elapsed: $timeFormatted" else "⏳ Remaining: $timeFormatted"
-            builder.setContentText(statusText ?: label)
-                .addAction(0, if (isTimerRunning) "⏸️ PAUSE" else "▶️ RESUME", pauseIntent)
+            val pauseLabel = if (isTimerRunning) "⏸️ PAUSE FOCUS" else "▶️ RESUME FOCUS"
+            builder.addAction(0, pauseLabel, pauseIntent)
                 .addAction(0, "⏹️ END & SAVE", stopIntent)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setCategory(NotificationCompat.CATEGORY_PROGRESS)

@@ -24,6 +24,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.myapplicationtoday.ui.DialogHelper
 import com.example.myapplicationtoday.ui.ProfileFragment
 import com.example.myapplicationtoday.ui.TimerServiceController
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -77,6 +78,7 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
             .replace(R.id.container, dashboardFragment)
             .commit()
 
+        checkAndSyncAuthState()
         updateProfileIconState()
 
         timerServiceController = TimerServiceController(this, this).apply {
@@ -170,8 +172,60 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
 
     override fun onResume() {
         super.onResume()
+        checkAndSyncAuthState()
         updateProfileIconState()
         updateStrictFocusLockState()
+    }
+
+    private fun checkAndSyncAuthState() {
+        val auth = FirebaseAuth.getInstance()
+        val user = auth.currentUser ?: return
+
+        user.reload().addOnCompleteListener { task ->
+            if (task.isSuccessful && user.isEmailVerified) {
+                val prefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
+                val isLoggedIn = prefs.getBoolean("auth_logged_in", false)
+                val isGuest = prefs.getBoolean("auth_is_guest", true)
+
+                if (!isLoggedIn || isGuest) {
+                    val email = user.email ?: ""
+                    val name = user.displayName ?: extractNameFromEmail(email)
+                    val initials = getInitialsFromName(name)
+                    val newUserId = user.uid
+
+                    SyncManager.migrateGuestDataToUser(this, newUserId)
+
+                    prefs.edit()
+                        .putBoolean("auth_logged_in", true)
+                        .putBoolean("auth_is_guest", false)
+                        .putString("auth_user_email", email)
+                        .putString("auth_user_name", name)
+                        .putBoolean("auth_email_verified", true)
+                        .putString("profile_username", name)
+                        .putString("profile_initials", initials)
+                        .putString("current_user_id", newUserId)
+                        .commit()
+
+                    viewModel.refreshSessions()
+                    SyncManager.syncAll(this)
+                    updateProfileIconState()
+                    Toast.makeText(this, "Signed in as $email", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun getInitialsFromName(name: String): String {
+        val parts = name.split(" ").filter { it.isNotEmpty() }
+        val initials = parts.map { it.first().uppercaseChar() }.take(2).joinToString("")
+        return if (initials.isNotEmpty()) initials else "JD"
+    }
+
+    private fun extractNameFromEmail(email: String): String {
+        if (email.isEmpty()) return "User"
+        return email.substringBefore("@").replace(".", " ").split(" ").joinToString(" ") { word ->
+            word.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+        }
     }
 
     fun updateProfileIconState() {

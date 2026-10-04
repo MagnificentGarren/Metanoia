@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="#121214">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="28dp"
+        android:gravity="center_horizontal">
+
+        <!-- Top Header & Close Button -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp">
+
+            <ImageView
+                android:id="@+id/btnGateClose"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentEnd="true"
+                android:padding="4dp"
+                android:src="@drawable/ic_cancel"
+                app:tint="#8E8E93"
+                android:contentDescription="Close Gate"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true" />
+        </RelativeLayout>
+
+        <!-- Brand Icon / Illustration -->
+        <ImageView
+            android:id="@+id/ivGateHeaderIcon"
+            android:layout_width="84dp"
+            android:layout_height="84dp"
+            android:src="@drawable/ic_metanoia_logo"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Badge Title -->
+        <TextView
+            android:id="@+id/tvGateBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="FREE ACCOUNT FEATURE"
+            android:textColor="#D4AF37"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="4dp"
+            android:background="@drawable/bg_category_pill"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Main Title -->
+        <TextView
+            android:id="@+id/tvGateTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="SIGN IN REQUIRED"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Action / Feature Message -->
+        <TextView
+            android:id="@+id/tvGateMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Creating more than 3 projects requires a free Metanoia account. Sign in or create an account to unlock unlimited access!"
+            android:textColor="#B0B0B8"
+            android:textSize="15sp"
+            android:gravity="center"
+            android:lineSpacingExtra="4dp"
+            android:layout_marginBottom="32dp" />
+
+        <!-- Tier Perks Container -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_dialog_dark"
+            android:padding="20dp"
+            android:layout_marginBottom="36dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="FREE ACCOUNT UNLOCKS:"
+                android:textColor="#D4AF37"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Benefit 1 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="14dp">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_cloud"
+                    app:tint="#D4AF37"
+                    android:layout_marginEnd="12dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Automatic Cloud Sync &amp; Cross-Device Backup"
+                    android:textColor="#EEEEEE"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Benefit 2 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="14dp">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_projects"
+                    app:tint="#D4AF37"
+                    android:layout_marginEnd="12dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Unlimited Focus Projects &amp; Custom Tags"
+                    android:textColor="#EEEEEE"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Benefit 3 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="14dp">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_profile"
+                    app:tint="#D4AF37"
+                    android:layout_marginEnd="12dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Profile Customization &amp; Exclusive Avatars"
+                    android:textColor="#EEEEEE"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Benefit 4 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_share"
+                    app:tint="#D4AF37"
+                    android:layout_marginEnd="12dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="CSV Data Export &amp; Advanced Analytics"
+                    android:textColor="#EEEEEE"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Bottom Actions -->
+        <Button
+            android:id="@+id/btnGatePrimary"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:backgroundTint="#D4AF37"
+            android:text="LOG IN / CREATE FREE ACCOUNT"
+            android:textColor="#0A0A0A"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/btnGateSecondary"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="MAYBE LATER (CONTINUE AS GUEST)"
+            android:textColor="#8E8E93"
+            android:textSize="13sp" />
+
+    </LinearLayout>
+</ScrollView>

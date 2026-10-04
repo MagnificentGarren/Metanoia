@@ -41,6 +41,35 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:851229961159:android:bb1f91f99ecededb7787e2",
+        "android_client_info": {
+          "package_name": "com.magnificentgarren.metanoia"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "851229961159-39oiud6tlcgujvrm6bl6h890ul9lp5ra.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBNjCI2rr_sYb7v40zHv6068KoynSf2nkY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "851229961159-39oiud6tlcgujvrm6bl6h890ul9lp5ra.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"

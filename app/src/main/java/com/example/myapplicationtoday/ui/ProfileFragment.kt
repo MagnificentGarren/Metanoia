@@ -35,14 +35,18 @@ import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
+import com.example.myapplicationtoday.AccountDataManager
 import com.example.myapplicationtoday.AchievementsEngine
+import com.example.myapplicationtoday.AppFeature
 import com.example.myapplicationtoday.AuthActivity
 import com.example.myapplicationtoday.BackupManager
+import com.example.myapplicationtoday.EntitlementManager
 import com.example.myapplicationtoday.MainActivity
 import com.example.myapplicationtoday.MainViewModel
 import com.example.myapplicationtoday.R
 import com.example.myapplicationtoday.ReminderScheduler
 import com.example.myapplicationtoday.SessionRepository
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
@@ -332,14 +336,26 @@ class ProfileFragment : Fragment() {
                 .putBoolean("auth_logged_in", false)
                 .putBoolean("auth_is_guest", true)
                 .putString("auth_user_email", "guest@metanoia.local")
-                .putString("auth_user_name", "John Doe")
-                .putString("profile_username", "John Doe")
-                .putString("profile_initials", "JD")
+                .putString("auth_user_name", "Guest User")
+                .putString("profile_username", "Guest User")
+                .putString("profile_initials", "GU")
+                .putString("current_user_id", "guest_local")
                 .apply()
+
+            viewModel.refreshSessions()
             loadProfileData()
+            calculateAndDisplayInsights()
             Toast.makeText(context, "Logged out successfully", Toast.LENGTH_SHORT).show()
+
+            val intent = Intent(requireContext(), AuthActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            startActivity(intent)
         } else {
-            startActivity(Intent(requireContext(), AuthActivity::class.java))
+            val intent = Intent(requireContext(), AuthActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            startActivity(intent)
         }
     }
 
@@ -621,6 +637,11 @@ class ProfileFragment : Fragment() {
 
         rgType.setOnCheckedChangeListener { _, checkedId ->
             if (checkedId == R.id.rbTypeIcon) {
+                if (!EntitlementManager.isFeatureAccessible(requireContext(), AppFeature.PREMIUM_AVATARS)) {
+                    rbInitials.isChecked = true
+                    EntitlementManager.showFullScreenGate(requireContext(), "Custom Avatars", "Unlocking character profile avatars")
+                    return@setOnCheckedChangeListener
+                }
                 selectedAvatarMode = "icon"
                 llInitials.visibility = View.GONE
                 llIconGrid.visibility = View.VISIBLE
@@ -1022,6 +1043,10 @@ class ProfileFragment : Fragment() {
     }
 
     private fun exportFocusHistoryToCSV() {
+        if (!EntitlementManager.isFeatureAccessible(requireContext(), AppFeature.CSV_EXPORT)) {
+            EntitlementManager.showProUpgradePrompt(requireContext(), "CSV Focus History Export")
+            return
+        }
         SessionRepository.init(requireContext())
         val sessions = SessionRepository.memorySessions
 
@@ -1066,6 +1091,10 @@ class ProfileFragment : Fragment() {
     }
 
     private fun showBackupDialog() {
+        if (!EntitlementManager.isFeatureAccessible(requireContext(), AppFeature.CLOUD_SYNC)) {
+            EntitlementManager.showFullScreenGate(requireContext(), "Cloud & Local Backup", "Creating or sharing full system backups")
+            return
+        }
         val view = layoutInflater.inflate(R.layout.dialog_custom_alert, null)
         val tvTitle = view.findViewById<TextView>(R.id.tvAlertTitle)
         val tvMessage = view.findViewById<TextView>(R.id.tvAlertMessage)
@@ -1131,27 +1160,59 @@ class ProfileFragment : Fragment() {
         btnPositive.setOnClickListener {
             dialog.dismiss()
 
-            // 1. Wipe MainActivity settings preferences
-            getAppPreferences().edit().clear().apply()
-            getAltPreferences()?.edit()?.clear()?.apply()
+            val prefs = getAppPreferences()
+            val isLoggedIn = prefs.getBoolean("auth_logged_in", false)
+            val isGuest = prefs.getBoolean("auth_is_guest", true)
 
-            // 2. Clear SessionRepository session logs and project settings
-            val p = requireContext().getSharedPreferences("metanoia_sessions_pref", Context.MODE_PRIVATE)
-            p.edit().clear().apply()
+            if (isLoggedIn && !isGuest) {
+                showAccountDeletionDialog()
+            } else {
+                performLocalDataReset()
+            }
+        }
+        dialog.show()
+    }
 
-            val t = requireContext().getSharedPreferences("metanoia_tags_pref", Context.MODE_PRIVATE)
-            t.edit().clear().apply()
-
-            // Cancel any scheduled daily reminder alarm
-            ReminderScheduler.cancelReminder(requireContext())
-
-            SessionRepository.reset(requireContext())
-
-            // 3. Reload Profile and insights instantly to update display
+    private fun performLocalDataReset() {
+        AccountDataManager.clearAllUserData(requireContext()) {
+            viewModel.refreshSessions()
             loadProfileData()
             calculateAndDisplayInsights()
-
             Toast.makeText(context, R.string.toast_reset_success, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun showAccountDeletionDialog() {
+        val view = layoutInflater.inflate(R.layout.dialog_custom_alert, null)
+        val tvTitle = view.findViewById<TextView>(R.id.tvAlertTitle)
+        val tvMessage = view.findViewById<TextView>(R.id.tvAlertMessage)
+        val btnNegative = view.findViewById<Button>(R.id.btnAlertNegative)
+        val btnPositive = view.findViewById<Button>(R.id.btnAlertPositive)
+
+        tvTitle.text = "DELETE ACCOUNT & DATA"
+        tvMessage.text = "WARNING: Permanently delete your Metanoia cloud account and wipe all local focus logs? This action is irreversible and complies with Google Play Account Deletion mandates."
+        btnNegative.text = "CANCEL"
+        btnPositive.text = "PERMANENTLY DELETE"
+        btnPositive.setTextColor(Color.RED)
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(view)
+            .create()
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnNegative.setOnClickListener { dialog.dismiss() }
+        btnPositive.setOnClickListener {
+            dialog.dismiss()
+            val firebaseUser = FirebaseAuth.getInstance().currentUser
+            firebaseUser?.delete()?.addOnCompleteListener {
+                performLocalDataReset()
+                Toast.makeText(context, "Account & cloud data permanently deleted.", Toast.LENGTH_LONG).show()
+                val intent = Intent(requireContext(), AuthActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+            } ?: run {
+                performLocalDataReset()
+            }
         }
         dialog.show()
     }

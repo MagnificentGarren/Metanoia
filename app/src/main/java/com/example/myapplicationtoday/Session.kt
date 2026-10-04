@@ -31,6 +31,7 @@ data class Project(
 
 object SessionRepository {
     private const val PREF_NAME = "metanoia_sessions_pref"
+    private const val GLOBAL_PREFS = "metanoia_prefs"
     private const val KEY_SESSIONS = "saved_sessions_json"
     private const val KEY_PROJECTS = "saved_projects_json"
 
@@ -43,19 +44,46 @@ object SessionRepository {
     val memoryProjects = mutableListOf<Project>()
     @Volatile
     private var isInitialized = false
+    @Volatile
+    private var currentLoadedUserId: String? = null
 
-    fun init(context: Context) {
-        if (isInitialized) return
+    private fun getCurrentUserId(context: Context): String {
+        val prefs = context.getSharedPreferences(GLOBAL_PREFS, Context.MODE_PRIVATE)
+        return prefs.getString("current_user_id", "guest_local") ?: "guest_local"
+    }
+
+    private fun getSessionsKey(userId: String) = "${KEY_SESSIONS}_$userId"
+    private fun getProjectsKey(userId: String) = "${KEY_PROJECTS}_$userId"
+
+    fun init(context: Context, forceReload: Boolean = false) {
+        val targetUserId = getCurrentUserId(context)
+        if (isInitialized && currentLoadedUserId == targetUserId && !forceReload) return
+
         synchronized(this) {
-            if (isInitialized) return
+            val activeUserId = getCurrentUserId(context)
+            if (isInitialized && currentLoadedUserId == activeUserId && !forceReload) return
+
             val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
-            // Load Sessions
-            val sessionJson = prefs.getString(KEY_SESSIONS, null)
+            // Save previous user data if needed before switching
+            if (isInitialized && currentLoadedUserId != null && currentLoadedUserId != activeUserId) {
+                saveToDiskForUser(context, currentLoadedUserId!!)
+            }
+
+            memorySessions.clear()
+            memoryProjects.clear()
+            currentLoadedUserId = activeUserId
+
+            val userSessionsKey = getSessionsKey(activeUserId)
+            var sessionJson = prefs.getString(userSessionsKey, null)
+            // Fallback & migration for existing default installation
+            if (sessionJson == null && activeUserId == "guest_local") {
+                sessionJson = prefs.getString(KEY_SESSIONS, null)
+            }
+
             if (sessionJson != null) {
                 try {
                     val jsonArray = JSONArray(sessionJson)
-                    memorySessions.clear()
                     for (i in 0 until jsonArray.length()) {
                         val obj = jsonArray.getJSONObject(i)
                         val cal = Calendar.getInstance().apply {
@@ -79,12 +107,15 @@ object SessionRepository {
                 } catch (e: Exception) { e.printStackTrace() }
             }
 
-            // Load Projects
-            val projectJson = prefs.getString(KEY_PROJECTS, null)
+            val userProjectsKey = getProjectsKey(activeUserId)
+            var projectJson = prefs.getString(userProjectsKey, null)
+            if (projectJson == null && activeUserId == "guest_local") {
+                projectJson = prefs.getString(KEY_PROJECTS, null)
+            }
+
             if (projectJson != null) {
                 try {
                     val jsonArray = JSONArray(projectJson)
-                    memoryProjects.clear()
                     for (i in 0 until jsonArray.length()) {
                         val obj = jsonArray.getJSONObject(i)
                         memoryProjects.add(
@@ -139,11 +170,18 @@ object SessionRepository {
 
     fun reset(context: Context) {
         synchronized(this) {
+            val activeUserId = currentLoadedUserId ?: getCurrentUserId(context)
             memorySessions.clear()
             memoryProjects.clear()
             isInitialized = false
+            currentLoadedUserId = null
             val sessionPrefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-            sessionPrefs.edit().clear().apply()
+            sessionPrefs.edit()
+                .remove(getSessionsKey(activeUserId))
+                .remove(getProjectsKey(activeUserId))
+                .remove(KEY_SESSIONS)
+                .remove(KEY_PROJECTS)
+                .apply()
         }
     }
 
@@ -295,6 +333,11 @@ object SessionRepository {
     }
 
     private fun saveToDiskInternal(context: Context) {
+        val activeUserId = currentLoadedUserId ?: getCurrentUserId(context)
+        saveToDiskForUser(context, activeUserId)
+    }
+
+    private fun saveToDiskForUser(context: Context, userId: String) {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         val editor = prefs.edit()
 
@@ -311,7 +354,7 @@ object SessionRepository {
                 put("projectId", session.projectId ?: "")
             })
         }
-        editor.putString(KEY_SESSIONS, sessionArray.toString())
+        editor.putString(getSessionsKey(userId), sessionArray.toString())
 
         // Save Projects
         val projectArray = JSONArray()
@@ -325,7 +368,7 @@ object SessionRepository {
                 put("totalMinutes", project.totalMinutes)
             })
         }
-        editor.putString(KEY_PROJECTS, projectArray.toString())
+        editor.putString(getProjectsKey(userId), projectArray.toString())
 
         editor.apply()
     }

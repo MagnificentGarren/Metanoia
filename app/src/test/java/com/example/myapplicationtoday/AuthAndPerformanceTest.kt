@@ -106,4 +106,25 @@ class AuthAndPerformanceTest {
         // Valid input
         assertEquals(null, validateSignUpInputs("John Doe", "user@example.com", "123456"))
     }
+
+    @Test
+    fun testEmailNameExtractionAndInitials() {
+        fun extractNameFromEmail(email: String): String {
+            if (email.isEmpty()) return "User"
+            return email.substringBefore("@").replace(".", " ").split(" ").joinToString(" ") { word ->
+                word.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+            }
+        }
+
+        fun getInitialsFromName(name: String): String {
+            val parts = name.split(" ").filter { it.isNotEmpty() }
+            val initials = parts.map { it.first().uppercaseChar() }.take(2).joinToString("")
+            return if (initials.isNotEmpty()) initials else "JD"
+        }
+
+        assertEquals("John Doe", extractNameFromEmail("john.doe@example.com"))
+        assertEquals("Alice", extractNameFromEmail("alice@example.com"))
+        assertEquals("JD", getInitialsFromName("John Doe"))
+        assertEquals("A", getInitialsFromName("Alice"))
+    }
 }

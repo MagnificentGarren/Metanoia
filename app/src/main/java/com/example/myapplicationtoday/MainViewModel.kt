@@ -42,6 +42,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun refreshSessions() {
         val app = getApplication<Application>()
+        SessionRepository.init(app, forceReload = true)
         _allSessionsFlow.value = SessionRepository.getAllSessions(app)
         _allProjectsFlow.value = SessionRepository.getAllProjects(app)
     }
@@ -135,11 +136,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return streak
     }
 
-    // Tag Management (Max 10 Tags Limit, Users can delete any tag including default)
+    // Tag Management (User-Scoped, Max 10 Tags Limit, Users can delete any tag including default)
+    private fun getCurrentUserId(): String {
+        val app = getApplication<Application>()
+        val prefs = app.getSharedPreferences(GLOBAL_PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getString("current_user_id", "guest_local") ?: "guest_local"
+    }
+
     fun getTags(): List<String> {
         val app = getApplication<Application>()
+        val userId = getCurrentUserId()
         val prefs = app.getSharedPreferences("metanoia_tags_pref", Context.MODE_PRIVATE)
-        val jsonString = prefs.getString("saved_tags_list", null) ?: prefs.getString("custom_tags_list", null)
+        val userTagsKey = "saved_tags_list_$userId"
+        var jsonString = prefs.getString(userTagsKey, null)
+        if (jsonString == null && userId == "guest_local") {
+            jsonString = prefs.getString("saved_tags_list", null) ?: prefs.getString("custom_tags_list", null)
+        }
         if (jsonString == null) return DEFAULT_TAGS
         return try {
             val array = JSONArray(jsonString)
@@ -178,12 +190,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun saveTags(tags: List<String>) {
         val app = getApplication<Application>()
+        val userId = getCurrentUserId()
         val prefs = app.getSharedPreferences("metanoia_tags_pref", Context.MODE_PRIVATE)
         val array = JSONArray()
         for (t in tags) {
             array.put(t)
         }
         prefs.edit()
+            .putString("saved_tags_list_$userId", array.toString())
             .putString("saved_tags_list", array.toString())
             .putString("custom_tags_list", array.toString())
             .apply()

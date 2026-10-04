@@ -1,3 +1,5 @@
+@file:Suppress("EditedTargetSdkVersion", "TargetedApi", "TargetSdkVersion")
+
 plugins {
     alias(libs.plugins.android.application)
     id("com.google.gms.google-services")
@@ -8,11 +10,11 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.example.myapplicationtoday"
+        applicationId = "com.magnificentgarren.metanoia"
         minSdk = 24
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 36
+        versionCode = 3
+        versionName = "1.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -39,11 +41,10 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
 
-    // Room Database (Using standard annotation processor since KSP/kapt plugin conflict with built-in Kotlin)
+    // Room Database Runtime
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
-    annotationProcessor("androidx.room:room-compiler:$roomVersion")
 
     // Lifecycle & ViewModel & Fragments
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.4")

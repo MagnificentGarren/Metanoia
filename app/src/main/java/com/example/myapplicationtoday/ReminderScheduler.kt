@@ -4,6 +4,9 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import java.util.Calendar
 
 object ReminderScheduler {
@@ -31,6 +34,21 @@ object ReminderScheduler {
         // If time has already passed today, schedule for tomorrow
         if (calendar.timeInMillis <= System.currentTimeMillis()) {
             calendar.add(Calendar.DAY_OF_YEAR, 1)
+        }
+
+        // Check Android 12+ Exact Alarm Permission
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!alarmManager.canScheduleExactAlarms()) {
+                try {
+                    val settingsIntent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                        data = Uri.parse("package:${context.packageName}")
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    context.startActivity(settingsIntent)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
         }
 
         try {

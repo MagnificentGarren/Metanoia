@@ -15,11 +15,11 @@
 
         <!-- App Logo & Header -->
         <ImageView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:layout_marginTop="32dp"
+            android:layout_width="130dp"
+            android:layout_height="130dp"
+            android:layout_marginTop="28dp"
             android:background="@drawable/bg_profile_avatar"
-            android:padding="12dp"
+            android:padding="16dp"
             android:src="@drawable/ic_metanoia_logo"
             android:contentDescription="Metanoia Logo" />
 
@@ -28,19 +28,19 @@
             android:layout_height="wrap_content"
             android:text="METANOIA"
             android:textColor="#D4AF37"
-            android:textSize="24sp"
+            android:textSize="28sp"
             android:textStyle="bold"
-            android:letterSpacing="0.15"
-            android:layout_marginTop="12dp" />
+            android:letterSpacing="0.18"
+            android:layout_marginTop="14dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Mindful Focus &amp; Productivity"
             android:textColor="#8E8E93"
-            android:textSize="14sp"
+            android:textSize="15sp"
             android:layout_marginTop="4dp"
-            android:layout_marginBottom="32dp" />
+            android:layout_marginBottom="28dp" />
 
         <!-- Segmented Tab Bar (Log In vs Sign Up) -->
         <LinearLayout

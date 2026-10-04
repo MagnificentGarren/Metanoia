@@ -12,6 +12,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
@@ -27,21 +28,41 @@ import java.util.Locale
 
 class ProjectsFragment : Fragment() {
 
+    private lateinit var btnTabTags: Button
+    private lateinit var btnTabProjects: Button
+    private lateinit var rvTags: RecyclerView
     private lateinit var rvProjects: RecyclerView
     private lateinit var fabAddProject: FloatingActionButton
+
     private lateinit var tvStatActiveProjects: TextView
+    private lateinit var tvStatActiveLabel: TextView
     private lateinit var tvCumulativeFocus: TextView
+    private lateinit var tvCumulativeLabel: TextView
     private lateinit var tvStatGoalsReached: TextView
+    private lateinit var tvStatGoalsLabel: TextView
+
     private lateinit var etSearchProjects: EditText
     private lateinit var btnClearSearch: ImageView
     private lateinit var btnSortProjects: ImageView
+
     private lateinit var layoutEmptyProjects: View
+    private lateinit var tvEmptyTitle: TextView
+    private lateinit var tvEmptySubtitle: TextView
     private lateinit var btnEmptyCreateProject: Button
-    private lateinit var adapter: ProjectsAdapter
-    
+
+    private lateinit var projectsAdapter: ProjectsAdapter
+    private lateinit var tagsAdapter: TagsAdapter
+
     private val viewModel: MainViewModel by activityViewModels()
+
+    private var currentStudioMode = MODE_TAGS
     private var rawProjectsList: List<Project> = emptyList()
     private var selectedSortOrder: String = "Name (A to Z)"
+
+    companion object {
+        private const val MODE_TAGS = 0
+        private const val MODE_PROJECTS = 1
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_projects, container, false)
@@ -49,37 +70,67 @@ class ProjectsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        btnTabTags = view.findViewById(R.id.btnTabTags)
+        btnTabProjects = view.findViewById(R.id.btnTabProjects)
+
+        rvTags = view.findViewById(R.id.rvTags)
         rvProjects = view.findViewById(R.id.rvProjects)
         fabAddProject = view.findViewById(R.id.fabAddProject)
+
         tvStatActiveProjects = view.findViewById(R.id.tvStatActiveProjects)
+        tvStatActiveLabel = view.findViewById(R.id.tvStatActiveLabel)
         tvCumulativeFocus = view.findViewById(R.id.tvCumulativeFocus)
+        tvCumulativeLabel = view.findViewById(R.id.tvCumulativeLabel)
         tvStatGoalsReached = view.findViewById(R.id.tvStatGoalsReached)
+        tvStatGoalsLabel = view.findViewById(R.id.tvStatGoalsLabel)
+
         etSearchProjects = view.findViewById(R.id.etSearchProjects)
         btnClearSearch = view.findViewById(R.id.btnClearSearch)
         btnSortProjects = view.findViewById(R.id.btnSortProjects)
+
         layoutEmptyProjects = view.findViewById(R.id.layoutEmptyProjects)
+        tvEmptyTitle = view.findViewById(R.id.tvEmptyTitle)
+        tvEmptySubtitle = view.findViewById(R.id.tvEmptySubtitle)
         btnEmptyCreateProject = view.findViewById(R.id.btnEmptyCreateProject)
 
-        adapter = ProjectsAdapter(emptyList())
+        // Setup RecyclerAdapters
+        projectsAdapter = ProjectsAdapter(emptyList())
         rvProjects.layoutManager = LinearLayoutManager(requireContext())
-        rvProjects.adapter = adapter
+        rvProjects.adapter = projectsAdapter
 
-        fabAddProject.setOnClickListener { showCreateProjectDialog(null) }
-        btnEmptyCreateProject.setOnClickListener { showCreateProjectDialog(null) }
+        tagsAdapter = TagsAdapter(emptyList())
+        rvTags.layoutManager = LinearLayoutManager(requireContext())
+        rvTags.adapter = tagsAdapter
 
-        btnClearSearch.setOnClickListener {
-            etSearchProjects.setText("")
+        // Mode Switching Listeners
+        btnTabTags.setOnClickListener { switchStudioMode(MODE_TAGS) }
+        btnTabProjects.setOnClickListener { switchStudioMode(MODE_PROJECTS) }
+
+        fabAddProject.setOnClickListener {
+            if (currentStudioMode == MODE_TAGS) {
+                showCreateTagDialog(null)
+            } else {
+                showCreateProjectDialog(null)
+            }
         }
 
-        btnSortProjects.setOnClickListener {
-            showSortProjectsDialog()
+        btnEmptyCreateProject.setOnClickListener {
+            if (currentStudioMode == MODE_TAGS) {
+                showCreateTagDialog(null)
+            } else {
+                showCreateProjectDialog(null)
+            }
         }
+
+        btnClearSearch.setOnClickListener { etSearchProjects.setText("") }
+        btnSortProjects.setOnClickListener { showSortStudioDialog() }
 
         etSearchProjects.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 btnClearSearch.visibility = if (s.isNullOrEmpty()) View.GONE else View.VISIBLE
-                filterAndRenderProjects()
+                filterAndRenderStudio()
             }
             override fun afterTextChanged(s: Editable?) {}
         })
@@ -87,36 +138,113 @@ class ProjectsFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.allProjectsFlow.collect { projects ->
                 rawProjectsList = projects
-                updateSummaryStats(projects)
-                filterAndRenderProjects()
+                filterAndRenderStudio()
             }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.allSessionsFlow.collect {
+                filterAndRenderStudio()
+            }
+        }
+
+        switchStudioMode(MODE_TAGS)
+    }
+
+    private fun switchStudioMode(mode: Int) {
+        currentStudioMode = mode
+        if (mode == MODE_TAGS) {
+            btnTabTags.setBackgroundResource(R.drawable.bg_tab_selected)
+            btnTabTags.setTextColor(Color.parseColor("#0A0A0A"))
+            btnTabProjects.setBackgroundResource(R.drawable.bg_tab_unselected)
+            btnTabProjects.setTextColor(Color.parseColor("#8E8E93"))
+
+            rvTags.visibility = View.VISIBLE
+            rvProjects.visibility = View.GONE
+
+            tvStatActiveLabel.text = "Active Tags"
+            tvCumulativeLabel.text = "Total Focus"
+            tvStatGoalsLabel.text = "Top Tag"
+            etSearchProjects.hint = "Search tags or categories..."
+        } else {
+            btnTabProjects.setBackgroundResource(R.drawable.bg_tab_selected)
+            btnTabProjects.setTextColor(Color.parseColor("#0A0A0A"))
+            btnTabTags.setBackgroundResource(R.drawable.bg_tab_unselected)
+            btnTabTags.setTextColor(Color.parseColor("#8E8E93"))
+
+            rvProjects.visibility = View.VISIBLE
+            rvTags.visibility = View.GONE
+
+            tvStatActiveLabel.text = "Active Projects"
+            tvCumulativeLabel.text = "Total Focus"
+            tvStatGoalsLabel.text = "Goals Reached"
+            etSearchProjects.hint = "Search projects..."
+        }
+        filterAndRenderStudio()
+    }
+
+    private fun filterAndRenderStudio() {
+        if (!isAdded) return
+        val query = etSearchProjects.text.toString().trim()
+
+        if (currentStudioMode == MODE_TAGS) {
+            renderTagsMode(query)
+        } else {
+            renderProjectsMode(query)
         }
     }
 
-    private fun showSortProjectsDialog() {
-        val sortOptions = arrayOf(
-            "Name (A to Z)",
-            "Name (Z to A)",
-            "Most Focus Time",
-            "Least Focus Time",
-            "Newest First",
-            "Oldest First"
-        )
-        val selectedIdx = sortOptions.indexOf(selectedSortOrder).coerceAtLeast(0)
+    private fun renderTagsMode(query: String) {
+        val allTags = viewModel.getTags()
+        val allSessions = SessionRepository.getAllSessions(requireContext())
 
-        AlertDialog.Builder(requireContext())
-            .setTitle("Sort Projects")
-            .setSingleChoiceItems(sortOptions, selectedIdx) { dialog, which ->
-                selectedSortOrder = sortOptions[which]
-                filterAndRenderProjects()
-                dialog.dismiss()
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+        var filteredTags = if (query.isEmpty()) {
+            allTags
+        } else {
+            allTags.filter { it.contains(query, ignoreCase = true) }
+        }
+
+        val tagStatsMap = mutableMapOf<String, Pair<Int, Int>>() // Tag -> (sessionCount, totalMinutes)
+        for (tag in allTags) {
+            val matching = allSessions.filter { it.category.equals(tag, ignoreCase = true) }
+            val count = matching.size
+            val mins = matching.sumOf { SessionRepository.parseDurationToMinutes(it.durationText) }
+            tagStatsMap[tag] = Pair(count, mins)
+        }
+
+        filteredTags = when (selectedSortOrder) {
+            "Name (A to Z)" -> filteredTags.sortedBy { it.lowercase(Locale.getDefault()) }
+            "Name (Z to A)" -> filteredTags.sortedByDescending { it.lowercase(Locale.getDefault()) }
+            "Most Focus Time" -> filteredTags.sortedByDescending { tagStatsMap[it]?.second ?: 0 }
+            "Least Focus Time" -> filteredTags.sortedBy { tagStatsMap[it]?.second ?: 0 }
+            else -> filteredTags
+        }
+
+        tagsAdapter.updateData(filteredTags, tagStatsMap)
+
+        tvStatActiveProjects.text = "${allTags.size} / 10"
+
+        val grandTotalMins = allSessions.sumOf { SessionRepository.parseDurationToMinutes(it.durationText) }
+        val gh = grandTotalMins / 60
+        val gm = grandTotalMins % 60
+        tvCumulativeFocus.text = String.format(Locale.getDefault(), "%02dh %02dm", gh, gm)
+
+        val topTagEntry = tagStatsMap.maxByOrNull { it.value.second }
+        tvStatGoalsReached.text = if (topTagEntry != null && topTagEntry.value.second > 0) topTagEntry.key else "None"
+
+        if (filteredTags.isEmpty()) {
+            layoutEmptyProjects.visibility = View.VISIBLE
+            rvTags.visibility = View.GONE
+            tvEmptyTitle.text = if (query.isEmpty()) "No Custom Tags Found" else "No Tags Matching '$query'"
+            tvEmptySubtitle.text = "Create custom tags to organize focus sessions and track productivity habits."
+            btnEmptyCreateProject.text = "CREATE NEW TAG"
+        } else {
+            layoutEmptyProjects.visibility = View.GONE
+            rvTags.visibility = View.VISIBLE
+        }
     }
 
-    private fun filterAndRenderProjects() {
-        val query = etSearchProjects.text.toString().trim()
+    private fun renderProjectsMode(query: String) {
         var filtered = if (query.isEmpty()) {
             rawProjectsList
         } else {
@@ -129,32 +257,270 @@ class ProjectsFragment : Fragment() {
             "Most Focus Time" -> filtered.sortedByDescending { it.totalMinutes }
             "Least Focus Time" -> filtered.sortedBy { it.totalMinutes }
             "Oldest First" -> filtered.reversed()
-            else -> filtered // Newest First
+            else -> filtered
         }
 
-        adapter.updateData(filtered)
+        projectsAdapter.updateData(filtered)
+
+        tvStatActiveProjects.text = "${rawProjectsList.size} Active"
+
+        val totalMins = rawProjectsList.sumOf { it.totalMinutes }
+        val h = totalMins / 60
+        val m = totalMins % 60
+        tvCumulativeFocus.text = String.format(Locale.getDefault(), "%02dh %02dm", h, m)
+
+        val projectsWithGoal = rawProjectsList.filter { it.goalMinutes != null && it.goalMinutes > 0 }
+        val goalsHit = projectsWithGoal.count { it.totalMinutes >= it.goalMinutes!! }
+        tvStatGoalsReached.text = "${goalsHit} / ${projectsWithGoal.size}"
 
         if (filtered.isEmpty()) {
             layoutEmptyProjects.visibility = View.VISIBLE
             rvProjects.visibility = View.GONE
+            tvEmptyTitle.text = if (query.isEmpty()) "No Projects Found" else "No Projects Matching '$query'"
+            tvEmptySubtitle.text = "Structure your goals into focus projects to achieve maximum clarity and progress."
+            btnEmptyCreateProject.text = "CREATE NEW PROJECT"
         } else {
             layoutEmptyProjects.visibility = View.GONE
             rvProjects.visibility = View.VISIBLE
         }
     }
 
-    private fun updateSummaryStats(projects: List<Project>) {
-        val activeCount = projects.size
-        tvStatActiveProjects.text = "$activeCount Active"
+    private fun showSortStudioDialog() {
+        val sortOptions = arrayOf(
+            "Name (A to Z)",
+            "Name (Z to A)",
+            "Most Focus Time",
+            "Least Focus Time"
+        )
+        val selectedIdx = sortOptions.indexOf(selectedSortOrder).coerceAtLeast(0)
 
-        val totalMins = projects.sumOf { it.totalMinutes }
+        AlertDialog.Builder(requireContext())
+            .setTitle(if (currentStudioMode == MODE_TAGS) "Sort Tags" else "Sort Projects")
+            .setSingleChoiceItems(sortOptions, selectedIdx) { dialog, which ->
+                selectedSortOrder = sortOptions[which]
+                filterAndRenderStudio()
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showCreateTagDialog(existingTag: String?) {
+        val view = layoutInflater.inflate(R.layout.dialog_create_tag, null)
+        val tvHeader = view.findViewById<TextView>(R.id.tvTagDialogHeader)
+        val etName = view.findViewById<EditText>(R.id.etTagNameInput)
+        val rvColor = view.findViewById<RecyclerView>(R.id.rvTagColorPicker)
+        val btnSave = view.findViewById<Button>(R.id.btnSaveTag)
+        val btnCancel = view.findViewById<ImageView>(R.id.btnCancelTagDialog)
+
+        if (existingTag != null) {
+            tvHeader.text = "EDIT TAG"
+            etName.setText(existingTag)
+            btnSave.text = "UPDATE TAG"
+        } else {
+            tvHeader.text = "CREATE CUSTOM TAG"
+            btnSave.text = "SAVE TAG"
+        }
+
+        val colors = listOf("#D4AF37", "#2ECC71", "#3498DB", "#9B59B6", "#E74C3C", "#F1C40F", "#1ABC9C", "#95A5A6")
+
+        rvColor.layoutManager = GridLayoutManager(requireContext(), 4)
+        rvColor.adapter = PickerAdapter(colors, false, 0) { }
+
+        val dialog = AlertDialog.Builder(requireContext()).setView(view).create()
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        btnSave.setOnClickListener {
+            val newTagName = etName.text.toString().trim()
+            if (newTagName.isEmpty()) {
+                etName.error = "Tag name cannot be empty"
+                return@setOnClickListener
+            }
+
+            if (existingTag != null) {
+                viewModel.deleteTag(existingTag)
+                viewModel.addTag(newTagName)
+                Toast.makeText(requireContext(), "Tag updated successfully", Toast.LENGTH_SHORT).show()
+            } else {
+                val success = viewModel.addTag(newTagName)
+                if (!success) {
+                    Toast.makeText(requireContext(), "Maximum limit of 10 tags reached. Delete a tag first.", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                Toast.makeText(requireContext(), "Tag created successfully", Toast.LENGTH_SHORT).show()
+            }
+            dialog.dismiss()
+            filterAndRenderStudio()
+        }
+        dialog.show()
+    }
+
+    private fun showDeleteTagConfirmation(tag: String) {
+        val view = layoutInflater.inflate(R.layout.dialog_custom_alert, null)
+        val tvTitle = view.findViewById<TextView>(R.id.tvAlertTitle)
+        val tvMessage = view.findViewById<TextView>(R.id.tvAlertMessage)
+        val btnNegative = view.findViewById<Button>(R.id.btnAlertNegative)
+        val btnPositive = view.findViewById<Button>(R.id.btnAlertPositive)
+
+        tvTitle.text = "DELETE TAG"
+        tvMessage.text = "Are you sure you want to delete the tag '$tag'? Sessions logged under this tag will retain their history."
+        btnNegative.text = "CANCEL"
+        btnPositive.text = "YES, DELETE"
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(view)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnNegative.setOnClickListener { dialog.dismiss() }
+        btnPositive.setOnClickListener {
+            viewModel.deleteTag(tag)
+            dialog.dismiss()
+            filterAndRenderStudio()
+        }
+
+        dialog.show()
+    }
+
+    private fun showTagDetailDialog(tag: String) {
+        val view = layoutInflater.inflate(R.layout.dialog_project_details, null)
+        val tvEmoji = view.findViewById<TextView>(R.id.tvProjectDetailEmoji)
+        val tvName = view.findViewById<TextView>(R.id.tvProjectDetailName)
+        val tvTime = view.findViewById<TextView>(R.id.tvProjectDetailTotalTime)
+        val tvSessionsCount = view.findViewById<TextView>(R.id.tvProjectDetailSessionsCount)
+        val tvAvgSession = view.findViewById<TextView>(R.id.tvProjectDetailAvgSession)
+        val layoutGoal = view.findViewById<View>(R.id.layoutProjectDetailGoal)
+        val tvEmptySessions = view.findViewById<TextView>(R.id.tvEmptyProjectSessions)
+        val rvSessions = view.findViewById<RecyclerView>(R.id.rvProjectSessions)
+        val btnBack = view.findViewById<View>(R.id.btnBackFromProject)
+
+        tvEmoji.text = "🏷️"
+        tvName.text = tag
+        layoutGoal.visibility = View.GONE
+
+        val tagSessions = SessionRepository.getAllSessions(requireContext()).filter { it.category.equals(tag, ignoreCase = true) }
+        val totalMins = tagSessions.sumOf { SessionRepository.parseDurationToMinutes(it.durationText) }
         val h = totalMins / 60
         val m = totalMins % 60
-        tvCumulativeFocus.text = String.format(Locale.getDefault(), "%02dh %02dm", h, m)
+        tvTime.text = String.format(Locale.getDefault(), "%02d hrs %02d mins Total Focus", h, m)
+        tvSessionsCount.text = "${tagSessions.size} Sessions"
 
-        val projectsWithGoal = projects.filter { it.goalMinutes != null && it.goalMinutes > 0 }
-        val goalsHit = projectsWithGoal.count { it.totalMinutes >= it.goalMinutes!! }
-        tvStatGoalsReached.text = "${goalsHit} / ${projectsWithGoal.size}"
+        val avgMins = if (tagSessions.isNotEmpty()) totalMins / tagSessions.size else 0
+        tvAvgSession.text = "${avgMins}m avg"
+
+        val etSearchSessions = view.findViewById<EditText>(R.id.etSearchProjectSessions)
+        val btnSortSessions = view.findViewById<TextView>(R.id.btnSortProjectSessions)
+
+        var searchQuery = ""
+        var currentSort = "NEWEST"
+
+        fun buildSessionIndexMap(sessions: List<Session>): Map<String, Int> {
+            val sortedAsc = sessions.sortedBy { it.date.timeInMillis }
+            val map = mutableMapOf<String, Int>()
+            sortedAsc.forEachIndexed { index, session ->
+                map[session.id] = index + 1
+            }
+            return map
+        }
+
+        lateinit var sessionAdapter: SessionAdapter
+
+        fun getFilteredAndSortedSessions(): MutableList<Session> {
+            val baseList = SessionRepository.getAllSessions(requireContext()).filter { it.category.equals(tag, ignoreCase = true) }
+            var list = if (searchQuery.isBlank()) {
+                baseList
+            } else {
+                baseList.filter { s ->
+                    s.title.contains(searchQuery, ignoreCase = true) ||
+                    s.durationText.contains(searchQuery, ignoreCase = true)
+                }
+            }
+            list = when (currentSort) {
+                "OLDEST" -> list.sortedBy { it.date.timeInMillis }
+                "LONGEST" -> list.sortedByDescending { it.durationMinutes }
+                "SHORTEST" -> list.sortedBy { it.durationMinutes }
+                else -> list.sortedByDescending { it.date.timeInMillis }
+            }
+            return list.toMutableList()
+        }
+
+        fun refreshTagSessions() {
+            val allList = SessionRepository.getAllSessions(requireContext()).filter { it.category.equals(tag, ignoreCase = true) }
+            val displayList = getFilteredAndSortedSessions()
+            val updatedIndexMap = buildSessionIndexMap(allList)
+            sessionAdapter.updateData(displayList, updatedIndexMap)
+            tvSessionsCount.text = "${allList.size} Sessions"
+            if (displayList.isEmpty()) {
+                tvEmptySessions.visibility = View.VISIBLE
+                rvSessions.visibility = View.GONE
+            } else {
+                tvEmptySessions.visibility = View.GONE
+                rvSessions.visibility = View.VISIBLE
+            }
+        }
+
+        val initialList = getFilteredAndSortedSessions()
+        val sessionIndexMap = buildSessionIndexMap(initialList)
+
+        if (initialList.isEmpty()) {
+            tvEmptySessions.visibility = View.VISIBLE
+            rvSessions.visibility = View.GONE
+        } else {
+            tvEmptySessions.visibility = View.GONE
+            rvSessions.visibility = View.VISIBLE
+        }
+
+        sessionAdapter = SessionAdapter(
+            initialList,
+            onEditClick = { session ->
+                showEditSessionDialog(session) { refreshTagSessions() }
+            },
+            onDeleteClick = { session ->
+                showDeleteSessionConfirmation(session) { refreshTagSessions() }
+            },
+            sessionIndexMap = sessionIndexMap
+        )
+        rvSessions.layoutManager = LinearLayoutManager(requireContext())
+        rvSessions.adapter = sessionAdapter
+
+        etSearchSessions.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                searchQuery = s?.toString()?.trim() ?: ""
+                refreshTagSessions()
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        btnSortSessions.setOnClickListener { anchor ->
+            val popup = PopupMenu(requireContext(), anchor)
+            popup.menu.add(0, 1, 0, if (currentSort == "NEWEST") "✓ Newest First" else "Newest First")
+            popup.menu.add(0, 2, 1, if (currentSort == "OLDEST") "✓ Oldest First" else "Oldest First")
+            popup.menu.add(0, 3, 2, if (currentSort == "LONGEST") "✓ Longest Duration" else "Longest Duration")
+            popup.menu.add(0, 4, 3, if (currentSort == "SHORTEST") "✓ Shortest Duration" else "Shortest Duration")
+
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    1 -> { currentSort = "NEWEST"; btnSortSessions.text = "Sort ▾" }
+                    2 -> { currentSort = "OLDEST"; btnSortSessions.text = "Oldest ▾" }
+                    3 -> { currentSort = "LONGEST"; btnSortSessions.text = "Longest ▾" }
+                    4 -> { currentSort = "SHORTEST"; btnSortSessions.text = "Shortest ▾" }
+                }
+                refreshTagSessions()
+                true
+            }
+            popup.show()
+        }
+
+        val dialog = AlertDialog.Builder(requireContext(), android.R.style.Theme_NoTitleBar_Fullscreen)
+            .setView(view)
+            .create()
+
+        btnBack.setOnClickListener { dialog.dismiss() }
+        dialog.show()
     }
 
     private fun showProjectDetailDialog(project: Project) {
@@ -202,9 +568,8 @@ class ProjectsFragment : Fragment() {
         val btnSortSessions = view.findViewById<TextView>(R.id.btnSortProjectSessions)
 
         var searchQuery = ""
-        var currentSort = "NEWEST" // "NEWEST", "OLDEST", "LONGEST", "SHORTEST"
+        var currentSort = "NEWEST"
 
-        // Map session index (1..N) chronologically for this project
         fun buildSessionIndexMap(sessions: List<Session>): Map<String, Int> {
             val sortedAsc = sessions.sortedBy { it.date.timeInMillis }
             val map = mutableMapOf<String, Int>()
@@ -231,7 +596,7 @@ class ProjectsFragment : Fragment() {
                 "OLDEST" -> list.sortedBy { it.date.timeInMillis }
                 "LONGEST" -> list.sortedByDescending { it.durationMinutes }
                 "SHORTEST" -> list.sortedBy { it.durationMinutes }
-                else -> list.sortedByDescending { it.date.timeInMillis } // NEWEST
+                else -> list.sortedByDescending { it.date.timeInMillis }
             }
             return list.toMutableList()
         }
@@ -372,6 +737,10 @@ class ProjectsFragment : Fragment() {
     }
 
     private fun showCreateProjectDialog(existingProject: Project?) {
+        if (existingProject == null && !EntitlementManager.canCreateProject(requireContext(), rawProjectsList.size)) {
+            EntitlementManager.showGuestSignInPrompt(requireContext(), "Creating more than 3 projects")
+            return
+        }
         val view = layoutInflater.inflate(R.layout.dialog_create_project, null)
         val etName = view.findViewById<EditText>(R.id.etProjectName)
         val etGoal = view.findViewById<EditText>(R.id.etProjectGoal)
@@ -473,6 +842,58 @@ class ProjectsFragment : Fragment() {
         }
 
         dialog.show()
+    }
+
+    inner class TagsAdapter(
+        private var tags: List<String>,
+        private var statsMap: Map<String, Pair<Int, Int>> = emptyMap()
+    ) : RecyclerView.Adapter<TagsAdapter.TagViewHolder>() {
+
+        inner class TagViewHolder(v: View) : RecyclerView.ViewHolder(v) {
+            val name: TextView = v.findViewById(R.id.tvTagName)
+            val time: TextView = v.findViewById(R.id.tvTagTime)
+            val sessions: TextView = v.findViewById(R.id.tvTagSessions)
+            val btnEdit: View = v.findViewById(R.id.btnEditTag)
+            val btnDelete: View = v.findViewById(R.id.btnDeleteTag)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = TagViewHolder(
+            LayoutInflater.from(parent.context).inflate(R.layout.item_tag, parent, false)
+        )
+
+        override fun onBindViewHolder(holder: TagViewHolder, position: Int) {
+            val tag = tags[position]
+            holder.name.text = tag
+
+            val stats = statsMap[tag] ?: Pair(0, 0)
+            val sessionCount = stats.first
+            val totalMins = stats.second
+
+            val h = totalMins / 60
+            val m = totalMins % 60
+            holder.time.text = String.format(Locale.getDefault(), "%02d hrs %02d mins total focus", h, m)
+            holder.sessions.text = if (sessionCount == 1) "1 focus session" else "$sessionCount focus sessions"
+
+            holder.itemView.setOnClickListener {
+                showTagDetailDialog(tag)
+            }
+
+            holder.btnEdit.setOnClickListener {
+                showCreateTagDialog(tag)
+            }
+
+            holder.btnDelete.setOnClickListener {
+                showDeleteTagConfirmation(tag)
+            }
+        }
+
+        override fun getItemCount() = tags.size
+
+        fun updateData(newTags: List<String>, newStats: Map<String, Pair<Int, Int>>) {
+            tags = newTags
+            statsMap = newStats
+            notifyDataSetChanged()
+        }
     }
 
     inner class ProjectsAdapter(private var projects: List<Project>) : RecyclerView.Adapter<ProjectsAdapter.ProjectViewHolder>() {

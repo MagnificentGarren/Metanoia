@@ -20,7 +20,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
-            android:text="@string/projects_header"
+            android:text="TAGS &amp; PROJECTS STUDIO"
             android:textColor="@color/gold_primary"
             android:textSize="18sp"
             android:textStyle="bold" />
@@ -33,25 +33,59 @@
             android:layout_centerVertical="true"
             android:background="@drawable/bg_search_rounded"
             android:clickable="true"
-            android:contentDescription="Sort Projects"
+            android:contentDescription="Sort Items"
             android:focusable="true"
             android:padding="8dp"
             android:src="@drawable/ic_sort"
             app:tint="@color/gold_primary" />
     </RelativeLayout>
 
+    <!-- Studio Mode Segmented Navigation Switcher (Tags vs Projects) -->
+    <LinearLayout
+        android:id="@+id/layoutStudioModeContainer"
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:layout_below="@id/layoutProjectsHeaderBar"
+        android:layout_marginTop="14dp"
+        android:background="@drawable/bg_segmented_container"
+        android:orientation="horizontal"
+        android:padding="4dp">
+
+        <Button
+            android:id="@+id/btnTabTags"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/bg_tab_selected"
+            android:text="🏷️ CUSTOM TAGS"
+            android:textColor="#0A0A0A"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnTabProjects"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/bg_tab_unselected"
+            android:text="📁 PROJECTS &amp; GOALS"
+            android:textColor="#8E8E93"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
     <!-- Top Analytics Summary Cards Row -->
     <LinearLayout
         android:id="@+id/layoutProjectsSummary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/layoutProjectsHeaderBar"
-        android:layout_marginTop="16dp"
+        android:layout_below="@id/layoutStudioModeContainer"
+        android:layout_marginTop="14dp"
         android:baselineAligned="false"
         android:orientation="horizontal"
         android:weightSum="3">
 
-        <!-- Stat 1: Total Projects Count -->
+        <!-- Stat 1: Total Active Count -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -69,13 +103,14 @@
                 android:textColor="@color/gold_primary"
                 android:textSize="15sp"
                 android:textStyle="bold"
-                tools:text="4 Active" />
+                tools:text="5 Tags" />
 
             <TextView
+                android:id="@+id/tvStatActiveLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="@string/projects_stat_active"
+                android:text="Active Tags"
                 android:textColor="@color/text_muted"
                 android:textSize="11sp" />
         </LinearLayout>
@@ -102,15 +137,16 @@
                 tools:text="14h 25m" />
 
             <TextView
+                android:id="@+id/tvCumulativeLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="@string/projects_stat_focus"
+                android:text="Total Focus"
                 android:textColor="@color/text_muted"
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- Stat 3: Goals Reached -->
+        <!-- Stat 3: Top Category or Goals Reached -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -128,13 +164,16 @@
                 android:textColor="@color/gold_primary"
                 android:textSize="15sp"
                 android:textStyle="bold"
-                tools:text="2 / 3" />
+                android:ellipsize="end"
+                android:maxLines="1"
+                tools:text="Deep Work" />
 
             <TextView
+                android:id="@+id/tvStatGoalsLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="@string/projects_stat_goals"
+                android:text="Top Tag"
                 android:textColor="@color/text_muted"
                 android:textSize="11sp" />
         </LinearLayout>
@@ -146,7 +185,7 @@
         android:layout_width="match_parent"
         android:layout_height="44dp"
         android:layout_below="@id/layoutProjectsSummary"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="14dp"
         android:background="@drawable/bg_search_rounded"
         android:gravity="center_vertical"
         android:orientation="horizontal"
@@ -155,7 +194,7 @@
         <ImageView
             android:layout_width="20dp"
             android:layout_height="20dp"
-            android:contentDescription="@string/projects_search_icon_desc"
+            android:contentDescription="Search Icon"
             android:src="@drawable/ic_search"
             app:tint="@color/text_muted" />
 
@@ -167,7 +206,7 @@
             android:layout_marginStart="8dp"
             android:autofillHints="none"
             android:background="@android:color/transparent"
-            android:hint="@string/projects_search_hint"
+            android:hint="Search tags or categories..."
             android:imeOptions="actionDone"
             android:inputType="text"
             android:maxLines="1"
@@ -180,7 +219,7 @@
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/projects_clear_search_desc"
+            android:contentDescription="Clear Search"
             android:src="@drawable/ic_cancel"
             android:visibility="gone"
             app:tint="@color/text_muted" />
@@ -193,16 +232,17 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/layoutSearchBar"
         android:layout_centerInParent="true"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="32dp"
         android:gravity="center"
         android:orientation="vertical"
         android:padding="24dp"
         android:visibility="gone">
 
         <ImageView
+            android:id="@+id/ivEmptyIcon"
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:contentDescription="@string/projects_icon_desc"
+            android:contentDescription="Empty Icon"
             android:src="@drawable/ic_projects"
             app:tint="@color/gold_primary" />
 
@@ -211,7 +251,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="@string/projects_empty_title"
+            android:text="No Tags Found"
             android:textColor="@color/text_white"
             android:textSize="18sp"
             android:textStyle="bold" />
@@ -222,7 +262,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:gravity="center"
-            android:text="@string/projects_empty_subtitle"
+            android:text="Create custom focus tags to categorize your productivity and track habits."
             android:textColor="@color/text_muted"
             android:textSize="13sp" />
 
@@ -232,10 +272,22 @@
             android:layout_height="44dp"
             android:layout_marginTop="20dp"
             android:backgroundTint="@color/gold_primary"
-            android:text="@string/projects_empty_button"
+            android:text="CREATE NEW TAG"
             android:textColor="#0A0A0A"
             android:textStyle="bold" />
     </LinearLayout>
+
+    <!-- Tags List RecyclerView -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvTags"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/layoutSearchBar"
+        android:layout_marginTop="14dp"
+        android:clipToPadding="false"
+        android:paddingBottom="100dp"
+        android:scrollbars="none"
+        android:visibility="visible" />
 
     <!-- Projects List RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
@@ -243,10 +295,11 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/layoutSearchBar"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="14dp"
         android:clipToPadding="false"
         android:paddingBottom="100dp"
-        android:scrollbars="none" />
+        android:scrollbars="none"
+        android:visibility="gone" />
 
     <!-- Floating Action Button -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -257,7 +310,7 @@
         android:layout_alignParentBottom="true"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
-        android:contentDescription="@string/projects_fab_desc"
+        android:contentDescription="Add New Tag or Project"
         android:src="@android:drawable/ic_input_add"
         app:backgroundTint="@color/gold_primary"
         app:tint="#0A0A0A" />

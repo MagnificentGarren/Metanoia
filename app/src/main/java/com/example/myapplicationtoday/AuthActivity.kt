@@ -9,6 +9,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
@@ -72,6 +73,47 @@ class AuthActivity : AppCompatActivity() {
 
         setupTextWatchers()
         setMode(signUp = false)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        autoCheckEmailVerificationOnReturn()
+    }
+
+    private fun autoCheckEmailVerificationOnReturn() {
+        val auth = FirebaseAuth.getInstance()
+        val user = auth.currentUser ?: return
+
+        user.reload().addOnCompleteListener { task ->
+            if (task.isSuccessful && user.isEmailVerified) {
+                val email = user.email ?: etAuthEmail.text.toString().trim()
+                val name = user.displayName ?: extractNameFromEmail(email)
+                val newUserId = user.uid
+
+                val prefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
+                val prevWasGuest = prefs.getBoolean("auth_is_guest", true)
+
+                if (prevWasGuest) {
+                    SyncManager.migrateGuestDataToUser(this, newUserId)
+                }
+
+                saveAuthSession(
+                    email = email,
+                    name = name,
+                    isGuest = false,
+                    isVerified = true,
+                    userId = newUserId
+                )
+                SyncManager.syncAll(this)
+
+                Toast.makeText(this, "Email verified! Logged in as $email", Toast.LENGTH_SHORT).show()
+                val mainIntent = Intent(this, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                }
+                startActivity(mainIntent)
+                finish()
+            }
+        }
     }
 
     private fun setupTextWatchers() {
@@ -159,15 +201,33 @@ class AuthActivity : AppCompatActivity() {
                     val user = auth.currentUser
 
                     // Always reload user state from Firebase servers to check verification status
-                    user?.reload()?.addOnCompleteListener {
-                        if (user.isEmailVerified) {
-                            // User verified their real email! Save session and enter main app
-                            saveAuthSession(email = email, name = user.displayName ?: extractNameFromEmail(email), isGuest = false, isVerified = true)
-                            startActivity(Intent(this, MainActivity::class.java))
+                    user?.reload()?.addOnCompleteListener { reloadTask ->
+                        if (reloadTask.isSuccessful && user.isEmailVerified) {
+                            // User verified their real email! Check account switching and save session
+                            val prefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
+                            val prevWasGuest = prefs.getBoolean("auth_is_guest", true)
+                            val newUserId = user.uid
+
+                            if (prevWasGuest) {
+                                SyncManager.migrateGuestDataToUser(this, newUserId)
+                            }
+
+                            saveAuthSession(
+                                email = email,
+                                name = user.displayName ?: extractNameFromEmail(email),
+                                isGuest = false,
+                                isVerified = true,
+                                userId = newUserId
+                            )
+                            SyncManager.syncAll(this)
+
+                            Toast.makeText(this, "Logged in successfully!", Toast.LENGTH_SHORT).show()
+                            val mainIntent = Intent(this, MainActivity::class.java).apply {
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            }
+                            startActivity(mainIntent)
                             finish()
                         } else {
-                            // Sign out and alert user that verification is required
-                            auth.signOut()
                             showEmailVerificationRequiredDialog(email)
                         }
                     }
@@ -226,10 +286,9 @@ class AuthActivity : AppCompatActivity() {
                     // 2. Dispatch real email verification
                     user?.sendEmailVerification()?.addOnCompleteListener { verifyTask ->
                         if (verifyTask.isSuccessful) {
-                            // Show modal informing user to check inbox
+                            // Show modal informing user to check inbox.
+                            // We do NOT call auth.signOut() so the device session stays active for auto-verification on return.
                             showVerificationSentModal(email)
-                            // Sign out until verified
-                            auth.signOut()
                         } else {
                             tvAuthGlobalError.text = "Failed to send verification email: ${verifyTask.exception?.message}"
                             tvAuthGlobalError.visibility = View.VISIBLE
@@ -243,8 +302,11 @@ class AuthActivity : AppCompatActivity() {
     }
 
     private fun handleGuestAccess() {
-        saveAuthSession(email = "guest@metanoia.local", name = "Guest User", isGuest = true, isVerified = false)
-        startActivity(Intent(this, MainActivity::class.java))
+        saveAuthSession(email = "guest@metanoia.local", name = "Guest User", isGuest = true, isVerified = false, userId = "guest_local")
+        val mainIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        startActivity(mainIntent)
         finish()
     }
 
@@ -256,7 +318,7 @@ class AuthActivity : AppCompatActivity() {
         val btnPositive = view.findViewById<Button>(R.id.btnAlertPositive)
 
         tvTitle.text = "VERIFICATION EMAIL SENT"
-        tvMessage.text = "A verification link has been dispatched to $email.\n\nIn production, users must open the link in their inbox before signing in."
+        tvMessage.text = "A verification link has been dispatched to $email.\n\nPlease open the link in your email inbox and then return here or tap 'VERIFY & LOG IN'."
         btnNegative.text = "RESEND"
         btnPositive.text = "VERIFY & LOG IN"
 
@@ -268,12 +330,19 @@ class AuthActivity : AppCompatActivity() {
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
         btnNegative.setOnClickListener {
-            dialog.dismiss()
+            FirebaseAuth.getInstance().currentUser?.sendEmailVerification()
+                ?.addOnCompleteListener { resendTask ->
+                    if (resendTask.isSuccessful) {
+                        Toast.makeText(this, "Verification email resent to $email", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this, "Failed to resend: ${resendTask.exception?.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
         }
 
         btnPositive.setOnClickListener {
             dialog.dismiss()
-            setMode(signUp = false)
+            checkVerificationAndLogIn(email)
         }
 
         dialog.show()
@@ -298,17 +367,67 @@ class AuthActivity : AppCompatActivity() {
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
         btnNegative.setOnClickListener {
-            dialog.dismiss()
+            FirebaseAuth.getInstance().currentUser?.sendEmailVerification()
+                ?.addOnCompleteListener { resendTask ->
+                    if (resendTask.isSuccessful) {
+                        Toast.makeText(this, "Verification link resent to $email", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this, "Failed to resend: ${resendTask.exception?.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
         }
 
         btnPositive.setOnClickListener {
             dialog.dismiss()
+            checkVerificationAndLogIn(email)
         }
 
         dialog.show()
     }
 
-    private fun saveAuthSession(email: String, name: String, isGuest: Boolean, isVerified: Boolean) {
+    private fun checkVerificationAndLogIn(email: String) {
+        val auth = FirebaseAuth.getInstance()
+        val user = auth.currentUser
+
+        if (user == null) {
+            setMode(signUp = false)
+            return
+        }
+
+        user.reload().addOnCompleteListener { task ->
+            if (task.isSuccessful && user.isEmailVerified) {
+                val prefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
+                val prevWasGuest = prefs.getBoolean("auth_is_guest", true)
+                val newUserId = user.uid
+
+                if (prevWasGuest) {
+                    SyncManager.migrateGuestDataToUser(this, newUserId)
+                }
+
+                saveAuthSession(
+                    email = user.email ?: email,
+                    name = user.displayName ?: extractNameFromEmail(user.email ?: email),
+                    isGuest = false,
+                    isVerified = true,
+                    userId = newUserId
+                )
+                SyncManager.syncAll(this)
+
+                Toast.makeText(this, "Verification confirmed! Welcome to Metanoia.", Toast.LENGTH_SHORT).show()
+                val mainIntent = Intent(this, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                }
+                startActivity(mainIntent)
+                finish()
+            } else {
+                tvAuthGlobalError.text = "Email not verified yet. Please check your inbox and click the verification link."
+                tvAuthGlobalError.visibility = View.VISIBLE
+                showEmailVerificationRequiredDialog(email)
+            }
+        }
+    }
+
+    private fun saveAuthSession(email: String, name: String, isGuest: Boolean, isVerified: Boolean, userId: String = "guest_local") {
         val prefs = getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
         val initials = name.split(" ").filter { it.isNotEmpty() }.map { it.first().uppercaseChar() }.take(2).joinToString("")
 
@@ -320,7 +439,8 @@ class AuthActivity : AppCompatActivity() {
             .putBoolean("auth_email_verified", isVerified)
             .putString("profile_username", name)
             .putString("profile_initials", if (initials.isNotEmpty()) initials else "JD")
-            .apply()
+            .putString("current_user_id", userId)
+            .commit()
     }
 
     private fun extractNameFromEmail(email: String): String {

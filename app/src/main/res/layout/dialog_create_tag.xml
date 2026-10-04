@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog_dark"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:id="@+id/tvTagDialogHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:text="CREATE CUSTOM TAG"
+            android:textColor="#D4AF37"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/btnCancelTagDialog"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Cancel"
+            android:src="@drawable/ic_cancel"
+            app:tint="#8E8E93" />
+    </RelativeLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TAG NAME"
+        android:textColor="#D4AF37"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp" />
+
+    <EditText
+        android:id="@+id/etTagNameInput"
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:background="@drawable/bg_search_rounded"
+        android:hint="e.g. Meditate, Reading, Fitness"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#555555"
+        android:paddingHorizontal="14dp"
+        android:inputType="textCapWords"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ACCENT COLOR"
+        android:textColor="#D4AF37"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvTagColorPicker"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp" />
+
+    <Button
+        android:id="@+id/btnSaveTag"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:backgroundTint="#D4AF37"
+        android:text="SAVE TAG"
+        android:textColor="#0A0A0A"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+</LinearLayout>
