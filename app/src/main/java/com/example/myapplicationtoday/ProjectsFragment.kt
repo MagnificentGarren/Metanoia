@@ -306,6 +306,16 @@ class ProjectsFragment : Fragment() {
     }
 
     private fun showCreateTagDialog(existingTag: String?) {
+        val currentTags = viewModel.getTags()
+        if (existingTag == null && !EntitlementManager.canCreateTag(requireContext(), currentTags.size)) {
+            val tier = EntitlementManager.getCurrentTier(requireContext())
+            if (tier == UserTier.GUEST) {
+                EntitlementManager.showGuestSignInPrompt(requireContext(), "Creating custom tags")
+            } else {
+                EntitlementManager.showProUpgradePrompt(requireContext(), "10+ Custom Tags")
+            }
+            return
+        }
         val view = layoutInflater.inflate(R.layout.dialog_create_tag, null)
         val tvHeader = view.findViewById<TextView>(R.id.tvTagDialogHeader)
         val etName = view.findViewById<EditText>(R.id.etTagNameInput)
@@ -738,7 +748,12 @@ class ProjectsFragment : Fragment() {
 
     private fun showCreateProjectDialog(existingProject: Project?) {
         if (existingProject == null && !EntitlementManager.canCreateProject(requireContext(), rawProjectsList.size)) {
-            EntitlementManager.showGuestSignInPrompt(requireContext(), "Creating more than 3 projects")
+            val tier = EntitlementManager.getCurrentTier(requireContext())
+            if (tier == UserTier.GUEST) {
+                EntitlementManager.showGuestSignInPrompt(requireContext(), "Creating more than 3 projects")
+            } else {
+                EntitlementManager.showProUpgradePrompt(requireContext(), "10+ Projects")
+            }
             return
         }
         val view = layoutInflater.inflate(R.layout.dialog_create_project, null)

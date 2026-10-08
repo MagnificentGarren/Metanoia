@@ -139,6 +139,19 @@
                     android:textSize="11sp"
                     android:textStyle="bold"
                     android:paddingHorizontal="12dp" />
+
+                <Button
+                    android:id="@+id/btnDeleteAccount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="8dp"
+                    android:backgroundTint="#2C0E0E"
+                    android:text="DELETE ACCOUNT"
+                    android:textColor="#FF453A"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:paddingHorizontal="10dp"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <!-- Focus Statistics Section -->

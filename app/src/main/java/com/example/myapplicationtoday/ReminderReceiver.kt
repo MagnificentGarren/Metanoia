@@ -53,7 +53,7 @@ class ReminderReceiver : BroadcastReceiver() {
         )
 
         val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.ic_head)
+            .setSmallIcon(R.drawable.ic_metanoia_notification_logo)
             .setContentTitle("✨ METANOIA • DAILY FOCUS REMINDER")
             .setContentText("Master your time, transform your mind. Tap to begin today's focus session.")
             .setStyle(NotificationCompat.BigTextStyle().bigText("Master your time, transform your mind. Tap to start today's focus session and maintain your streak! ⚡"))

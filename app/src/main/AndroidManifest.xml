@@ -21,6 +21,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplicationToday">
 
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_metanoia_notification_logo" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/gold_primary" />
+
         <!-- Main Dashboard Activity -->
         <activity
             android:name=".MainActivity"

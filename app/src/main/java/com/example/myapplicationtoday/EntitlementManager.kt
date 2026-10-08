@@ -28,7 +28,9 @@ enum class AppFeature {
 
 object EntitlementManager {
 
-    private const val GUEST_PROJECT_LIMIT = 3
+    const val GUEST_PROJECT_LIMIT = 3
+    const val FREE_REGISTERED_PROJECT_LIMIT = 10
+    const val FREE_REGISTERED_TAG_LIMIT = 10
 
     fun getCurrentTier(context: Context): UserTier {
         val prefs = context.getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
@@ -57,11 +59,19 @@ object EntitlementManager {
     }
 
     fun canCreateProject(context: Context, currentProjectCount: Int): Boolean {
-        val tier = getCurrentTier(context)
-        if (tier == UserTier.GUEST) {
-            return currentProjectCount < GUEST_PROJECT_LIMIT
+        return when (getCurrentTier(context)) {
+            UserTier.GUEST -> currentProjectCount < GUEST_PROJECT_LIMIT
+            UserTier.FREE_REGISTERED -> currentProjectCount < FREE_REGISTERED_PROJECT_LIMIT
+            UserTier.PRO_SUBSCRIBED -> true
         }
-        return true
+    }
+
+    fun canCreateTag(context: Context, currentTagCount: Int): Boolean {
+        return when (getCurrentTier(context)) {
+            UserTier.GUEST -> currentTagCount < 3
+            UserTier.FREE_REGISTERED -> currentTagCount < FREE_REGISTERED_TAG_LIMIT
+            UserTier.PRO_SUBSCRIBED -> true
+        }
     }
 
     fun showFullScreenGate(

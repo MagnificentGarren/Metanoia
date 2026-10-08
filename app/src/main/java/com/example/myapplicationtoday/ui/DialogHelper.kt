@@ -6,8 +6,10 @@ import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -34,7 +36,12 @@ object DialogHelper {
             .setView(view)
             .create()
 
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.let { window ->
+            window.setBackgroundDrawableResource(android.R.color.transparent)
+            window.setGravity(Gravity.BOTTOM)
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            window.setWindowAnimations(com.google.android.material.R.style.Animation_Design_BottomSheetDialog)
+        }
 
         val currentCategories = categories.toMutableList()
 
@@ -52,9 +59,32 @@ object DialogHelper {
                 }
 
                 btnDelete.setOnClickListener {
-                    onDeleteTag?.invoke(category)
-                    currentCategories.remove(category)
-                    populateCategories()
+                    val confirmView = LayoutInflater.from(context).inflate(R.layout.dialog_custom_alert, null)
+                    val tvTitle = confirmView.findViewById<TextView>(R.id.tvAlertTitle)
+                    val tvMessage = confirmView.findViewById<TextView>(R.id.tvAlertMessage)
+                    val btnNeg = confirmView.findViewById<Button>(R.id.btnAlertNegative)
+                    val btnPos = confirmView.findViewById<Button>(R.id.btnAlertPositive)
+
+                    tvTitle.text = "DELETE TAG?"
+                    tvMessage.text = "Are you sure you want to delete '$category'? Saved session history will retain this category name."
+                    btnNeg.text = "CANCEL"
+                    btnPos.text = "DELETE"
+
+                    val confirmDialog = AlertDialog.Builder(context)
+                        .setView(confirmView)
+                        .create()
+
+                    confirmDialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+                    btnNeg.setOnClickListener { confirmDialog.dismiss() }
+                    btnPos.setOnClickListener {
+                        onDeleteTag?.invoke(category)
+                        currentCategories.remove(category)
+                        populateCategories()
+                        confirmDialog.dismiss()
+                    }
+
+                    confirmDialog.show()
                 }
 
                 container.addView(row)
@@ -194,7 +224,7 @@ object DialogHelper {
         tvTier.text = "${item.tierName.uppercase()} TIER UNLOCKED"
         tvTier.setTextColor(item.glowColor)
         tvLore.text = "\"${item.lore}\""
-        tvDescription.text = "Goal Met: ${item.currentProgress} / ${item.maxProgress} ${item.unit}"
+        tvDescription.text = item.howToObtain
 
         // Set up the custom gradient glow ring
         val gradient = GradientDrawable(
@@ -204,10 +234,14 @@ object DialogHelper {
         gradient.shape = GradientDrawable.OVAL
         viewGlow.background = gradient
 
-        val dialog = AlertDialog.Builder(context, android.R.style.Theme_Translucent_NoTitleBar)
+        val dialog = AlertDialog.Builder(context, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
             .setView(view)
             .create()
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        dialog.window?.let { window ->
+            window.setBackgroundDrawableResource(android.R.color.transparent)
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        }
 
         btnClaim.setOnClickListener {
             onDismiss()

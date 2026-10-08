@@ -15,9 +15,10 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class AchievementsFragment : Fragment() {
@@ -58,8 +59,9 @@ class AchievementsFragment : Fragment() {
         setupRecyclerView()
 
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.allSessionsFlow.collectLatest { sessions ->
-                val projects = viewModel.allProjectsFlow.value
+            combine(viewModel.allSessionsFlow, viewModel.allProjectsFlow) { sessions, projects ->
+                Pair(sessions, projects)
+            }.collectLatest { (sessions, projects) ->
                 calculateAchievements(sessions, projects)
             }
         }
@@ -92,7 +94,7 @@ class AchievementsFragment : Fragment() {
 
     private fun setupRecyclerView() {
         adapter = AchievementsAdapter { item -> showAchievementDetailDialog(item) }
-        rvAchievements.layoutManager = GridLayoutManager(requireContext(), 2)
+        rvAchievements.layoutManager = LinearLayoutManager(requireContext())
         rvAchievements.adapter = adapter
     }
 
@@ -157,17 +159,17 @@ class AchievementsFragment : Fragment() {
         gradient.shape = GradientDrawable.OVAL
         viewDetailGlow.background = gradient
 
-        tvDetailProgressText.text = "Current Status: ${item.currentProgress} / ${item.maxProgress} ${item.unit}"
+        tvDetailProgressText.text = item.howToObtain
 
         if (item.nextTierRequirement != null) {
             val progressNeeded = item.nextTierRequirement - item.currentProgress
             tvDetailNextTierText.text = if (progressNeeded > 0) {
-                "Next level requires $progressNeeded more ${item.unit} (${item.currentProgress}/${item.nextTierRequirement})."
+                "Next tier requirement: Need $progressNeeded more ${item.unit} to advance."
             } else {
                 "Ready to advance to the next cosmic tier!"
             }
         } else {
-            tvDetailNextTierText.text = "You have fully mastered this cosmic focus line! 💎"
+            tvDetailNextTierText.text = "Fully Mastered Diamond Tier! 💎"
         }
 
         btnDismissDetail.setOnClickListener { dialog.dismiss() }
@@ -202,15 +204,23 @@ class AchievementsAdapter(private val onItemClicked: (AchievementItem) -> Unit) 
         private val tvTitle: TextView = itemView.findViewById(R.id.tvAchievementTitle)
         private val tvTierTag: TextView = itemView.findViewById(R.id.tvAchievementTierTag)
         private val tvDescription: TextView = itemView.findViewById(R.id.tvAchievementDescription)
+        private val tvLore: TextView = itemView.findViewById(R.id.tvAchievementLore)
         private val tvProgress: TextView = itemView.findViewById(R.id.tvAchievementProgress)
+        private val progressAchievementBar: ProgressBar = itemView.findViewById(R.id.progressAchievementBar)
         private val viewGlowRing: View = itemView.findViewById(R.id.viewGlowRing)
         private val tvLockIcon: TextView = itemView.findViewById(R.id.tvLockIcon)
 
         fun bind(item: AchievementItem, clickListener: (AchievementItem) -> Unit) {
             tvTitle.text = item.title
             tvEmoji.text = item.emoji
-            tvDescription.text = item.description
-            tvProgress.text = "${item.currentProgress} / ${item.maxProgress}"
+            tvDescription.text = item.howToObtain
+            tvLore.text = "\"${item.lore}\""
+            tvProgress.text = "${item.currentProgress} / ${item.maxProgress} ${item.unit}"
+
+            val percent = if (item.maxProgress > 0) {
+                ((item.currentProgress.toDouble() / item.maxProgress) * 100).toInt().coerceIn(0, 100)
+            } else 0
+            progressAchievementBar.progress = percent
 
             val borderGlow = GradientDrawable()
             borderGlow.shape = GradientDrawable.OVAL
@@ -226,9 +236,9 @@ class AchievementsAdapter(private val onItemClicked: (AchievementItem) -> Unit) 
             if (item.isLocked) {
                 borderGlow.setColor(Color.parseColor("#151515"))
                 tvLockIcon.visibility = View.VISIBLE
-                tvTierTag.text = "LOCKED • 4 TIERS"
+                tvTierTag.text = "LOCKED"
                 tvTierTag.setTextColor(Color.parseColor("#8E8E93"))
-                itemView.alpha = 0.5f
+                itemView.alpha = 0.65f
             } else {
                 borderGlow.setColor(item.glowColor)
                 tvLockIcon.visibility = View.GONE

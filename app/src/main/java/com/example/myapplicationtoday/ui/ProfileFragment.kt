@@ -47,6 +47,7 @@ import com.example.myapplicationtoday.R
 import com.example.myapplicationtoday.ReminderScheduler
 import com.example.myapplicationtoday.SessionRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
@@ -66,6 +67,7 @@ class ProfileFragment : Fragment() {
     private lateinit var tvAccountEmail: TextView
     private lateinit var tvAccountStatus: TextView
     private lateinit var btnAuthAction: Button
+    private lateinit var btnDeleteAccount: Button
 
     private lateinit var llInsightsContainer: LinearLayout
     private lateinit var tvStatTotalFocus: TextView
@@ -137,6 +139,7 @@ class ProfileFragment : Fragment() {
         tvAccountEmail = view.findViewById(R.id.tvAccountEmail)
         tvAccountStatus = view.findViewById(R.id.tvAccountStatus)
         btnAuthAction = view.findViewById(R.id.btnAuthAction)
+        btnDeleteAccount = view.findViewById(R.id.btnDeleteAccount)
 
         // Bind stats grid
         llInsightsContainer = view.findViewById(R.id.llInsightsContainer)
@@ -183,6 +186,7 @@ class ProfileFragment : Fragment() {
         // Set up listeners
         btnEditProfile.setOnClickListener { showEditProfileDialog() }
         btnAuthAction.setOnClickListener { handleAuthAction() }
+        btnDeleteAccount.setOnClickListener { showAccountDeletionDialog() }
         llInsightsContainer.setOnClickListener { showEnlargedStatsDialog() }
 
         llHapticFeedback.setOnClickListener { switchHapticFeedback.toggle() }
@@ -211,7 +215,7 @@ class ProfileFragment : Fragment() {
         llCloudLocalBackup.setOnClickListener { showBackupDialog() }
         llResetData.setOnClickListener { showResetDataWarningDialog() }
 
-        llTermsPrivacy.setOnClickListener { showTermsPrivacyDialog() }
+        llTermsPrivacy.setOnClickListener { openPrivacyPolicyWebPage() }
         llSupportFeedback.setOnClickListener { sendSupportFeedbackEmail() }
     }
 
@@ -238,13 +242,14 @@ class ProfileFragment : Fragment() {
     private fun loadProfileData() {
         val prefs = getAppPreferences()
         val altPrefs = getAltPreferences()
+        val userId = prefs.getString("current_user_id", "guest_local") ?: "guest_local"
 
         val username = prefs.getString(PROFILE_USERNAME_KEY, altPrefs?.getString(PROFILE_USERNAME_KEY, "John Doe")) ?: "John Doe"
         tvProfileName.text = username
 
-        val avatarMode = prefs.getString("avatar_mode", "initials") ?: "initials"
-        val bgColor = prefs.getInt("avatar_bg_color", 0xFF2A2824.toInt())
-        val tintColor = prefs.getInt("avatar_tint_color", ContextCompat.getColor(requireContext(), R.color.gold_primary))
+        val avatarMode = prefs.getString("avatar_mode_$userId", prefs.getString("avatar_mode", "initials")) ?: "initials"
+        val bgColor = prefs.getInt("avatar_bg_color_$userId", prefs.getInt("avatar_bg_color", 0xFF2A2824.toInt()))
+        val tintColor = prefs.getInt("avatar_tint_color_$userId", prefs.getInt("avatar_tint_color", ContextCompat.getColor(requireContext(), R.color.gold_primary)))
 
         val bgContainer = view?.findViewById<View>(R.id.flProfileAvatarContainer)
         val bgDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.bg_profile_avatar)?.mutate()
@@ -256,7 +261,7 @@ class ProfileFragment : Fragment() {
         bgContainer?.background = bgDrawable
 
         if (avatarMode == "icon") {
-            val iconName = prefs.getString("avatar_icon", "astronaut") ?: "astronaut"
+            val iconName = prefs.getString("avatar_icon_$userId", prefs.getString("avatar_icon", "astronaut")) ?: "astronaut"
             val drawableRes = getIconDrawableRes(iconName)
 
             ivProfileAvatarIcon?.setImageResource(drawableRes)
@@ -283,10 +288,12 @@ class ProfileFragment : Fragment() {
             tvAccountEmail.text = email
             tvAccountStatus.text = if (isVerified) "Status: Email Verified ✓" else "Status: Pending Verification"
             btnAuthAction.text = "LOG OUT"
+            btnDeleteAccount.visibility = View.VISIBLE
         } else {
             tvAccountEmail.text = "Guest Account"
             tvAccountStatus.text = "Status: Guest Mode"
             btnAuthAction.text = "LOG IN / SIGN UP"
+            btnDeleteAccount.visibility = View.GONE
         }
 
         // Haptic & Sound Preferences
@@ -317,12 +324,17 @@ class ProfileFragment : Fragment() {
 
     private fun getIconDrawableRes(iconName: String): Int {
         return when (iconName) {
+            "astronaut", "new_astronaut" -> R.drawable.new_astronaut
+            "knight", "new_knight" -> R.drawable.new_knight
+            "pirate", "new_pirate" -> R.drawable.new_pirate
+            "scientist", "new_scientist" -> R.drawable.new_scientist
             "chef" -> R.drawable.a_friendly_chef
             "detective" -> R.drawable.a_friendly_detective
-            "knight" -> R.drawable.a_friendly_knight
             "robot" -> R.drawable.a_friendly_robot
             "viking" -> R.drawable.a_friendly_viking
-            else -> R.drawable.a_friendly_astronaut
+            "superhero" -> R.drawable.a_friendly_superhero
+            "alien" -> R.drawable.a_friendly_alien
+            else -> R.drawable.new_astronaut
         }
     }
 
@@ -332,15 +344,22 @@ class ProfileFragment : Fragment() {
         val isGuest = prefs.getBoolean("auth_is_guest", true)
 
         if (isLoggedIn && !isGuest) {
+            try {
+                FirebaseAuth.getInstance().signOut()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
             prefs.edit()
                 .putBoolean("auth_logged_in", false)
                 .putBoolean("auth_is_guest", true)
+                .putBoolean("awaiting_verification", false)
                 .putString("auth_user_email", "guest@metanoia.local")
                 .putString("auth_user_name", "Guest User")
                 .putString("profile_username", "Guest User")
                 .putString("profile_initials", "GU")
                 .putString("current_user_id", "guest_local")
-                .apply()
+                .commit()
 
             viewModel.refreshSessions()
             loadProfileData()
@@ -349,11 +368,13 @@ class ProfileFragment : Fragment() {
 
             val intent = Intent(requireContext(), AuthActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                putExtra("is_logout", true)
             }
             startActivity(intent)
         } else {
             val intent = Intent(requireContext(), AuthActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                putExtra("is_logout", true)
             }
             startActivity(intent)
         }
@@ -588,8 +609,9 @@ class ProfileFragment : Fragment() {
             0xFFFFFFFF.toInt()  // White
         )
 
-        var selectedBgColor = prefs.getInt("avatar_bg_color", 0xFF2A2824.toInt())
-        var selectedTintColor = prefs.getInt("avatar_tint_color", 0xFFD4AF37.toInt())
+        val currentUserId = prefs.getString("current_user_id", "guest_local") ?: "guest_local"
+        var selectedBgColor = prefs.getInt("avatar_bg_color_$currentUserId", prefs.getInt("avatar_bg_color", 0xFF2A2824.toInt()))
+        var selectedTintColor = prefs.getInt("avatar_tint_color_$currentUserId", prefs.getInt("avatar_tint_color", 0xFFD4AF37.toInt()))
 
         val rgType = view.findViewById<RadioGroup>(R.id.rgAvatarType)
         val rbInitials = view.findViewById<RadioButton>(R.id.rbTypeInitials)
@@ -597,9 +619,9 @@ class ProfileFragment : Fragment() {
         val llInitials = view.findViewById<View>(R.id.llInitialsContainer)
         val llIconGrid = view.findViewById<View>(R.id.llCharacterIconContainer)
 
-        val savedMode = prefs.getString("avatar_mode", "initials") ?: "initials"
+        val savedMode = prefs.getString("avatar_mode_$currentUserId", prefs.getString("avatar_mode", "initials")) ?: "initials"
         var selectedAvatarMode = savedMode
-        var selectedAvatarIcon = prefs.getString("avatar_icon", "astronaut") ?: "astronaut"
+        var selectedAvatarIcon = prefs.getString("avatar_icon_$currentUserId", prefs.getString("avatar_icon", "astronaut")) ?: "astronaut"
 
         fun updateLivePreview() {
             val bgDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.bg_profile_avatar)?.mutate()
@@ -661,14 +683,21 @@ class ProfileFragment : Fragment() {
             override fun afterTextChanged(s: Editable?) {}
         })
 
+        fun getIconView(idName: String): ImageView? {
+            val resId = resources.getIdentifier(idName, "id", requireContext().packageName)
+            return if (resId != 0) view.findViewById(resId) else null
+        }
+
         val iconViews = listOf(
-            view.findViewById<ImageView>(R.id.iconAstronaut) to "astronaut",
-            view.findViewById<ImageView>(R.id.iconChef) to "chef",
-            view.findViewById<ImageView>(R.id.iconDetective) to "detective",
-            view.findViewById<ImageView>(R.id.iconKnight) to "knight",
-            view.findViewById<ImageView>(R.id.iconRobot) to "robot",
-            view.findViewById<ImageView>(R.id.iconViking) to "viking"
-        )
+            getIconView("iconAstronaut") to "astronaut",
+            getIconView("iconKnight") to "knight",
+            getIconView("iconPirate") to "pirate",
+            getIconView("iconNewScientist") to "new_scientist",
+            getIconView("iconChef") to "chef",
+            getIconView("iconDetective") to "detective",
+            getIconView("iconRobot") to "robot",
+            getIconView("iconViking") to "viking"
+        ).filter { it.first != null }.map { it.first!! to it.second }
 
         fun updateIconSelectionHighlights() {
             for ((iv, name) in iconViews) {
@@ -765,6 +794,12 @@ class ProfileFragment : Fragment() {
 
             saveSetting(PROFILE_USERNAME_KEY, nameText)
             saveSetting(PROFILE_INITIALS_KEY, initialsText)
+
+            saveSetting("avatar_mode_$currentUserId", selectedAvatarMode)
+            saveSetting("avatar_icon_$currentUserId", selectedAvatarIcon)
+            saveSetting("avatar_bg_color_$currentUserId", selectedBgColor)
+            saveSetting("avatar_tint_color_$currentUserId", selectedTintColor)
+
             saveSetting("avatar_mode", selectedAvatarMode)
             saveSetting("avatar_icon", selectedAvatarIcon)
             saveSetting("avatar_bg_color", selectedBgColor)
@@ -1159,16 +1194,7 @@ class ProfileFragment : Fragment() {
         btnNegative.setOnClickListener { dialog.dismiss() }
         btnPositive.setOnClickListener {
             dialog.dismiss()
-
-            val prefs = getAppPreferences()
-            val isLoggedIn = prefs.getBoolean("auth_logged_in", false)
-            val isGuest = prefs.getBoolean("auth_is_guest", true)
-
-            if (isLoggedIn && !isGuest) {
-                showAccountDeletionDialog()
-            } else {
-                performLocalDataReset()
-            }
+            performLocalDataReset()
         }
         dialog.show()
     }
@@ -1203,39 +1229,45 @@ class ProfileFragment : Fragment() {
         btnNegative.setOnClickListener { dialog.dismiss() }
         btnPositive.setOnClickListener {
             dialog.dismiss()
-            val firebaseUser = FirebaseAuth.getInstance().currentUser
-            firebaseUser?.delete()?.addOnCompleteListener {
-                performLocalDataReset()
-                Toast.makeText(context, "Account & cloud data permanently deleted.", Toast.LENGTH_LONG).show()
-                val intent = Intent(requireContext(), AuthActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
-            } ?: run {
-                performLocalDataReset()
-            }
+            performAccountDeletion()
         }
         dialog.show()
     }
 
-    private fun showTermsPrivacyDialog() {
-        val view = layoutInflater.inflate(R.layout.dialog_custom_alert, null)
-        val tvTitle = view.findViewById<TextView>(R.id.tvAlertTitle)
-        val tvMessage = view.findViewById<TextView>(R.id.tvAlertMessage)
-        val btnNegative = view.findViewById<Button>(R.id.btnAlertNegative)
-        val btnPositive = view.findViewById<Button>(R.id.btnAlertPositive)
+    private fun performAccountDeletion() {
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user == null) {
+            performLocalDataReset()
+            return
+        }
+        user.delete().addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                AccountDataManager.clearAllUserData(requireContext()) {
+                    Toast.makeText(context, "Account permanently deleted.", Toast.LENGTH_LONG).show()
+                    val intent = Intent(requireContext(), AuthActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    }
+                    startActivity(intent)
+                }
+            } else {
+                val exception = task.exception
+                if (exception is FirebaseAuthRecentLoginRequiredException) {
+                    Toast.makeText(context, "For security, please log out and log back in before deleting your account.", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(context, "Account deletion failed: ${exception?.localizedMessage}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
-        tvTitle.text = "TERMS & PRIVACY POLICY"
-        tvMessage.text = "At Metanoia, we prioritize your focus journey and your privacy. All your session data, project details, and productivity metrics are processed and stored locally on your device. We do not transmit, share, or sell your personal information or focus logs to third parties. Your data remains entirely in your control."
-        btnNegative.visibility = View.GONE
-        btnPositive.text = "UNDERSTOOD"
-
-        val dialog = AlertDialog.Builder(requireContext())
-            .setView(view)
-            .create()
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-
-        btnPositive.setOnClickListener { dialog.dismiss() }
-        dialog.show()
+    private fun openPrivacyPolicyWebPage() {
+        val url = "https://magnificentgarren.github.io/metanoia-privacy/"
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        try {
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Unable to open browser", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun sendSupportFeedbackEmail() {

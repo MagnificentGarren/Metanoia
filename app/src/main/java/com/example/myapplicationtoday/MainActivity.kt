@@ -26,6 +26,7 @@ import com.example.myapplicationtoday.ui.ProfileFragment
 import com.example.myapplicationtoday.ui.TimerServiceController
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), TimerService.TimerListener {
@@ -65,8 +66,9 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
 
         // Observe sessions and projects for Trophy Pops
         lifecycleScope.launch {
-            viewModel.allSessionsFlow.collectLatest { sessions ->
-                val projects = viewModel.allProjectsFlow.value
+            combine(viewModel.allSessionsFlow, viewModel.allProjectsFlow) { sessions, projects ->
+                Pair(sessions, projects)
+            }.collectLatest { (sessions, projects) ->
                 AchievementsEngine.processTrophyPops(this@MainActivity, sessions, projects) { item ->
                     DialogHelper.showTrophyUnlockPop(this@MainActivity, item)
                 }
@@ -178,39 +180,39 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
     }
 
     private fun checkAndSyncAuthState() {
+        val prefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
+        val isLoggedIn = prefs.getBoolean("auth_logged_in", false)
+        val isGuest = prefs.getBoolean("auth_is_guest", true)
+
+        // Do not automatically log back in if user logged out or is in guest mode
+        if (!isLoggedIn || isGuest) {
+            return
+        }
+
         val auth = FirebaseAuth.getInstance()
         val user = auth.currentUser ?: return
 
         user.reload().addOnCompleteListener { task ->
             if (task.isSuccessful && user.isEmailVerified) {
-                val prefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
-                val isLoggedIn = prefs.getBoolean("auth_logged_in", false)
-                val isGuest = prefs.getBoolean("auth_is_guest", true)
+                val email = user.email ?: ""
+                val name = user.displayName ?: extractNameFromEmail(email)
+                val initials = getInitialsFromName(name)
+                val newUserId = user.uid
 
-                if (!isLoggedIn || isGuest) {
-                    val email = user.email ?: ""
-                    val name = user.displayName ?: extractNameFromEmail(email)
-                    val initials = getInitialsFromName(name)
-                    val newUserId = user.uid
+                prefs.edit()
+                    .putBoolean("auth_logged_in", true)
+                    .putBoolean("auth_is_guest", false)
+                    .putString("auth_user_email", email)
+                    .putString("auth_user_name", name)
+                    .putBoolean("auth_email_verified", true)
+                    .putString("profile_username", name)
+                    .putString("profile_initials", initials)
+                    .putString("current_user_id", newUserId)
+                    .commit()
 
-                    SyncManager.migrateGuestDataToUser(this, newUserId)
-
-                    prefs.edit()
-                        .putBoolean("auth_logged_in", true)
-                        .putBoolean("auth_is_guest", false)
-                        .putString("auth_user_email", email)
-                        .putString("auth_user_name", name)
-                        .putBoolean("auth_email_verified", true)
-                        .putString("profile_username", name)
-                        .putString("profile_initials", initials)
-                        .putString("current_user_id", newUserId)
-                        .commit()
-
-                    viewModel.refreshSessions()
-                    SyncManager.syncAll(this)
-                    updateProfileIconState()
-                    Toast.makeText(this, "Signed in as $email", Toast.LENGTH_SHORT).show()
-                }
+                viewModel.refreshSessions()
+                SyncManager.syncAll(this)
+                updateProfileIconState()
             }
         }
     }
@@ -230,20 +232,26 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
 
     fun updateProfileIconState() {
         val prefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
-        val altPrefs = getPreferences(MODE_PRIVATE)
-        val avatarMode = prefs.getString("avatar_mode", "initials") ?: "initials"
-        val bgColor = prefs.getInt("avatar_bg_color", 0xFF2A2824.toInt())
-        val tintColor = prefs.getInt("avatar_tint_color", ContextCompat.getColor(this, R.color.gold_primary))
+        val userId = prefs.getString("current_user_id", "guest_local") ?: "guest_local"
+
+        val avatarMode = prefs.getString("avatar_mode_$userId", prefs.getString("avatar_mode", "initials")) ?: "initials"
+        val bgColor = prefs.getInt("avatar_bg_color_$userId", prefs.getInt("avatar_bg_color", 0xFF2A2824.toInt()))
+        val tintColor = prefs.getInt("avatar_tint_color_$userId", prefs.getInt("avatar_tint_color", ContextCompat.getColor(this, R.color.gold_primary)))
 
         if (avatarMode == "icon") {
-            val iconName = prefs.getString("avatar_icon", "astronaut") ?: "astronaut"
+            val iconName = prefs.getString("avatar_icon_$userId", prefs.getString("avatar_icon", "astronaut")) ?: "astronaut"
             val drawableRes = when (iconName) {
+                "astronaut", "new_astronaut" -> R.drawable.new_astronaut
+                "knight", "new_knight" -> R.drawable.new_knight
+                "pirate", "new_pirate" -> R.drawable.new_pirate
+                "scientist", "new_scientist" -> R.drawable.new_scientist
                 "chef" -> R.drawable.a_friendly_chef
                 "detective" -> R.drawable.a_friendly_detective
-                "knight" -> R.drawable.a_friendly_knight
                 "robot" -> R.drawable.a_friendly_robot
                 "viking" -> R.drawable.a_friendly_viking
-                else -> R.drawable.a_friendly_astronaut
+                "superhero" -> R.drawable.a_friendly_superhero
+                "alien" -> R.drawable.a_friendly_alien
+                else -> R.drawable.new_astronaut
             }
             val bgDrawable = ContextCompat.getDrawable(this, R.drawable.bg_profile_avatar)?.mutate()
             if (bgDrawable is GradientDrawable) {
@@ -274,7 +282,7 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
             profileIcon.background = bgDrawable
 
             profileIcon.setCompoundDrawablesWithIntrinsicBounds(null, null, null, null)
-            val initials = prefs.getString("profile_initials", altPrefs?.getString("profile_initials", "JD")) ?: "JD"
+            val initials = prefs.getString("profile_initials", "JD") ?: "JD"
             profileIcon.text = initials
             profileIcon.setTextColor(tintColor)
         }

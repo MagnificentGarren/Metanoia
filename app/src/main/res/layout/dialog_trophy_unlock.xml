@@ -1,114 +1,133 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="@drawable/bg_dialog_dark"
-    android:gravity="center_horizontal"
-    android:orientation="vertical"
-    android:padding="26dp">
+    android:layout_height="match_parent"
+    android:background="#FA0A0A0C"
+    android:padding="28dp">
 
-    <!-- Glowing Stars / Sparkles Header -->
-    <TextView
-        android:id="@+id/tvTrophyUnlockHeader"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="🏆 TROPHY UNLOCKED! 🏆"
-        android:textColor="@color/gold_primary"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="16dp"
-        android:textAlignment="center"/>
-
-    <!-- Huge Glowing Circle for the Emoji Trophy -->
-    <FrameLayout
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:layout_marginBottom="16dp">
-
-        <!-- Glowing colored ring representing the unlocked rarity -->
-        <View
-            android:id="@+id/viewTrophyPopGlow"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_gravity="center"
-            android:background="@drawable/bg_profile_avatar" />
-
-        <!-- Inner dark shield container -->
-        <View
-            android:layout_width="84dp"
-            android:layout_height="84dp"
-            android:layout_gravity="center"
-            android:background="@drawable/bg_search_rounded" />
-
-        <!-- Big Achievement Emoji representation -->
-        <TextView
-            android:id="@+id/tvTrophyPopEmoji"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="🛡️"
-            android:textSize="44sp" />
-    </FrameLayout>
-
-    <!-- Trophy Title -->
-    <TextView
-        android:id="@+id/tvTrophyPopTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Weekend Warrior"
-        android:textColor="@color/text_white"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:textAlignment="center" />
-
-    <!-- Unlocked Tier tag -->
-    <TextView
-        android:id="@+id/tvTrophyPopTier"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="GOLD TIER UNLOCKED"
-        android:textColor="#FFE600"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        android:letterSpacing="0.1" />
-
-    <!-- Pure Lore/Narrative Paragraph -->
-    <TextView
-        android:id="@+id/tvTrophyPopLore"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
-        android:text="While others rest or wander, the warrior sharpens their sword in the quietude of the weekend."
-        android:textColor="#C0C0C0"
-        android:textSize="15sp"
-        android:textStyle="italic"
-        android:textAlignment="center" />
+        android:layout_height="match_parent"
+        android:layout_above="@id/btnTrophyPopClaim"
+        android:fillViewport="true"
+        android:scrollbars="none">
 
-    <!-- Unlock Method Detail -->
-    <TextView
-        android:id="@+id/tvTrophyPopDescription"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@drawable/bg_card_outline"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="8dp"
-        android:text="Goal Met: Logged 15 weekend focus sessions."
-        android:textColor="@color/text_white"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:textAlignment="center" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingTop="36dp">
+
+            <!-- Glowing Header Label -->
+            <TextView
+                android:id="@+id/tvTrophyUnlockHeader"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="28dp"
+                android:letterSpacing="0.08"
+                android:text="✨ TROPHY UNLOCKED ✨"
+                android:textColor="@color/gold_primary"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <!-- Huge Animated Shield Container for the Emoji Trophy -->
+            <FrameLayout
+                android:layout_width="160dp"
+                android:layout_height="160dp"
+                android:layout_marginBottom="24dp">
+
+                <!-- Outer Glowing Aura Ring -->
+                <View
+                    android:id="@+id/viewTrophyPopGlow"
+                    android:layout_width="150dp"
+                    android:layout_height="150dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_profile_avatar" />
+
+                <!-- Inner Dark Shield -->
+                <View
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_search_rounded" />
+
+                <!-- Big Trophy Emoji -->
+                <TextView
+                    android:id="@+id/tvTrophyPopEmoji"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="🛡️"
+                    android:textSize="64sp" />
+            </FrameLayout>
+
+            <!-- Trophy Title -->
+            <TextView
+                android:id="@+id/tvTrophyPopTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Weekend Warrior"
+                android:textColor="@color/text_white"
+                android:textSize="28sp"
+                android:textStyle="bold" />
+
+            <!-- Unlocked Tier Tag -->
+            <TextView
+                android:id="@+id/tvTrophyPopTier"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:letterSpacing="0.12"
+                android:text="GOLD TIER UNLOCKED"
+                android:textColor="#FFE600"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <!-- Lore Narrative Quote Box -->
+            <TextView
+                android:id="@+id/tvTrophyPopLore"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="20dp"
+                android:background="@drawable/bg_card_outline"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="&quot;While others rest or wander, the warrior sharpens their sword in the quietude of the weekend.&quot;"
+                android:textColor="#D1D1D6"
+                android:textSize="15sp"
+                android:textStyle="italic" />
+
+            <!-- Unlock Method / Progress Description -->
+            <TextView
+                android:id="@+id/tvTrophyPopDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_search_rounded"
+                android:gravity="center"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="14dp"
+                android:text="Goal Met: Logged 15 weekend focus sessions."
+                android:textColor="@color/text_white"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </ScrollView>
 
     <Button
         android:id="@+id/btnTrophyPopClaim"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_marginTop="24dp"
+        android:layout_height="56dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginTop="16dp"
         android:backgroundTint="@color/gold_primary"
-        android:text="CLAIM GLORY"
+        android:letterSpacing="0.05"
+        android:text="CLAIM GLORY 🏆"
         android:textColor="@color/bg_dark"
+        android:textSize="16sp"
         android:textStyle="bold" />
 
-</LinearLayout>
+</RelativeLayout>

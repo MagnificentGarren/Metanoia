@@ -749,7 +749,7 @@ class TimerService : Service() {
             .setContentText(statusText ?: dynamicStatusText)
             .setSubText(categoryTag)
             .setColor(0xD4AF37)
-            .setSmallIcon(R.drawable.ic_head)
+            .setSmallIcon(R.drawable.ic_metanoia_notification_logo)
             .setContentIntent(pendingIntent)
             .setOngoing(isTimerRunning || isAlarmRinging)
             .setOnlyAlertOnce(true)

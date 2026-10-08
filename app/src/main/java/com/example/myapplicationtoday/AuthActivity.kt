@@ -73,6 +73,19 @@ class AuthActivity : AppCompatActivity() {
 
         setupTextWatchers()
         setMode(signUp = false)
+
+        val isLogoutIntent = intent.getBooleanExtra("is_logout", false)
+        val prefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
+        val isLoggedIn = prefs.getBoolean("auth_logged_in", false)
+
+        if (isLogoutIntent || !isLoggedIn) {
+            try {
+                FirebaseAuth.getInstance().signOut()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            prefs.edit().putBoolean("awaiting_verification", false).commit()
+        }
     }
 
     override fun onResume() {
@@ -81,6 +94,14 @@ class AuthActivity : AppCompatActivity() {
     }
 
     private fun autoCheckEmailVerificationOnReturn() {
+        val prefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
+        val awaitingVerification = prefs.getBoolean("awaiting_verification", false)
+        val isLoggedIn = prefs.getBoolean("auth_logged_in", false)
+
+        if (!awaitingVerification || isLoggedIn) {
+            return
+        }
+
         val auth = FirebaseAuth.getInstance()
         val user = auth.currentUser ?: return
 
@@ -90,7 +111,6 @@ class AuthActivity : AppCompatActivity() {
                 val name = user.displayName ?: extractNameFromEmail(email)
                 val newUserId = user.uid
 
-                val prefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
                 val prevWasGuest = prefs.getBoolean("auth_is_guest", true)
 
                 if (prevWasGuest) {
@@ -286,8 +306,9 @@ class AuthActivity : AppCompatActivity() {
                     // 2. Dispatch real email verification
                     user?.sendEmailVerification()?.addOnCompleteListener { verifyTask ->
                         if (verifyTask.isSuccessful) {
-                            // Show modal informing user to check inbox.
-                            // We do NOT call auth.signOut() so the device session stays active for auto-verification on return.
+                            getSharedPreferences("metanoia_prefs", MODE_PRIVATE).edit()
+                                .putBoolean("awaiting_verification", true)
+                                .apply()
                             showVerificationSentModal(email)
                         } else {
                             tvAuthGlobalError.text = "Failed to send verification email: ${verifyTask.exception?.message}"
@@ -431,15 +452,25 @@ class AuthActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
         val initials = name.split(" ").filter { it.isNotEmpty() }.map { it.first().uppercaseChar() }.take(2).joinToString("")
 
+        val userAvatarMode = prefs.getString("avatar_mode_$userId", prefs.getString("avatar_mode", "initials")) ?: "initials"
+        val userAvatarIcon = prefs.getString("avatar_icon_$userId", prefs.getString("avatar_icon", "astronaut")) ?: "astronaut"
+        val userBgColor = prefs.getInt("avatar_bg_color_$userId", prefs.getInt("avatar_bg_color", 0xFF2A2824.toInt()))
+        val userTintColor = prefs.getInt("avatar_tint_color_$userId", prefs.getInt("avatar_tint_color", 0xFFD4AF37.toInt()))
+
         prefs.edit()
             .putBoolean("auth_logged_in", true)
             .putBoolean("auth_is_guest", isGuest)
+            .putBoolean("awaiting_verification", false)
             .putString("auth_user_email", email)
             .putString("auth_user_name", name)
             .putBoolean("auth_email_verified", isVerified)
             .putString("profile_username", name)
             .putString("profile_initials", if (initials.isNotEmpty()) initials else "JD")
             .putString("current_user_id", userId)
+            .putString("avatar_mode", userAvatarMode)
+            .putString("avatar_icon", userAvatarIcon)
+            .putInt("avatar_bg_color", userBgColor)
+            .putInt("avatar_tint_color", userTintColor)
             .commit()
     }
 

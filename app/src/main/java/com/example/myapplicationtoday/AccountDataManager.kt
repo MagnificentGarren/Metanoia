@@ -56,6 +56,14 @@ object AccountDataManager {
             .putString("profile_username", "Guest User")
             .putString("profile_initials", "GU")
             .putString("current_user_id", "guest_local")
+            .putString("avatar_mode", "initials")
+            .putString("avatar_icon", "astronaut")
+            .putInt("avatar_bg_color", 0xFF2A2824.toInt())
+            .putInt("avatar_tint_color", 0xFFD4AF37.toInt())
+            .putString("avatar_mode_guest_local", "initials")
+            .putString("avatar_icon_guest_local", "astronaut")
+            .putInt("avatar_bg_color_guest_local", 0xFF2A2824.toInt())
+            .putInt("avatar_tint_color_guest_local", 0xFFD4AF37.toInt())
             .commit()
 
         // 6. Cancel Scheduled Reminders

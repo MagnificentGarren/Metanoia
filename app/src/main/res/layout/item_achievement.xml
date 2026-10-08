@@ -4,22 +4,22 @@
     android:id="@+id/layoutAchievementCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="4dp"
+    android:layout_marginVertical="6dp"
     android:background="@drawable/bg_card_outline"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?android:attr/selectableItemBackground"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="12dp">
+    android:orientation="horizontal"
+    android:padding="16dp">
 
-    <!-- Glowing Icon Area -->
+    <!-- Left Badge Shield Area -->
     <FrameLayout
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:gravity="center">
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_gravity="top"
+        android:layout_marginEnd="16dp">
 
-        <!-- Outer Glowing Ring -->
+        <!-- Glowing Rarity Aura Ring -->
         <View
             android:id="@+id/viewGlowRing"
             android:layout_width="68dp"
@@ -27,21 +27,21 @@
             android:layout_gravity="center"
             android:background="@drawable/bg_profile_avatar" />
 
-        <!-- Innermost dark container for contrast -->
+        <!-- Inner dark contrast container -->
         <View
-            android:layout_width="56dp"
-            android:layout_height="56dp"
+            android:layout_width="54dp"
+            android:layout_height="54dp"
             android:layout_gravity="center"
             android:background="@drawable/bg_search_rounded" />
 
-        <!-- High-res Emoji icon representation -->
+        <!-- Emoji representation -->
         <TextView
             android:id="@+id/tvAchievementEmoji"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="⏳"
-            android:textSize="35sp" />
+            android:text="⏱️"
+            android:textSize="32sp" />
 
         <!-- Lock overlay icon -->
         <TextView
@@ -49,8 +49,6 @@
             android:layout_width="22dp"
             android:layout_height="22dp"
             android:layout_gravity="top|end"
-            android:layout_marginTop="4dp"
-            android:layout_marginEnd="4dp"
             android:background="@drawable/bg_profile_avatar"
             android:gravity="center"
             android:text="🔒"
@@ -58,62 +56,98 @@
             android:visibility="gone" />
     </FrameLayout>
 
-    <!-- Title and details -->
-    <TextView
-        android:id="@+id/tvAchievementTitle"
-        android:layout_width="wrap_content"
+    <!-- Main Right Content Column -->
+    <LinearLayout
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text="First Focus"
-        android:textColor="@color/text_white"
-        android:textSize="14sp"
-        android:textStyle="bold" />
+        android:layout_weight="1"
+        android:orientation="vertical">
 
-    <!-- Multi-Tier Indicator Badge -->
-    <TextView
-        android:id="@+id/tvAchievementTierTag"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:background="@drawable/bg_category_pill"
-        android:paddingHorizontal="8dp"
-        android:paddingVertical="2dp"
-        android:textColor="@color/gold_primary"
-        android:textSize="11sp"
-        android:textStyle="bold" />
+        <!-- Header Row: Title & Tier Pill -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-    <!-- Direct description of how to get the medal -->
-    <TextView
-        android:id="@+id/tvAchievementDescription"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:ellipsize="end"
-        android:maxLines="2"
-        android:text="Complete a focus session of any length."
-        android:textColor="@color/text_muted"
-        android:textSize="11sp"
-        android:textAlignment="center" />
+            <TextView
+                android:id="@+id/tvAchievementTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_toStartOf="@id/tvAchievementTierTag"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Consistency King"
+                android:textColor="@color/text_white"
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/tvAchievementProgress"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="2 / 7"
-        android:textColor="@color/text_light_grey"
-        android:textSize="12sp"
-        android:textStyle="bold" />
+            <TextView
+                android:id="@+id/tvAchievementTierTag"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:background="@drawable/bg_category_pill"
+                android:letterSpacing="0.04"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="3dp"
+                android:text="GOLD TIER"
+                android:textColor="@color/gold_primary"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
 
-    <ImageView
-        android:id="@+id/ivChevronDown"
-        android:layout_width="16dp"
-        android:layout_height="16dp"
-        android:layout_marginTop="4dp"
-        android:contentDescription="Expand"
-        android:src="@drawable/ic_chevron_down"
-        app:tint="@color/text_muted" />
+        <!-- Detailed How to Obtain Text -->
+        <TextView
+            android:id="@+id/tvAchievementDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Maintain a consecutive daily focus streak. Bronze (3 days) • Silver (7 days) • Gold (15 days) • Diamond (30 days)."
+            android:textColor="@color/text_white"
+            android:textSize="12sp" />
+
+        <!-- Lore Quote -->
+        <TextView
+            android:id="@+id/tvAchievementLore"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:text="&quot;Momentum is the secret catalyst of genius.&quot;"
+            android:textColor="@color/text_muted"
+            android:textSize="11sp"
+            android:textStyle="italic" />
+
+        <!-- Progress Bar & Percentage Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ProgressBar
+                android:id="@+id/progressAchievementBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="0dp"
+                android:layout_height="6dp"
+                android:layout_weight="1"
+                android:max="100"
+                android:progress="50"
+                android:progressBackgroundTint="@color/card_stroke"
+                android:progressTint="@color/gold_primary" />
+
+            <TextView
+                android:id="@+id/tvAchievementProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="3 / 7 days"
+                android:textColor="@color/gold_primary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
 
 </LinearLayout>

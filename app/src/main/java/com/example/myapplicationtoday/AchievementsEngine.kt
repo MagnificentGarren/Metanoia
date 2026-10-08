@@ -11,6 +11,7 @@ data class AchievementItem(
     val title: String,
     val lore: String,
     val description: String,
+    val howToObtain: String,
     val emoji: String,
     val category: String, // "STREAKS", "PROJECTS", "MILESTONES"
     val currentProgress: Int,
@@ -493,11 +494,19 @@ object AchievementsEngine {
             else -> Color.parseColor("#333333")
         }
 
+        val reqBronze = if (tiers.size > 0) "${tiers[0]} $unit" else ""
+        val reqSilver = if (tiers.size > 1) "${tiers[1]} $unit" else ""
+        val reqGold = if (tiers.size > 2) "${tiers[2]} $unit" else ""
+        val reqDiamond = if (tiers.size > 3) "${tiers[3]} $unit" else ""
+
+        val howToObtain = "HOW TO OBTAIN:\n$description\n\n• Bronze: $reqBronze  • Silver: $reqSilver\n• Gold: $reqGold  • Diamond: $reqDiamond\n\nYour Current Progress: $currentVal / $targetMax $unit"
+
         return AchievementItem(
             id = id,
             title = title,
             lore = lore,
             description = description,
+            howToObtain = howToObtain,
             emoji = emoji,
             category = category,
             currentProgress = currentVal,
@@ -518,14 +527,16 @@ object AchievementsEngine {
         val editor = prefs.edit()
 
         if (!hasInitialized) {
-            // First time loading - silently save current states to prevent spam popup
-            for (item in calculated) {
-                if (!item.isLocked) {
-                    editor.putString("unlocked_tier_${item.id}", item.tierName)
+            if (sessions.isNotEmpty() || projects.isNotEmpty()) {
+                // First time loading - silently save current states to prevent spam popup
+                for (item in calculated) {
+                    if (!item.isLocked) {
+                        editor.putString("unlocked_tier_${item.id}", item.tierName)
+                    }
                 }
+                editor.putBoolean("has_initialized_v1", true)
+                editor.apply()
             }
-            editor.putBoolean("has_initialized_v1", true)
-            editor.apply()
             return
         }
 
