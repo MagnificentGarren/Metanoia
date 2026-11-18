@@ -318,6 +318,21 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:contentDescription="Viking" />
+
+                <!-- 12. Jolly King -->
+                <ImageView
+                    android:id="@+id/iconJollyKing"
+                    android:layout_width="0dp"
+                    android:layout_height="64dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_avatar_icon_unselected"
+                    android:padding="12dp"
+                    android:src="@drawable/a_jolly_king"
+                    app:tint="@color/gold_primary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="Jolly King" />
             </GridLayout>
         </LinearLayout>
 

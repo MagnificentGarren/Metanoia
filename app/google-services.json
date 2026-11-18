@@ -51,6 +51,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "851229961159-j9vnc34a82l891vfae84bllqrl55bec4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.magnificentgarren.metanoia",
+            "certificate_hash": "942a9cee34d32dcf5f605e6868b9cbd29ab99b7a"
+          }
+        },
+        {
           "client_id": "851229961159-39oiud6tlcgujvrm6bl6h890ul9lp5ra.apps.googleusercontent.com",
           "client_type": 3
         }

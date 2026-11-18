@@ -251,6 +251,7 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
                 "viking" -> R.drawable.a_friendly_viking
                 "superhero" -> R.drawable.a_friendly_superhero
                 "alien" -> R.drawable.a_friendly_alien
+                "king", "jolly_king", "a_jolly_king" -> R.drawable.a_jolly_king
                 else -> R.drawable.new_astronaut
             }
             val bgDrawable = ContextCompat.getDrawable(this, R.drawable.bg_profile_avatar)?.mutate()

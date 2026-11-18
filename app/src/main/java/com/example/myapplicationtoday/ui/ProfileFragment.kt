@@ -334,6 +334,7 @@ class ProfileFragment : Fragment() {
             "viking" -> R.drawable.a_friendly_viking
             "superhero" -> R.drawable.a_friendly_superhero
             "alien" -> R.drawable.a_friendly_alien
+            "king", "jolly_king", "a_jolly_king" -> R.drawable.a_jolly_king
             else -> R.drawable.new_astronaut
         }
     }
@@ -696,7 +697,8 @@ class ProfileFragment : Fragment() {
             getIconView("iconChef") to "chef",
             getIconView("iconDetective") to "detective",
             getIconView("iconRobot") to "robot",
-            getIconView("iconViking") to "viking"
+            getIconView("iconViking") to "viking",
+            getIconView("iconJollyKing") to "a_jolly_king"
         ).filter { it.first != null }.map { it.first!! to it.second }
 
         fun updateIconSelectionHighlights() {
@@ -1274,7 +1276,7 @@ class ProfileFragment : Fragment() {
         try {
             val intent = Intent(Intent.ACTION_SENDTO).apply {
                 data = Uri.parse("mailto:")
-                putExtra(Intent.EXTRA_EMAIL, arrayOf("support@metanoia-focus.com"))
+                putExtra(Intent.EXTRA_EMAIL, arrayOf("magnificentgarren007@gmail.com"))
                 putExtra(Intent.EXTRA_SUBJECT, "Metanoia Support & Feedback (v1.0)")
                 putExtra(Intent.EXTRA_TEXT, "Hi Metanoia Support,\n\n[Write your feedback here]\n\n---\nDevice Details:\nModel: ${Build.MODEL}\nOS: Android ${Build.VERSION.RELEASE}")
             }

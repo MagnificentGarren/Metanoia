@@ -105,6 +105,7 @@
                 android:textColorHint="#555555"
                 android:paddingHorizontal="16dp"
                 android:inputType="textPersonName"
+                android:autofillHints="name"
                 android:visibility="gone"
                 android:layout_marginBottom="16dp" />
 
@@ -138,6 +139,7 @@
                 android:textColorHint="#555555"
                 android:paddingHorizontal="16dp"
                 android:inputType="textEmailAddress"
+                android:autofillHints="emailAddress"
                 android:layout_marginBottom="16dp" />
 
             <TextView
@@ -160,17 +162,52 @@
                 android:textStyle="bold"
                 android:layout_marginBottom="6dp" />
 
-            <EditText
-                android:id="@+id/etAuthPassword"
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:background="@drawable/bg_search_rounded"
-                android:hint="••••••••"
-                android:textColor="#FFFFFF"
-                android:textColorHint="#555555"
-                android:paddingHorizontal="16dp"
-                android:inputType="textPassword"
-                android:layout_marginBottom="20dp" />
+                android:layout_marginBottom="6dp">
+
+                <EditText
+                    android:id="@+id/etAuthPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_search_rounded"
+                    android:hint="••••••••"
+                    android:textColor="#FFFFFF"
+                    android:textColorHint="#555555"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="48dp"
+                    android:inputType="textPassword"
+                    android:autofillHints="password" />
+
+                <ImageView
+                    android:id="@+id/btnTogglePassword"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginEnd="4dp"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_eye_toggle"
+                    android:contentDescription="Toggle Password Visibility"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    app:tint="#8E8E93" />
+            </RelativeLayout>
+
+            <!-- Forgot Password Link (Log In mode) -->
+            <TextView
+                android:id="@+id/btnForgotPassword"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:text="Forgot Password?"
+                android:textColor="#D4AF37"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:paddingVertical="4dp"
+                android:layout_marginBottom="12dp"
+                android:clickable="true"
+                android:focusable="true" />
 
             <TextView
                 android:id="@+id/tvErrorAuthPassword"
@@ -179,8 +216,64 @@
                 android:textColor="#FF5252"
                 android:textSize="12sp"
                 android:visibility="gone"
-                android:layout_marginTop="-16dp"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginTop="-4dp"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Confirm Password (Sign Up only) -->
+            <TextView
+                android:id="@+id/lblAuthConfirmPassword"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CONFIRM PASSWORD"
+                android:textColor="#D4AF37"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                android:layout_marginBottom="6dp" />
+
+            <RelativeLayout
+                android:id="@+id/layoutConfirmPassword"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:visibility="gone"
+                android:layout_marginBottom="16dp">
+
+                <EditText
+                    android:id="@+id/etAuthConfirmPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_search_rounded"
+                    android:hint="••••••••"
+                    android:textColor="#FFFFFF"
+                    android:textColorHint="#555555"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="48dp"
+                    android:inputType="textPassword"
+                    android:autofillHints="password" />
+
+                <ImageView
+                    android:id="@+id/btnToggleConfirmPassword"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginEnd="4dp"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_eye_toggle"
+                    android:contentDescription="Toggle Confirm Password Visibility"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    app:tint="#8E8E93" />
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/tvErrorAuthConfirmPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#FF5252"
+                android:textSize="12sp"
+                android:visibility="gone"
+                android:layout_marginTop="-12dp"
+                android:layout_marginBottom="12dp" />
 
             <TextView
                 android:id="@+id/tvAuthGlobalError"
@@ -193,6 +286,16 @@
                 android:visibility="gone"
                 android:layout_marginBottom="12dp" />
 
+            <!-- Progress Bar Loading Overlay -->
+            <ProgressBar
+                android:id="@+id/pbAuthLoading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:indeterminateTint="#D4AF37"
+                android:visibility="gone"
+                android:layout_marginBottom="12dp" />
+
             <!-- Primary Action Button -->
             <Button
                 android:id="@+id/btnAuthSubmit"
@@ -202,6 +305,56 @@
                 android:text="LOG IN"
                 android:textColor="#0A0A0A"
                 android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <!-- OR Divider Line -->
+            <LinearLayout
+                android:id="@+id/layoutOrDivider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp">
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"
+                    android:background="#2C2C2E" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="  OR  "
+                    android:textColor="#8E8E93"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"
+                    android:background="#2C2C2E" />
+            </LinearLayout>
+
+            <!-- Google Sign-In Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAuthGoogle"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:backgroundTint="#1C1C1E"
+                app:icon="@drawable/ic_google_logo"
+                app:iconTint="@null"
+                android:drawableTint="@null"
+                app:iconGravity="textStart"
+                app:iconSize="20dp"
+                app:iconPadding="12dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="CONTINUE WITH GOOGLE"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
                 android:textStyle="bold" />
         </LinearLayout>
 

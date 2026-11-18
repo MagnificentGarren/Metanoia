@@ -1,11 +1,14 @@
 package com.example.myapplicationtoday
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
+import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.Ringtone
@@ -17,6 +20,7 @@ import android.os.CountDownTimer
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -64,13 +68,15 @@ class TimerService : Service() {
     private var countDownTimer: CountDownTimer? = null
     private var ringtone: Ringtone? = null
     private var tickToneGenerator: ToneGenerator? = null
-    private var previewToneGenerator: ToneGenerator? = null // New ToneGenerator for preview
+    private var previewToneGenerator: ToneGenerator? = null
     private var alarmToneGenerator: ToneGenerator? = null
     private var activePlayer: MediaPlayer? = null
     private var nextPlayer: MediaPlayer? = null
     private var isCrossfading = false
     private val crossfadeHandler = Handler(Looper.getMainLooper())
     private val FADE_DURATION_MS = 4000L
+
+    private var wakeLock: PowerManager.WakeLock? = null
 
     private val fadeCheckRunnable = object : Runnable {
         override fun run() {
@@ -106,8 +112,11 @@ class TimerService : Service() {
             if (isTimerRunning) {
                 val now = System.currentTimeMillis()
                 countUpTimeInSeconds = (now - countUpStartTime) / 1000L
-                updateNotification()
                 notifyTick(countUpTimeInSeconds * 1000L)
+                if (countUpTimeInSeconds % 60 == 0L) {
+                    updateNotification()
+                }
+                saveActiveSessionState()
                 handler.postDelayed(this, 1000)
             }
         }
@@ -115,6 +124,7 @@ class TimerService : Service() {
 
     var totalDurationMillis: Long = 0L
     var timeLeftInMillis: Long = 0L
+    var targetEndTimeMs: Long = 0L
     var isTimerRunning: Boolean = false
     var isPaused: Boolean = false
     var isAlarmRinging: Boolean = false
@@ -128,8 +138,17 @@ class TimerService : Service() {
 
     override fun onBind(intent: Intent?): IBinder = binder
 
+    override fun onCreate() {
+        super.onCreate()
+        restoreActiveSessionStateIfNeeded()
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action = intent?.action
+        if (action == null && !isTimerRunning && !isPaused && !isAlarmRinging) {
+            restoreActiveSessionStateIfNeeded()
+        }
+
         when (action) {
             ACTION_START -> {
                 isCountUpMode = intent.getBooleanExtra(EXTRA_IS_COUNT_UP, false)
@@ -152,6 +171,122 @@ class TimerService : Service() {
         return START_STICKY
     }
 
+    private fun acquireWakeLock() {
+        try {
+            if (wakeLock == null) {
+                val powerManager = getSystemService(POWER_SERVICE) as? PowerManager
+                wakeLock = powerManager?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "metanoia:TimerServiceWakeLock")
+            }
+            if (wakeLock?.isHeld == false) {
+                wakeLock?.acquire(24 * 60 * 60 * 1000L)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun releaseWakeLock() {
+        try {
+            if (wakeLock?.isHeld == true) {
+                wakeLock?.release()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun getActivePrefs(): SharedPreferences {
+        return getSharedPreferences(PREFS_ACTIVE_SESSION, MODE_PRIVATE)
+    }
+
+    fun saveActiveSessionState() {
+        try {
+            val prefs = getActivePrefs()
+            prefs.edit()
+                .putBoolean(KEY_IS_ACTIVE, isTimerRunning || isPaused || isAlarmRinging)
+                .putBoolean(KEY_IS_RUNNING, isTimerRunning)
+                .putBoolean(KEY_IS_PAUSED, isPaused)
+                .putBoolean(KEY_IS_ALARM_RINGING, isAlarmRinging)
+                .putBoolean(KEY_IS_COUNT_UP, isCountUpMode)
+                .putLong(KEY_START_TIME_MS, countUpStartTime)
+                .putLong(KEY_TARGET_END_TIME_MS, targetEndTimeMs)
+                .putLong(KEY_TOTAL_DURATION_MS, totalDurationMillis)
+                .putLong(KEY_TIME_LEFT_MS, timeLeftInMillis)
+                .putLong(KEY_COUNT_UP_SECONDS, countUpTimeInSeconds)
+                .putString(KEY_SESSION_TITLE, sessionTitle)
+                .putString(KEY_SESSION_CATEGORY, sessionCategory)
+                .putString(KEY_SESSION_PROJECT_ID, sessionProjectId)
+                .apply()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun clearActiveSessionState() {
+        try {
+            getActivePrefs().edit().clear().apply()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun restoreActiveSessionStateIfNeeded() {
+        if (isTimerRunning || isPaused || isAlarmRinging) return
+
+        val prefs = getActivePrefs()
+        val isActive = prefs.getBoolean(KEY_IS_ACTIVE, false)
+        if (!isActive) return
+
+        isCountUpMode = prefs.getBoolean(KEY_IS_COUNT_UP, false)
+        sessionTitle = prefs.getString(KEY_SESSION_TITLE, "Focus Session") ?: "Focus Session"
+        sessionCategory = prefs.getString(KEY_SESSION_CATEGORY, "Deep Work") ?: "Deep Work"
+        sessionProjectId = prefs.getString(KEY_SESSION_PROJECT_ID, null)
+        totalDurationMillis = prefs.getLong(KEY_TOTAL_DURATION_MS, 0L)
+
+        val savedIsRunning = prefs.getBoolean(KEY_IS_RUNNING, false)
+        val savedIsPaused = prefs.getBoolean(KEY_IS_PAUSED, false)
+        val savedIsAlarmRinging = prefs.getBoolean(KEY_IS_ALARM_RINGING, false)
+
+        when {
+            savedIsAlarmRinging -> {
+                playAlarmSound()
+                startForeground(NOTIFICATION_ID, buildNotification("Session Complete!"))
+                notifyFinish()
+            }
+            savedIsPaused -> {
+                isTimerRunning = false
+                isPaused = true
+                timeLeftInMillis = prefs.getLong(KEY_TIME_LEFT_MS, 0L)
+                countUpTimeInSeconds = prefs.getLong(KEY_COUNT_UP_SECONDS, 0L)
+                startForeground(NOTIFICATION_ID, buildNotification("Paused"))
+                notifyStateChanged(isRunning = false, isPaused = true)
+            }
+            savedIsRunning -> {
+                val now = System.currentTimeMillis()
+                if (isCountUpMode) {
+                    val startTime = prefs.getLong(KEY_START_TIME_MS, now)
+                    countUpStartTime = startTime
+                    countUpTimeInSeconds = (now - startTime) / 1000L
+                    startCountUpTimer()
+                } else {
+                    val savedTargetEndTime = prefs.getLong(KEY_TARGET_END_TIME_MS, now)
+                    val remaining = savedTargetEndTime - now
+                    if (remaining <= 0) {
+                        // Timer completed while service/app process was killed
+                        timeLeftInMillis = 0L
+                        isTimerRunning = false
+                        isPaused = false
+                        endAndSaveSession()
+                    } else {
+                        targetEndTimeMs = savedTargetEndTime
+                        timeLeftInMillis = remaining
+                        startTimer(remaining)
+                    }
+                }
+            }
+        }
+    }
+
     fun endAndSaveSession() {
         stopAlarmSound()
 
@@ -160,7 +295,7 @@ class TimerService : Service() {
             "${mins} mins"
         } else {
             val elapsedMillis = totalDurationMillis - timeLeftInMillis
-            val mins = elapsedMillis / 1000 / 60
+            val mins = (elapsedMillis / 1000 / 60).coerceAtLeast(1)
             "${mins} mins"
         }
 
@@ -178,6 +313,7 @@ class TimerService : Service() {
         SessionRepository.init(this)
         SessionRepository.addSession(this, newSession)
 
+        clearActiveSessionState()
         notifyStateChanged(isRunning = false, isPaused = false)
 
         stopTimerAndService()
@@ -185,6 +321,7 @@ class TimerService : Service() {
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
+        saveActiveSessionState()
         if (!isTimerRunning && !isPaused && !isAlarmRinging) {
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
@@ -192,6 +329,7 @@ class TimerService : Service() {
     }
 
     fun startCountUpTimer() {
+        acquireWakeLock()
         stopAlarmSound()
         countDownTimer?.cancel()
 
@@ -210,18 +348,24 @@ class TimerService : Service() {
         handler.removeCallbacks(countUpRunnable)
         handler.post(countUpRunnable)
 
+        saveActiveSessionState()
         startForeground(NOTIFICATION_ID, buildNotification("Count Up Running..."))
+        notifyStateChanged(isRunning = true, isPaused = false)
     }
 
     fun startTimer(durationMillis: Long) {
+        acquireWakeLock()
         stopAlarmSound()
         handler.removeCallbacks(countUpRunnable)
 
+        val now = System.currentTimeMillis()
         if (timeLeftInMillis <= 0 || !isPaused) {
             totalDurationMillis = durationMillis
             timeLeftInMillis = durationMillis
+            targetEndTimeMs = now + durationMillis
             playFocusMusic()
         } else {
+            targetEndTimeMs = now + timeLeftInMillis
             resumeFocusMusic()
         }
 
@@ -230,9 +374,13 @@ class TimerService : Service() {
         countDownTimer?.cancel()
         countDownTimer = object : CountDownTimer(timeLeftInMillis, 1000) {
             override fun onTick(millisUntilFinished: Long) {
-                timeLeftInMillis = millisUntilFinished
-                updateNotification()
-                notifyTick(millisUntilFinished)
+                val realRemaining = (targetEndTimeMs - System.currentTimeMillis()).coerceAtLeast(0L)
+                timeLeftInMillis = realRemaining
+                notifyTick(realRemaining)
+                if ((realRemaining / 1000) % 60 == 0L) {
+                    updateNotification()
+                }
+                saveActiveSessionState()
             }
 
             override fun onFinish() {
@@ -241,6 +389,7 @@ class TimerService : Service() {
                 isPaused = false
                 stopFocusMusic()
                 playAlarmSound()
+                saveActiveSessionState()
                 updateNotification("Session Complete!")
                 notifyFinish()
             }
@@ -248,7 +397,9 @@ class TimerService : Service() {
 
         isTimerRunning = true
         isPaused = false
+        saveActiveSessionState()
         startForeground(NOTIFICATION_ID, buildNotification("Running..."))
+        notifyStateChanged(isRunning = true, isPaused = false)
     }
 
     fun togglePauseResume() {
@@ -263,6 +414,7 @@ class TimerService : Service() {
         isTimerRunning = false
         isPaused = true
         pauseFocusMusic()
+        releaseWakeLock()
 
         if (isCountUpMode) {
             handler.removeCallbacks(countUpRunnable)
@@ -270,6 +422,7 @@ class TimerService : Service() {
             countDownTimer?.cancel()
         }
 
+        saveActiveSessionState()
         updateNotification("Paused")
         notifyStateChanged(isRunning = false, isPaused = true)
     }
@@ -280,8 +433,6 @@ class TimerService : Service() {
         } else {
             startTimer(timeLeftInMillis)
         }
-
-        notifyStateChanged(isRunning = true, isPaused = false)
     }
 
     fun stopTimerAndService() {
@@ -289,8 +440,10 @@ class TimerService : Service() {
         handler.removeCallbacks(countUpRunnable)
         stopAlarmSound()
         stopFocusMusic()
+        releaseWakeLock()
         isTimerRunning = false
         isPaused = false
+        clearActiveSessionState()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
 
@@ -324,7 +477,7 @@ class TimerService : Service() {
     private fun playFocusMusic() {
         stopFocusMusic()
 
-        val prefs = getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
+        val prefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
         val isMusicEnabled = prefs.getBoolean("focus_music_enabled", true)
         if (!isMusicEnabled) return
 
@@ -524,8 +677,10 @@ class TimerService : Service() {
 
     @Suppress("unused")
     private fun playTickFeedback() {
-        val metanoiaPrefs = getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
-        val mainActivityPrefs = getSharedPreferences("com.example.myapplicationtoday.MainActivity", Context.MODE_PRIVATE)
+        val metanoiaPrefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
+        val mainActivityPrefs = getSharedPreferences("com.example.myapplicationtoday.MainActivity",
+            MODE_PRIVATE
+        )
 
         val isHapticEnabled = metanoiaPrefs.getBoolean("haptic_feedback_enabled", metanoiaPrefs.getBoolean("haptic_sound", true))
         val isSoundEnabled = metanoiaPrefs.getBoolean("sound_effects_enabled", metanoiaPrefs.getBoolean("haptic_sound", true))
@@ -594,8 +749,10 @@ class TimerService : Service() {
     private val alarmLoopRunnable = object : Runnable {
         override fun run() {
             if (!isAlarmRinging) return
-            val prefs = getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
-            val altPrefs = getSharedPreferences("com.example.myapplicationtoday.MainActivity", Context.MODE_PRIVATE)
+            val prefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
+            val altPrefs = getSharedPreferences("com.example.myapplicationtoday.MainActivity",
+                MODE_PRIVATE
+            )
             val isSoundEnabled = prefs.getBoolean("sound_effects_enabled", prefs.getBoolean("haptic_sound", true))
             val soundChoice = prefs.getString("alert_sound", altPrefs.getString("alert_sound", "Zen Bell")) ?: "Zen Bell"
 
@@ -621,14 +778,17 @@ class TimerService : Service() {
     }
 
     private fun playAlarmSound() {
-        val prefs = getSharedPreferences("metanoia_prefs", Context.MODE_PRIVATE)
-        val altPrefs = getSharedPreferences("com.example.myapplicationtoday.MainActivity", Context.MODE_PRIVATE)
+        val prefs = getSharedPreferences("metanoia_prefs", MODE_PRIVATE)
+        val altPrefs = getSharedPreferences("com.example.myapplicationtoday.MainActivity",
+            MODE_PRIVATE
+        )
 
         val isHapticEnabled = prefs.getBoolean("haptic_feedback_enabled", prefs.getBoolean("haptic_sound", true))
         val isSoundEnabled = prefs.getBoolean("sound_effects_enabled", prefs.getBoolean("haptic_sound", true))
         val soundChoice = prefs.getString("alert_sound", altPrefs.getString("alert_sound", "Zen Bell")) ?: "Zen Bell"
 
         isAlarmRinging = true
+        acquireWakeLock()
 
         try {
             if (isHapticEnabled) {
@@ -677,7 +837,7 @@ class TimerService : Service() {
         try {
             alarmToneGenerator?.stopTone()
             alarmToneGenerator?.release()
-        previewToneGenerator?.release() // Release the new ToneGenerator
+            previewToneGenerator?.release()
             alarmToneGenerator = null
         } catch (e: Exception) {
             e.printStackTrace()
@@ -692,6 +852,7 @@ class TimerService : Service() {
 
         isAlarmRinging = false
         if (!isTimerRunning) {
+            releaseWakeLock()
             stopForeground(STOP_FOREGROUND_REMOVE)
         }
     }
@@ -701,7 +862,7 @@ class TimerService : Service() {
         notificationManager.notify(NOTIFICATION_ID, buildNotification(statusText))
     }
 
-    private fun buildNotification(statusText: String?): android.app.Notification {
+    private fun buildNotification(statusText: String?): Notification {
         createNotificationChannel()
 
         val timeFormatted = if (isCountUpMode) {
@@ -755,6 +916,19 @@ class TimerService : Service() {
             .setOnlyAlertOnce(true)
             .setStyle(NotificationCompat.BigTextStyle().bigText(bigTextSummary))
 
+        if (isTimerRunning && !isAlarmRinging) {
+            builder.setUsesChronometer(true)
+            if (isCountUpMode) {
+                builder.setChronometerCountDown(false)
+                builder.setWhen(countUpStartTime)
+            } else {
+                builder.setChronometerCountDown(true)
+                builder.setWhen(targetEndTimeMs)
+            }
+        } else {
+            builder.setUsesChronometer(false)
+        }
+
         if (isAlarmRinging) {
             val stopAlarmIntent = PendingIntent.getService(
                 this, 3, Intent(this, TimerService::class.java).apply { action = ACTION_STOP_ALARM },
@@ -767,7 +941,7 @@ class TimerService : Service() {
             val pauseLabel = if (isTimerRunning) "⏸️ PAUSE FOCUS" else "▶️ RESUME FOCUS"
             builder.addAction(0, pauseLabel, pauseIntent)
                 .addAction(0, "⏹️ END & SAVE", stopIntent)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setCategory(NotificationCompat.CATEGORY_PROGRESS)
         }
 
@@ -776,18 +950,33 @@ class TimerService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val manager = getSystemService(NotificationManager::class.java)
+            val existingChannel = manager.getNotificationChannel(CHANNEL_ID)
+            if (existingChannel != null && existingChannel.importance < NotificationManager.IMPORTANCE_DEFAULT) {
+                manager.deleteNotificationChannel(CHANNEL_ID)
+            }
+            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            val audioAttributes = AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .build()
+
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Focus Timer Channel",
-                NotificationManager.IMPORTANCE_LOW
-            )
-            val manager = getSystemService(NotificationManager::class.java)
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Metanoia active timer and focus progress notifications"
+                enableVibration(true)
+                setSound(soundUri, audioAttributes)
+            }
             manager.createNotificationChannel(channel)
         }
     }
 
     override fun onDestroy() {
         stopAlarmSound()
+        releaseWakeLock()
         try {
             tickToneGenerator?.release()
             tickToneGenerator = null
@@ -810,5 +999,20 @@ class TimerService : Service() {
         const val EXTRA_CATEGORY = "EXTRA_CATEGORY"
         const val EXTRA_IS_COUNT_UP = "EXTRA_IS_COUNT_UP"
         const val EXTRA_PROJECT_ID = "EXTRA_PROJECT_ID"
+
+        const val PREFS_ACTIVE_SESSION = "metanoia_active_timer_prefs"
+        const val KEY_IS_ACTIVE = "active_session_is_active"
+        const val KEY_IS_RUNNING = "active_session_is_running"
+        const val KEY_IS_PAUSED = "active_session_is_paused"
+        const val KEY_IS_ALARM_RINGING = "active_session_is_alarm_ringing"
+        const val KEY_IS_COUNT_UP = "active_session_is_count_up"
+        const val KEY_START_TIME_MS = "active_session_start_time_ms"
+        const val KEY_TARGET_END_TIME_MS = "active_session_target_end_time_ms"
+        const val KEY_TOTAL_DURATION_MS = "active_session_total_duration_ms"
+        const val KEY_TIME_LEFT_MS = "active_session_time_left_ms"
+        const val KEY_COUNT_UP_SECONDS = "active_session_count_up_seconds"
+        const val KEY_SESSION_TITLE = "active_session_title"
+        const val KEY_SESSION_CATEGORY = "active_session_category"
+        const val KEY_SESSION_PROJECT_ID = "active_session_project_id"
     }
 }
