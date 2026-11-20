@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.util.AttributeSet
+import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.View
@@ -84,10 +85,23 @@ class CustomWheelPicker @JvmOverloads constructor(
                 val alpha = (255 * (1f - (distanceFromCenter / (itemHeight * 1.5f)))).toInt().coerceIn(40, 255)
                 val isSelected = distanceFromCenter < (itemHeight / 2f)
 
-                textPaint.color = if (isSelected) {
-                    ContextCompat.getColor(context, R.color.text_white)
+                val typedValue = TypedValue()
+                val theme = context.theme
+                val primaryTextColor = if (theme.resolveAttribute(R.attr.appTextColorPrimary, typedValue, true)) {
+                    typedValue.data
+                } else {
+                    ContextCompat.getColor(context, R.color.white)
+                }
+                val secondaryTextColor = if (theme.resolveAttribute(R.attr.appTextColorSecondary, typedValue, true)) {
+                    typedValue.data
                 } else {
                     Color.argb(alpha, 160, 160, 160)
+                }
+
+                textPaint.color = if (isSelected) {
+                    primaryTextColor
+                } else {
+                    Color.argb(alpha, Color.red(secondaryTextColor), Color.green(secondaryTextColor), Color.blue(secondaryTextColor))
                 }
                 textPaint.textSize = if (isSelected) 56f else 44f
 

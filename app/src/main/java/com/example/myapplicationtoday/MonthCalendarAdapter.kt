@@ -1,6 +1,7 @@
 package com.example.myapplicationtoday
 
 import android.graphics.Color
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -50,8 +51,16 @@ class MonthCalendarAdapter(
             }
         } else {
             holder.flDayBackground.setBackgroundResource(R.drawable.bg_month_day_unselected)
+            val typedValue = TypedValue()
+            val context = holder.itemView.context
             if (monthDay.isCurrentMonth) {
-                holder.tvDayNumber.setTextColor(Color.parseColor("#FFFFFF"))
+                holder.tvDayNumber.alpha = 1.0f
+                val textColorPrimary = if (context.theme.resolveAttribute(R.attr.appTextColorPrimary, typedValue, true)) {
+                    typedValue.data
+                } else {
+                    Color.WHITE
+                }
+                holder.tvDayNumber.setTextColor(textColorPrimary)
                 if (monthDay.hasSessions) {
                     holder.vSessionDot.visibility = View.VISIBLE
                     holder.vSessionDot.setBackgroundResource(R.drawable.bg_chip_selected)
@@ -59,7 +68,13 @@ class MonthCalendarAdapter(
                     holder.vSessionDot.visibility = View.INVISIBLE
                 }
             } else {
-                holder.tvDayNumber.setTextColor(Color.parseColor("#4A4A4A"))
+                holder.tvDayNumber.alpha = 0.4f
+                val textColorSecondary = if (context.theme.resolveAttribute(R.attr.appTextColorSecondary, typedValue, true)) {
+                    typedValue.data
+                } else {
+                    Color.parseColor("#8E8E93")
+                }
+                holder.tvDayNumber.setTextColor(textColorSecondary)
                 holder.vSessionDot.visibility = View.INVISIBLE
             }
         }

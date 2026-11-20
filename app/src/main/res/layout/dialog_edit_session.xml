@@ -24,7 +24,7 @@
         android:paddingHorizontal="14dp"
         android:paddingVertical="12dp"
         android:hint="Session Title"
-        android:textColor="#FFFFFF"
+        android:textColor="?attr/appTextColorPrimary"
         android:textColorHint="#8E8E93"
         android:background="@drawable/bg_search_rounded"
         android:inputType="textCapWords" />
@@ -38,7 +38,7 @@
         android:paddingHorizontal="14dp"
         android:paddingVertical="12dp"
         android:hint="Category (e.g. Focus, Coding)"
-        android:textColor="#FFFFFF"
+        android:textColor="?attr/appTextColorPrimary"
         android:textColorHint="#8E8E93"
         android:background="@drawable/bg_search_rounded"
         android:inputType="textCapWords" />

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp"
+    android:background="@drawable/bg_search_rounded"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <FrameLayout
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_gravity="center">
+
+        <View
+            android:id="@+id/viewGlowRing"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_circle_selectable" />
+
+        <TextView
+            android:id="@+id/tvAchievementEmoji"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textSize="32sp"
+            tools:text="⏱️" />
+
+        <TextView
+            android:id="@+id/tvLockIcon"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="bottom|end"
+            android:background="@drawable/bg_tab_selected"
+            android:gravity="center"
+            android:text="🔒"
+            android:textSize="11sp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/tvAchievementTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="2"
+        android:textColor="?attr/appTextColorPrimary"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        tools:text="Consistency King" />
+
+    <TextView
+        android:id="@+id/tvAchievementProgressPill"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/bg_category_pill"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="2dp"
+        android:textColor="@color/gold_primary"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        tools:text="3 / 4" />
+
+    <ProgressBar
+        android:id="@+id/progressAchievementBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:layout_marginTop="8dp"
+        android:max="100"
+        android:progress="75"
+        android:progressTint="@color/gold_primary"
+        android:progressBackgroundTint="@color/card_stroke" />
+
+</LinearLayout>

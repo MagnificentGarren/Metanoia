@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog_dark"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <!-- Header -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvSelectChimeHeader"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SELECT ALERT CHIME"
+                android:textColor="@color/gold_primary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.06" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Select the tone played when a focus session ends"
+                android:textColor="#8E8E93"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/btnCloseChimeDialog"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Close"
+            android:src="@drawable/ic_cancel"
+            app:tint="#8E8E93" />
+    </RelativeLayout>
+
+    <!-- Chime List Scrollable Container -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:overScrollMode="never"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Item 1: Zen Bell -->
+            <LinearLayout
+                android:id="@+id/llChimeZen"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_dialog_item_unselected"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:layout_marginBottom="8dp">
+
+                <RadioButton
+                    android:id="@+id/rbChimeZen"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:buttonTint="@color/gold_primary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="8dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Zen Bell 🔔"
+                        android:textColor="?attr/appTextColorPrimary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tranquil bell tone"
+                        android:textColor="#8E8E93"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/btnPreviewZen"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Preview Zen Bell"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_volume"
+                    app:tint="@color/gold_primary" />
+            </LinearLayout>
+
+            <!-- Item 2: Digital Chime -->
+            <LinearLayout
+                android:id="@+id/llChimeDigital"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_dialog_item_unselected"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:layout_marginBottom="8dp">
+
+                <RadioButton
+                    android:id="@+id/rbChimeDigital"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:buttonTint="@color/gold_primary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="8dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Digital Chime ⚡"
+                        android:textColor="?attr/appTextColorPrimary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Crisp electronic alert"
+                        android:textColor="#8E8E93"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/btnPreviewDigital"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Preview Digital Chime"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_volume"
+                    app:tint="@color/gold_primary" />
+            </LinearLayout>
+
+            <!-- Item 3: Gentle Chime -->
+            <LinearLayout
+                android:id="@+id/llChimeGentle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_dialog_item_unselected"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:layout_marginBottom="8dp">
+
+                <RadioButton
+                    android:id="@+id/rbChimeGentle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:buttonTint="@color/gold_primary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="8dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Gentle Chime 🌿"
+                        android:textColor="?attr/appTextColorPrimary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Soft ambient tone"
+                        android:textColor="#8E8E93"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/btnPreviewGentle"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Preview Gentle Chime"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_volume"
+                    app:tint="@color/gold_primary" />
+            </LinearLayout>
+
+            <!-- Item 4: Classic Alarm -->
+            <LinearLayout
+                android:id="@+id/llChimeClassic"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_dialog_item_unselected"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:layout_marginBottom="8dp">
+
+                <RadioButton
+                    android:id="@+id/rbChimeClassic"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:buttonTint="@color/gold_primary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="8dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Classic Alarm ⏰"
+                        android:textColor="?attr/appTextColorPrimary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Prominent alarm tone"
+                        android:textColor="#8E8E93"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/btnPreviewClassic"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Preview Classic Alarm"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_volume"
+                    app:tint="@color/gold_primary" />
+            </LinearLayout>
+
+            <!-- Item 5: System Default -->
+            <LinearLayout
+                android:id="@+id/llChimeSystem"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_dialog_item_unselected"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <RadioButton
+                    android:id="@+id/rbChimeSystem"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:buttonTint="@color/gold_primary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="8dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="System Default 📱"
+                        android:textColor="?attr/appTextColorPrimary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Standard system alert sound"
+                        android:textColor="#8E8E93"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/btnPreviewSystem"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Preview System Default"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_volume"
+                    app:tint="@color/gold_primary" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnCancelChime"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_marginEnd="12dp"
+            android:text="CANCEL"
+            android:textColor="#8E8E93"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnSaveChime"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:backgroundTint="@color/gold_primary"
+            android:paddingHorizontal="24dp"
+            android:text="SAVE"
+            android:textColor="#0A0A0A"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+</LinearLayout>

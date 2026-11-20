@@ -95,6 +95,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun markProjectCompleted(projectId: String) {
+        viewModelScope.launch {
+            val app = getApplication<Application>()
+            SessionRepository.markProjectCompleted(app, projectId)
+            refreshSessions()
+        }
+    }
+
+    fun reactivateProject(projectId: String) {
+        viewModelScope.launch {
+            val app = getApplication<Application>()
+            SessionRepository.reactivateProject(app, projectId)
+            refreshSessions()
+        }
+    }
+
     fun calculateStreak(sessions: List<Session>): Int {
         if (sessions.isEmpty()) return 0
         

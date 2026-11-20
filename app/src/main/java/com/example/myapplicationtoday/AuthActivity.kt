@@ -18,6 +18,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.example.myapplicationtoday.ui.ThemeManager
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
@@ -67,6 +68,7 @@ class AuthActivity : AppCompatActivity() {
     private var isConfirmPasswordVisible = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        ThemeManager.applyThemeToActivity(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_auth)
 

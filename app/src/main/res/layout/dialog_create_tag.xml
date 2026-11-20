@@ -50,7 +50,7 @@
         android:layout_height="46dp"
         android:background="@drawable/bg_search_rounded"
         android:hint="e.g. Meditate, Reading, Fitness"
-        android:textColor="#FFFFFF"
+        android:textColor="?attr/appTextColorPrimary"
         android:textColorHint="#555555"
         android:paddingHorizontal="14dp"
         android:inputType="textCapWords"

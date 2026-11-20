@@ -62,7 +62,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="SIGN IN REQUIRED"
-            android:textColor="#FFFFFF"
+            android:textColor="?attr/appTextColorPrimary"
             android:textSize="24sp"
             android:textStyle="bold"
             android:gravity="center"

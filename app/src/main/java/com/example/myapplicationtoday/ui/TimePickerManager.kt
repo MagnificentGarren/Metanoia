@@ -1,6 +1,7 @@
 package com.example.myapplicationtoday.ui
 
 import android.content.Context
+import android.util.TypedValue
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.example.myapplicationtoday.CustomWheelPicker
@@ -71,7 +72,12 @@ class TimePickerManager(
     /** Resets all preset chips back to their unselected styling. */
     fun resetChipStyles() {
         val unselectedBg = R.drawable.bg_calendar_unselected
-        val unselectedColor = ContextCompat.getColor(context, R.color.text_white)
+        val typedValue = TypedValue()
+        val unselectedColor = if (context.theme.resolveAttribute(R.attr.appTextColorPrimary, typedValue, true)) {
+            typedValue.data
+        } else {
+            ContextCompat.getColor(context, R.color.text_white)
+        }
         chips.forEach { chip ->
             chip.setBackgroundResource(unselectedBg)
             chip.setTextColor(unselectedColor)

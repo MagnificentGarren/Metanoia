@@ -77,7 +77,7 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="Consistency King"
-                android:textColor="@color/text_white"
+                android:textColor="?attr/appTextColorPrimary"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -103,7 +103,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:text="Maintain a consecutive daily focus streak. Bronze (3 days) • Silver (7 days) • Gold (15 days) • Diamond (30 days)."
-            android:textColor="@color/text_white"
+            android:textColor="?attr/appTextColorPrimary"
             android:textSize="12sp" />
 
         <!-- Lore Quote -->

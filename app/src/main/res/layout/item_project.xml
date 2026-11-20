@@ -39,7 +39,7 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:singleLine="true"
-                android:textColor="#FFFFFF"
+                android:textColor="?attr/appTextColorPrimary"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 tools:text="Mobile App Design" />

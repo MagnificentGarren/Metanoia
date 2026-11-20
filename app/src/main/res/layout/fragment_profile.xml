@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_dark"
+    android:background="?attr/appBgColor"
     tools:context=".ui.ProfileFragment">
 
     <TextView
@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="@string/profile_settings_title"
-        android:textColor="@color/text_white"
+        android:textColor="?attr/appTextColorPrimary"
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
@@ -56,7 +56,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center"
-                        android:textColor="@color/text_white"
+                        android:textColor="?attr/appTextColorPrimary"
                         android:textSize="22sp"
                         android:textStyle="bold"
                         tools:text="JD" />
@@ -81,7 +81,7 @@
                         android:id="@+id/tvProfileName"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/text_white"
+                        android:textColor="?attr/appTextColorPrimary"
                         android:textSize="20sp"
                         android:textStyle="bold"
                         tools:text="John Doe" />
@@ -168,7 +168,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="MY FOCUS INSIGHTS 🔍 (TAP FOR DETAILED ANALYTICS)"
-                    android:textColor="@color/text_white"
+                    android:textColor="?attr/appTextColorPrimary"
                     android:textSize="12sp"
                     android:textStyle="bold"
                     android:letterSpacing="0.05"
@@ -339,6 +339,61 @@
 
             </LinearLayout>
 
+            <!-- Completed Projects Archive Entry Point -->
+            <LinearLayout
+                android:id="@+id/llCompletedProjectsArchive"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_search_rounded"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="14dp"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:gravity="center"
+                    android:text="🏆"
+                    android:textSize="20sp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Completed Projects Archive"
+                        android:textColor="?attr/appTextColorPrimary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvCompletedProjectsCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0 goals accomplished"
+                        android:textColor="@color/gold_primary"
+                        android:textSize="12sp"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:rotation="-90"
+                    android:src="@drawable/ic_chevron_down"
+                    app:tint="@color/text_muted" />
+            </LinearLayout>
+
             <!-- Focus & Timer Settings Header -->
             <TextView
                 android:layout_width="wrap_content"
@@ -348,6 +403,61 @@
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp"/>
+
+            <!-- App Theme Style Selector -->
+            <LinearLayout
+                android:id="@+id/llAppThemeStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_search_rounded"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="14dp"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:gravity="center"
+                    android:text="🎨"
+                    android:textSize="20sp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="App Theme &amp; Color Style"
+                        android:textColor="?attr/appTextColorPrimary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvAppThemeValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Gold Dark (Signature)"
+                        android:textColor="@color/gold_primary"
+                        android:textSize="12sp"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:rotation="-90"
+                    android:src="@drawable/ic_chevron_down"
+                    app:tint="@color/text_muted" />
+            </LinearLayout>
 
             <!-- Haptic Feedback -->
             <LinearLayout
@@ -382,7 +492,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Haptic Feedback"
-                        android:textColor="@color/text_white"
+                        android:textColor="?attr/appTextColorPrimary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
@@ -435,7 +545,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Sound Effects"
-                        android:textColor="@color/text_white"
+                        android:textColor="?attr/appTextColorPrimary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
@@ -488,7 +598,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Curate Focus Playlist"
-                        android:textColor="@color/text_white"
+                        android:textColor="?attr/appTextColorPrimary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
@@ -551,7 +661,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Custom Alert Chime"
-                        android:textColor="@color/text_white"
+                        android:textColor="?attr/appTextColorPrimary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
@@ -568,7 +678,7 @@
                     android:id="@+id/tvAlertSoundValue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/text_white"
+                    android:textColor="?attr/appTextColorPrimary"
                     android:textSize="15sp"
                     android:textStyle="bold"
                     tools:text="Zen Bell" />
@@ -615,7 +725,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Strict Focus Mode"
-                        android:textColor="@color/text_white"
+                        android:textColor="?attr/appTextColorPrimary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
@@ -677,7 +787,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/settings_daily_focus_goal"
-                        android:textColor="@color/text_white"
+                        android:textColor="?attr/appTextColorPrimary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
@@ -694,7 +804,7 @@
                     android:id="@+id/tvDailyFocusGoalValue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/text_white"
+                    android:textColor="?attr/appTextColorPrimary"
                     android:textSize="15sp"
                     android:textStyle="bold"
                     tools:text="1h 0m" />
@@ -740,7 +850,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/settings_daily_reminder_time"
-                        android:textColor="@color/text_white"
+                        android:textColor="?attr/appTextColorPrimary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
@@ -757,7 +867,7 @@
                     android:id="@+id/tvDailyReminderTimeValue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/text_white"
+                    android:textColor="?attr/appTextColorPrimary"
                     android:textSize="15sp"
                     android:textStyle="bold"
                     tools:text="09:00 AM" />
@@ -813,7 +923,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/settings_export_focus_history"
-                        android:textColor="@color/text_white"
+                        android:textColor="?attr/appTextColorPrimary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
@@ -866,7 +976,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/settings_cloud_local_backup"
-                        android:textColor="@color/text_white"
+                        android:textColor="?attr/appTextColorPrimary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
@@ -978,7 +1088,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="App Version"
-                        android:textColor="@color/text_white"
+                        android:textColor="?attr/appTextColorPrimary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
@@ -1024,7 +1134,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/settings_terms_privacy"
-                        android:textColor="@color/text_white"
+                        android:textColor="?attr/appTextColorPrimary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
@@ -1077,7 +1187,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/settings_support_feedback"
-                        android:textColor="@color/text_white"
+                        android:textColor="?attr/appTextColorPrimary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 

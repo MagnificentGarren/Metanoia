@@ -1,6 +1,7 @@
 package com.example.myapplicationtoday
 
 import android.app.Dialog
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -15,7 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -94,7 +95,7 @@ class AchievementsFragment : Fragment() {
 
     private fun setupRecyclerView() {
         adapter = AchievementsAdapter { item -> showAchievementDetailDialog(item) }
-        rvAchievements.layoutManager = LinearLayoutManager(requireContext())
+        rvAchievements.layoutManager = GridLayoutManager(requireContext(), 3)
         rvAchievements.adapter = adapter
     }
 
@@ -188,7 +189,7 @@ class AchievementsAdapter(private val onItemClicked: (AchievementItem) -> Unit) 
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_achievement, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_achievement_grid, parent, false)
         return ViewHolder(view)
     }
 
@@ -202,10 +203,7 @@ class AchievementsAdapter(private val onItemClicked: (AchievementItem) -> Unit) 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvEmoji: TextView = itemView.findViewById(R.id.tvAchievementEmoji)
         private val tvTitle: TextView = itemView.findViewById(R.id.tvAchievementTitle)
-        private val tvTierTag: TextView = itemView.findViewById(R.id.tvAchievementTierTag)
-        private val tvDescription: TextView = itemView.findViewById(R.id.tvAchievementDescription)
-        private val tvLore: TextView = itemView.findViewById(R.id.tvAchievementLore)
-        private val tvProgress: TextView = itemView.findViewById(R.id.tvAchievementProgress)
+        private val tvProgressPill: TextView = itemView.findViewById(R.id.tvAchievementProgressPill)
         private val progressAchievementBar: ProgressBar = itemView.findViewById(R.id.progressAchievementBar)
         private val viewGlowRing: View = itemView.findViewById(R.id.viewGlowRing)
         private val tvLockIcon: TextView = itemView.findViewById(R.id.tvLockIcon)
@@ -213,9 +211,7 @@ class AchievementsAdapter(private val onItemClicked: (AchievementItem) -> Unit) 
         fun bind(item: AchievementItem, clickListener: (AchievementItem) -> Unit) {
             tvTitle.text = item.title
             tvEmoji.text = item.emoji
-            tvDescription.text = item.howToObtain
-            tvLore.text = "\"${item.lore}\""
-            tvProgress.text = "${item.currentProgress} / ${item.maxProgress} ${item.unit}"
+            tvProgressPill.text = "${item.currentProgress} / ${item.maxProgress}"
 
             val percent = if (item.maxProgress > 0) {
                 ((item.currentProgress.toDouble() / item.maxProgress) * 100).toInt().coerceIn(0, 100)
@@ -224,26 +220,18 @@ class AchievementsAdapter(private val onItemClicked: (AchievementItem) -> Unit) 
 
             val borderGlow = GradientDrawable()
             borderGlow.shape = GradientDrawable.OVAL
-            
-            val tierNumber = when (item.tierName) {
-                "Bronze" -> 1
-                "Silver" -> 2
-                "Gold" -> 3
-                "Diamond" -> 4
-                else -> 0
-            }
 
             if (item.isLocked) {
                 borderGlow.setColor(Color.parseColor("#151515"))
                 tvLockIcon.visibility = View.VISIBLE
-                tvTierTag.text = "LOCKED"
-                tvTierTag.setTextColor(Color.parseColor("#8E8E93"))
-                itemView.alpha = 0.65f
+                tvProgressPill.setTextColor(Color.parseColor("#8E8E93"))
+                progressAchievementBar.progressTintList = ColorStateList.valueOf(Color.parseColor("#8E8E93"))
+                itemView.alpha = 0.55f
             } else {
                 borderGlow.setColor(item.glowColor)
                 tvLockIcon.visibility = View.GONE
-                tvTierTag.text = "${item.tierName.uppercase()} • TIER $tierNumber/4"
-                tvTierTag.setTextColor(item.glowColor)
+                tvProgressPill.setTextColor(item.glowColor)
+                progressAchievementBar.progressTintList = ColorStateList.valueOf(item.glowColor)
                 itemView.alpha = 1.0f
             }
             viewGlowRing.background = borderGlow

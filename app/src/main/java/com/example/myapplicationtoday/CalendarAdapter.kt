@@ -1,6 +1,7 @@
 package com.example.myapplicationtoday
 
 import android.graphics.Color
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -50,9 +51,21 @@ class CalendarAdapter(
             holder.vSessionDot?.visibility = if (hasSession) View.VISIBLE else View.INVISIBLE
             holder.vSessionDot?.setBackgroundColor(Color.parseColor("#0A0A0A"))
         } else {
+            val typedValue = TypedValue()
+            val context = holder.itemView.context
+            val textColorPrimary = if (context.theme.resolveAttribute(R.attr.appTextColorPrimary, typedValue, true)) {
+                typedValue.data
+            } else {
+                Color.WHITE
+            }
+            val textColorSecondary = if (context.theme.resolveAttribute(R.attr.appTextColorSecondary, typedValue, true)) {
+                typedValue.data
+            } else {
+                Color.parseColor("#8E8E93")
+            }
             holder.container.setBackgroundResource(R.drawable.bg_calendar_day_unselected)
-            holder.tvDayName.setTextColor(Color.parseColor("#8E8E93"))
-            holder.tvDayNumber.setTextColor(Color.parseColor("#FFFFFF"))
+            holder.tvDayName.setTextColor(textColorSecondary)
+            holder.tvDayNumber.setTextColor(textColorPrimary)
             holder.vSessionDot?.visibility = if (hasSession) View.VISIBLE else View.INVISIBLE
             holder.vSessionDot?.setBackgroundResource(R.drawable.bg_chip_selected)
         }

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_dark"
+    android:background="?attr/appBgColor"
     android:padding="20dp">
 
     <ImageView
@@ -17,6 +17,19 @@
         android:padding="6dp"
         android:src="@android:drawable/ic_menu_revert"
         app:tint="@color/gold_primary" />
+
+    <Button
+        android:id="@+id/btnAccomplishProject"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="12dp"
+        android:backgroundTint="@color/gold_primary"
+        android:paddingHorizontal="12dp"
+        android:text="Accomplish 🏆"
+        android:textColor="#0A0A0A"
+        android:textSize="11sp"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/tvProjectDetailEmoji"
@@ -36,7 +49,7 @@
         android:layout_below="@id/tvProjectDetailEmoji"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="16dp"
-        android:textColor="@color/text_white"
+        android:textColor="?attr/appTextColorPrimary"
         android:textSize="22sp"
         android:textStyle="bold"
         tools:text="Mobile App Design" />

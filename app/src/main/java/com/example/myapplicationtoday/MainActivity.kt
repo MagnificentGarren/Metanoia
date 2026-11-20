@@ -23,6 +23,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.myapplicationtoday.ui.DialogHelper
 import com.example.myapplicationtoday.ui.ProfileFragment
+import com.example.myapplicationtoday.ui.ThemeManager
 import com.example.myapplicationtoday.ui.TimerServiceController
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.collectLatest
@@ -50,7 +51,19 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
     private val profileFragment = ProfileFragment()
     private var currentFragment: Fragment = dashboardFragment
 
+    companion object {
+        private const val KEY_SELECTED_TAB = "key_selected_tab"
+        private const val TAB_DASHBOARD = 0
+        private const val TAB_SESSIONS = 1
+        private const val TAB_PROJECTS = 2
+        private const val TAB_ACHIEVEMENTS = 3
+        private const val TAB_PROFILE = 4
+    }
+
+    private var currentTabId = TAB_DASHBOARD
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        ThemeManager.applyThemeToActivity(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -75,9 +88,36 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
             }
         }
 
-        // Initial fragment setup
+        // Restore fragment selection if recreated
+        val savedTab = savedInstanceState?.getInt(KEY_SELECTED_TAB, TAB_DASHBOARD) ?: TAB_DASHBOARD
+        currentTabId = savedTab
+
+        val initialFragment = when (savedTab) {
+            TAB_SESSIONS -> {
+                highlightNav(navSessions)
+                sessionsFragment
+            }
+            TAB_PROJECTS -> {
+                highlightNav(navProjects)
+                projectsFragment
+            }
+            TAB_ACHIEVEMENTS -> {
+                highlightNav(navAchievements)
+                achievementsFragment
+            }
+            TAB_PROFILE -> {
+                highlightNav(null)
+                profileFragment
+            }
+            else -> {
+                highlightNav(navDashboard)
+                dashboardFragment
+            }
+        }
+        currentFragment = initialFragment
+
         supportFragmentManager.beginTransaction()
-            .replace(R.id.container, dashboardFragment)
+            .replace(R.id.container, initialFragment)
             .commit()
 
         checkAndSyncAuthState()
@@ -299,13 +339,12 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
         }
     }
 
-    private fun switchToFragment(fragment: Fragment, activeNav: TextView) {
-        currentFragment = fragment
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.container, fragment)
-            .commit()
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt(KEY_SELECTED_TAB, currentTabId)
+    }
 
-        // Handle bottom navigation item styling
+    private fun highlightNav(activeNav: TextView?) {
         val navItems = listOf(navDashboard, navSessions, navProjects, navAchievements)
         for (item in navItems) {
             if (item == activeNav) {
@@ -316,22 +355,32 @@ class MainActivity : AppCompatActivity(), TimerService.TimerListener {
                 item.setTextColor(0xFF8E8E93.toInt())
             }
         }
+    }
 
+    private fun switchToFragment(fragment: Fragment, activeNav: TextView) {
+        currentFragment = fragment
+        currentTabId = when (fragment) {
+            sessionsFragment -> TAB_SESSIONS
+            projectsFragment -> TAB_PROJECTS
+            achievementsFragment -> TAB_ACHIEVEMENTS
+            else -> TAB_DASHBOARD
+        }
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.container, fragment)
+            .commit()
+
+        highlightNav(activeNav)
         updateProfileIconState()
     }
 
     private fun switchToProfileFragment() {
         currentFragment = profileFragment
+        currentTabId = TAB_PROFILE
         supportFragmentManager.beginTransaction()
             .replace(R.id.container, profileFragment)
             .commit()
 
-        // Ensure all bottom navigation items are unselected
-        val navItems = listOf(navDashboard, navSessions, navProjects, navAchievements)
-        for (item in navItems) {
-            item.setBackgroundColor(Color.TRANSPARENT)
-            item.setTextColor(0xFF8E8E93.toInt())
-        }
+        highlightNav(null)
         updateProfileIconState()
     }
 

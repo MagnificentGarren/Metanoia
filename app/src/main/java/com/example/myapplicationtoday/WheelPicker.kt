@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
+import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
@@ -80,7 +81,13 @@ class WheelPicker @JvmOverloads constructor(
             view.isFocusableInTouchMode = false
             view.isClickable = false
             view.textSize = 20f
-            view.setTextColor(ContextCompat.getColor(context, R.color.text_white))
+            val typedValue = TypedValue()
+            val textColorPrimary = if (context.theme.resolveAttribute(R.attr.appTextColorPrimary, typedValue, true)) {
+                typedValue.data
+            } else {
+                ContextCompat.getColor(context, R.color.text_white)
+            }
+            view.setTextColor(textColorPrimary)
         }
     }
 }

@@ -2,6 +2,7 @@ package com.example.myapplicationtoday
 
 import android.content.Context
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -190,7 +191,13 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
                 nestedScrollView?.setOnTouchListener(null)
                 btnToggleScreenLock.text = getString(R.string.lock_screen_unlocked)
                 btnToggleScreenLock.setBackgroundResource(R.drawable.bg_calendar_unselected)
-                btnToggleScreenLock.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_white))
+                val typedValue = TypedValue()
+                val textColorPrimary = if (requireContext().theme.resolveAttribute(R.attr.appTextColorPrimary, typedValue, true)) {
+                    typedValue.data
+                } else {
+                    ContextCompat.getColor(requireContext(), R.color.text_white)
+                }
+                btnToggleScreenLock.setTextColor(textColorPrimary)
                 Toast.makeText(requireContext(), "Screen scrolling unlocked", Toast.LENGTH_SHORT).show()
             }
         }
@@ -207,7 +214,12 @@ class DashboardFragment : Fragment(), TimerService.TimerListener {
         rvProjectPicker.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.allProjectsFlow.collect { projects ->
-                rvProjectPicker.adapter = DashboardProjectAdapter(projects)
+                val activeProjects = projects.filter { !it.isCompleted }
+                if (selectedProjectId != null && activeProjects.none { it.id == selectedProjectId }) {
+                    selectedProjectId = null
+                    viewModel.draftProjectId = null
+                }
+                rvProjectPicker.adapter = DashboardProjectAdapter(activeProjects)
             }
         }
     }

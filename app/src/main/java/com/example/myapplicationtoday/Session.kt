@@ -26,7 +26,9 @@ data class Project(
     val emoji: String,
     val color: Int,
     val goalMinutes: Int? = null,
-    val totalMinutes: Int = 0
+    val totalMinutes: Int = 0,
+    val isCompleted: Boolean = false,
+    val completedAt: Long? = null
 )
 
 object SessionRepository {
@@ -125,7 +127,9 @@ object SessionRepository {
                                 emoji = obj.getString("emoji"),
                                 color = obj.getInt("color"),
                                 goalMinutes = if (obj.has("goalMinutes")) obj.getInt("goalMinutes") else null,
-                                totalMinutes = obj.optInt("totalMinutes", 0)
+                                totalMinutes = obj.optInt("totalMinutes", 0),
+                                isCompleted = obj.optBoolean("isCompleted", false),
+                                completedAt = if (obj.has("completedAt") && !obj.isNull("completedAt")) obj.getLong("completedAt") else null
                             )
                         )
                     }
@@ -255,6 +259,30 @@ object SessionRepository {
         }
     }
 
+    fun markProjectCompleted(context: Context, projectId: String) {
+        synchronized(this) {
+            init(context)
+            val index = memoryProjects.indexOfFirst { it.id == projectId }
+            if (index != -1) {
+                val p = memoryProjects[index]
+                memoryProjects[index] = p.copy(isCompleted = true, completedAt = System.currentTimeMillis())
+                saveToDiskInternal(context)
+            }
+        }
+    }
+
+    fun reactivateProject(context: Context, projectId: String) {
+        synchronized(this) {
+            init(context)
+            val index = memoryProjects.indexOfFirst { it.id == projectId }
+            if (index != -1) {
+                val p = memoryProjects[index]
+                memoryProjects[index] = p.copy(isCompleted = false, completedAt = null)
+                saveToDiskInternal(context)
+            }
+        }
+    }
+
     fun updateSession(context: Context, updatedSession: Session) {
         synchronized(this) {
             init(context)
@@ -366,6 +394,8 @@ object SessionRepository {
                 put("color", project.color)
                 project.goalMinutes?.let { put("goalMinutes", it) }
                 put("totalMinutes", project.totalMinutes)
+                put("isCompleted", project.isCompleted)
+                project.completedAt?.let { put("completedAt", it) }
             })
         }
         editor.putString(getProjectsKey(userId), projectArray.toString())

@@ -41,7 +41,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:text="First Focus"
-        android:textColor="@color/text_white"
+        android:textColor="?attr/appTextColorPrimary"
         android:textSize="22sp"
         android:textStyle="bold" />
 
@@ -80,7 +80,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Current Progress: 2 / 7 sessions"
-            android:textColor="@color/text_white"
+            android:textColor="?attr/appTextColorPrimary"
             android:textSize="14sp"
             android:textStyle="bold" />
 

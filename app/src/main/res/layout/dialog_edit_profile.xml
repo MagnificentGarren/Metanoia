@@ -104,7 +104,7 @@
             android:inputType="textPersonName|textCapWords"
             android:minHeight="48dp"
             android:paddingHorizontal="16dp"
-            android:textColor="#FFFFFF"
+            android:textColor="?attr/appTextColorPrimary"
             android:textColorHint="#8E8E93"
             android:layout_marginBottom="16dp" />
 
@@ -132,7 +132,7 @@
                 android:layout_weight="1"
                 android:checked="true"
                 android:text="Text Initials"
-                android:textColor="#FFFFFF" />
+                android:textColor="?attr/appTextColorPrimary" />
 
             <RadioButton
                 android:id="@+id/rbTypeIcon"
@@ -140,7 +140,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Character Icon"
-                android:textColor="#FFFFFF" />
+                android:textColor="?attr/appTextColorPrimary" />
         </RadioGroup>
 
         <!-- Initials Container -->
@@ -170,7 +170,7 @@
                 android:maxLength="3"
                 android:minHeight="48dp"
                 android:paddingHorizontal="16dp"
-                android:textColor="#FFFFFF"
+                android:textColor="?attr/appTextColorPrimary"
                 android:textColorHint="#8E8E93" />
         </LinearLayout>
 

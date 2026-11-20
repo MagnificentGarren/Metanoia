@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    android:background="@drawable/bg_search_rounded"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="14dp">
+
+    <TextView
+        android:id="@+id/tvCompletedEmoji"
+        android:layout_width="46dp"
+        android:layout_height="46dp"
+        android:background="@drawable/bg_card_outline"
+        android:gravity="center"
+        android:textSize="24sp"
+        tools:text="🎯" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="8dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvCompletedName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="?attr/appTextColorPrimary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:text="Mobile App Launch" />
+
+        <TextView
+            android:id="@+id/tvCompletedTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="#8E8E93"
+            android:textSize="12sp"
+            tools:text="12 hrs 30 mins focused" />
+
+        <TextView
+            android:id="@+id/tvCompletedBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_category_pill"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="2dp"
+            android:text="Accomplished 🏆"
+            android:textColor="@color/gold_primary"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnReactivateProject"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:backgroundTint="?attr/appCardBgColor"
+        android:paddingHorizontal="10dp"
+        android:text="Reactivate"
+        android:textColor="@color/gold_primary"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

@@ -48,6 +48,12 @@
             android:exported="true"
             android:theme="@style/Theme.MyApplicationToday" />
 
+        <!-- Completed Projects Archive Activity Page -->
+        <activity
+            android:name=".CompletedProjectsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MyApplicationToday" />
+
         <service
             android:name=".TimerService"
             android:enabled="true"

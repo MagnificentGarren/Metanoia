@@ -245,10 +245,11 @@ class ProjectsFragment : Fragment() {
     }
 
     private fun renderProjectsMode(query: String) {
+        val activeProjects = rawProjectsList.filter { !it.isCompleted }
         var filtered = if (query.isEmpty()) {
-            rawProjectsList
+            activeProjects
         } else {
-            rawProjectsList.filter { it.name.contains(query, ignoreCase = true) }
+            activeProjects.filter { it.name.contains(query, ignoreCase = true) }
         }
 
         filtered = when (selectedSortOrder) {
@@ -262,14 +263,14 @@ class ProjectsFragment : Fragment() {
 
         projectsAdapter.updateData(filtered)
 
-        tvStatActiveProjects.text = "${rawProjectsList.size} Active"
+        tvStatActiveProjects.text = "${activeProjects.size} Active"
 
-        val totalMins = rawProjectsList.sumOf { it.totalMinutes }
+        val totalMins = activeProjects.sumOf { it.totalMinutes }
         val h = totalMins / 60
         val m = totalMins % 60
         tvCumulativeFocus.text = String.format(Locale.getDefault(), "%02dh %02dm", h, m)
 
-        val projectsWithGoal = rawProjectsList.filter { it.goalMinutes != null && it.goalMinutes > 0 }
+        val projectsWithGoal = activeProjects.filter { it.goalMinutes != null && it.goalMinutes > 0 }
         val goalsHit = projectsWithGoal.count { it.totalMinutes >= it.goalMinutes!! }
         tvStatGoalsReached.text = "${goalsHit} / ${projectsWithGoal.size}"
 
@@ -684,6 +685,48 @@ class ProjectsFragment : Fragment() {
             .create()
 
         btnBack.setOnClickListener { dialog.dismiss() }
+
+        val btnAccomplish = view.findViewById<Button>(R.id.btnAccomplishProject)
+        if (project.isCompleted) {
+            btnAccomplish?.visibility = View.GONE
+        } else {
+            btnAccomplish?.visibility = View.VISIBLE
+            btnAccomplish?.setOnClickListener {
+                showAccomplishConfirmation(project) {
+                    dialog.dismiss()
+                }
+            }
+        }
+
+        dialog.show()
+    }
+
+    private fun showAccomplishConfirmation(project: Project, onAccomplished: () -> Unit) {
+        val view = layoutInflater.inflate(R.layout.dialog_custom_alert, null)
+        val tvTitle = view.findViewById<TextView>(R.id.tvAlertTitle)
+        val tvMessage = view.findViewById<TextView>(R.id.tvAlertMessage)
+        val btnNegative = view.findViewById<Button>(R.id.btnAlertNegative)
+        val btnPositive = view.findViewById<Button>(R.id.btnAlertPositive)
+
+        tvTitle.text = "ACCOMPLISH PROJECT 🏆"
+        tvMessage.text = "Congratulations! Mark '${project.name}' as completed? It will be archived in your Profile Completed Archive."
+        btnNegative.text = "KEEP ACTIVE"
+        btnPositive.text = "ACCOMPLISH 🏆"
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(view)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnNegative.setOnClickListener { dialog.dismiss() }
+        btnPositive.setOnClickListener {
+            viewModel.markProjectCompleted(project.id)
+            dialog.dismiss()
+            onAccomplished()
+            Toast.makeText(requireContext(), "Project '${project.name}' Accomplished! 🏆", Toast.LENGTH_SHORT).show()
+        }
+
         dialog.show()
     }
 

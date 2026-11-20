@@ -22,7 +22,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="1"
-            android:textColor="#FFFFFF"
+            android:textColor="?attr/appTextColorPrimary"
             android:textSize="13sp"
             android:textStyle="bold" />
     </FrameLayout>

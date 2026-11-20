@@ -48,7 +48,7 @@
             android:inputType="textCapWords"
             android:minHeight="48dp"
             android:paddingHorizontal="16dp"
-            android:textColor="#FFFFFF"
+            android:textColor="?attr/appTextColorPrimary"
             android:textColorHint="#8E8E93" />
 
         <TextView
@@ -100,7 +100,7 @@
             android:inputType="number"
             android:minHeight="48dp"
             android:paddingHorizontal="16dp"
-            android:textColor="#FFFFFF"
+            android:textColor="?attr/appTextColorPrimary"
             android:textColorHint="#8E8E93" />
 
         <Button

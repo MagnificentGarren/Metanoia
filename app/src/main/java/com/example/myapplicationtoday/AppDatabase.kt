@@ -45,6 +45,8 @@ data class ProjectEntity(
     val color: Int,
     val goalMinutes: Int?,
     val totalMinutes: Int,
+    val isCompleted: Boolean = false,
+    val completedAt: Long? = null,
     val userId: String = "guest_local",
     val updatedAt: Long = System.currentTimeMillis(),
     val isDeleted: Boolean = false,
@@ -90,6 +92,12 @@ interface SessionDao {
 interface ProjectDao {
     @Query("SELECT * FROM projects WHERE isDeleted = 0")
     fun getAllProjectsFlow(): Flow<List<ProjectEntity>>
+
+    @Query("SELECT * FROM projects WHERE isDeleted = 0 AND isCompleted = 0")
+    fun getActiveProjectsFlow(): Flow<List<ProjectEntity>>
+
+    @Query("SELECT * FROM projects WHERE isDeleted = 0 AND isCompleted = 1")
+    fun getCompletedProjectsFlow(): Flow<List<ProjectEntity>>
 
     @Query("SELECT * FROM projects WHERE isDeleted = 0")
     suspend fun getAllProjects(): List<ProjectEntity>

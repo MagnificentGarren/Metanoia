@@ -35,14 +35,18 @@ import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplicationtoday.AccountDataManager
 import com.example.myapplicationtoday.AchievementsEngine
 import com.example.myapplicationtoday.AppFeature
 import com.example.myapplicationtoday.AuthActivity
 import com.example.myapplicationtoday.BackupManager
+import com.example.myapplicationtoday.CompletedProjectsActivity
 import com.example.myapplicationtoday.EntitlementManager
 import com.example.myapplicationtoday.MainActivity
 import com.example.myapplicationtoday.MainViewModel
+import com.example.myapplicationtoday.Project
 import com.example.myapplicationtoday.R
 import com.example.myapplicationtoday.ReminderScheduler
 import com.example.myapplicationtoday.SessionRepository
@@ -103,6 +107,11 @@ class ProfileFragment : Fragment() {
 
     private lateinit var llTermsPrivacy: LinearLayout
     private lateinit var llSupportFeedback: LinearLayout
+
+    private lateinit var llCompletedProjectsArchive: LinearLayout
+    private lateinit var tvCompletedProjectsCount: TextView
+    private lateinit var llAppThemeStyle: LinearLayout
+    private lateinit var tvAppThemeValue: TextView
 
     private var previewToneGenerator: ToneGenerator? = null
     private var previewRingtone: Ringtone? = null
@@ -178,6 +187,11 @@ class ProfileFragment : Fragment() {
         llTermsPrivacy = view.findViewById(R.id.llTermsPrivacy)
         llSupportFeedback = view.findViewById(R.id.llSupportFeedback)
 
+        llCompletedProjectsArchive = view.findViewById(R.id.llCompletedProjectsArchive)
+        tvCompletedProjectsCount = view.findViewById(R.id.tvCompletedProjectsCount)
+        llAppThemeStyle = view.findViewById(R.id.llAppThemeStyle)
+        tvAppThemeValue = view.findViewById(R.id.tvAppThemeValue)
+
         // Load data
         loadProfileData()
         calculateAndDisplayInsights()
@@ -217,12 +231,23 @@ class ProfileFragment : Fragment() {
 
         llTermsPrivacy.setOnClickListener { openPrivacyPolicyWebPage() }
         llSupportFeedback.setOnClickListener { sendSupportFeedbackEmail() }
+
+        llCompletedProjectsArchive.setOnClickListener {
+            val intent = Intent(requireContext(), CompletedProjectsActivity::class.java)
+            startActivity(intent)
+        }
+        llAppThemeStyle.setOnClickListener { showThemeSelectionDialog() }
+
+        updateCompletedProjectsCount()
+        updateThemeValueText()
     }
 
     override fun onResume() {
         super.onResume()
         loadProfileData()
         calculateAndDisplayInsights()
+        updateCompletedProjectsCount()
+        updateThemeValueText()
     }
 
     private fun getAppPreferences() =
@@ -960,31 +985,81 @@ class ProfileFragment : Fragment() {
     }
 
     private fun showCustomAlertSoundPicker() {
-        val options = arrayOf("Zen Bell", "Digital Chime", "Gentle Chime", "Classic Alarm", "System Default")
+        val options = listOf("Zen Bell", "Digital Chime", "Gentle Chime", "Classic Alarm", "System Default")
         val currentSound = getAppPreferences().getString(ALERT_SOUND_KEY, getAltPreferences()?.getString(ALERT_SOUND_KEY, "Zen Bell")) ?: "Zen Bell"
-        var selectedIndex = options.indexOf(currentSound).let { if (it < 0) 0 else it }
+        var selectedSound = currentSound
 
-        playPreviewChime(options[selectedIndex])
+        val view = layoutInflater.inflate(R.layout.dialog_select_alert_chime, null)
+        val btnClose = view.findViewById<ImageView>(R.id.btnCloseChimeDialog)
 
-        AlertDialog.Builder(requireContext())
-            .setTitle("Select Alert Chime")
-            .setSingleChoiceItems(options, selectedIndex) { _, which ->
-                selectedIndex = which
-                playPreviewChime(options[which])
+        val itemViews = listOf(
+            Triple(view.findViewById<LinearLayout>(R.id.llChimeZen), view.findViewById<RadioButton>(R.id.rbChimeZen), view.findViewById<ImageView>(R.id.btnPreviewZen)),
+            Triple(view.findViewById<LinearLayout>(R.id.llChimeDigital), view.findViewById<RadioButton>(R.id.rbChimeDigital), view.findViewById<ImageView>(R.id.btnPreviewDigital)),
+            Triple(view.findViewById<LinearLayout>(R.id.llChimeGentle), view.findViewById<RadioButton>(R.id.rbChimeGentle), view.findViewById<ImageView>(R.id.btnPreviewGentle)),
+            Triple(view.findViewById<LinearLayout>(R.id.llChimeClassic), view.findViewById<RadioButton>(R.id.rbChimeClassic), view.findViewById<ImageView>(R.id.btnPreviewClassic)),
+            Triple(view.findViewById<LinearLayout>(R.id.llChimeSystem), view.findViewById<RadioButton>(R.id.rbChimeSystem), view.findViewById<ImageView>(R.id.btnPreviewSystem))
+        )
+
+        val btnCancel = view.findViewById<Button>(R.id.btnCancelChime)
+        val btnSave = view.findViewById<Button>(R.id.btnSaveChime)
+
+        fun updateChimeSelectionUI() {
+            options.forEachIndexed { index, chimeName ->
+                val (layout, radio, _) = itemViews[index]
+                val isSelected = chimeName == selectedSound
+                radio.isChecked = isSelected
+                layout.setBackgroundResource(
+                    if (isSelected) R.drawable.bg_dialog_item_selected else R.drawable.bg_dialog_item_unselected
+                )
             }
-            .setPositiveButton("SAVE") { dialog, _ ->
-                val chosen = options[selectedIndex]
-                saveSetting(ALERT_SOUND_KEY, chosen)
-                tvAlertSoundValue.text = chosen
-                Toast.makeText(context, "Alert chime updated to $chosen", Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
+        }
+
+        updateChimeSelectionUI()
+        playPreviewChime(selectedSound)
+
+        options.forEachIndexed { index, chimeName ->
+            val (layout, radio, previewBtn) = itemViews[index]
+
+            val selectAction = {
+                selectedSound = chimeName
+                updateChimeSelectionUI()
+                playPreviewChime(chimeName)
             }
-            .setNegativeButton("CANCEL") { dialog, _ ->
-                stopPreviewChime()
-                dialog.dismiss()
-            }
-            .setOnDismissListener { stopPreviewChime() }
-            .show()
+
+            layout.setOnClickListener { selectAction() }
+            radio.setOnClickListener { selectAction() }
+            previewBtn.setOnClickListener { selectAction() }
+        }
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(view)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnClose.setOnClickListener {
+            stopPreviewChime()
+            dialog.dismiss()
+        }
+
+        btnCancel.setOnClickListener {
+            stopPreviewChime()
+            dialog.dismiss()
+        }
+
+        btnSave.setOnClickListener {
+            saveSetting(ALERT_SOUND_KEY, selectedSound)
+            tvAlertSoundValue.text = selectedSound
+            Toast.makeText(context, "Alert chime updated to $selectedSound", Toast.LENGTH_SHORT).show()
+            stopPreviewChime()
+            dialog.dismiss()
+        }
+
+        dialog.setOnDismissListener {
+            stopPreviewChime()
+        }
+
+        dialog.show()
     }
 
     private fun playPreviewChime(chimeName: String) {
@@ -1284,6 +1359,82 @@ class ProfileFragment : Fragment() {
         } catch (e: Exception) {
             Toast.makeText(context, "No email client found!", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun updateCompletedProjectsCount() {
+        val completedCount = SessionRepository.getAllProjects(requireContext()).count { it.isCompleted }
+        tvCompletedProjectsCount.text = "$completedCount goals accomplished"
+    }
+
+    private fun updateThemeValueText() {
+        val currentTheme = ThemeManager.getSelectedTheme(requireContext())
+        tvAppThemeValue.text = ThemeManager.getThemeDisplayName(currentTheme)
+    }
+
+    private fun showThemeSelectionDialog() {
+        val currentTheme = ThemeManager.getSelectedTheme(requireContext())
+        var selectedTheme = currentTheme
+
+        val view = layoutInflater.inflate(R.layout.dialog_select_theme, null)
+        val btnClose = view.findViewById<ImageView>(R.id.btnCloseThemeDialog)
+        val llGoldDark = view.findViewById<LinearLayout>(R.id.llThemeGoldDark)
+        val rbGoldDark = view.findViewById<RadioButton>(R.id.rbThemeGoldDark)
+        val llGoldLight = view.findViewById<LinearLayout>(R.id.llThemeGoldLight)
+        val rbGoldLight = view.findViewById<RadioButton>(R.id.rbThemeGoldLight)
+        val btnCancel = view.findViewById<Button>(R.id.btnCancelTheme)
+        val btnApply = view.findViewById<Button>(R.id.btnApplyTheme)
+
+        fun updateThemeSelectionUI() {
+            val isDark = selectedTheme == ThemeManager.THEME_GOLD_DARK
+            rbGoldDark.isChecked = isDark
+            rbGoldLight.isChecked = !isDark
+
+            llGoldDark.setBackgroundResource(
+                if (isDark) R.drawable.bg_dialog_item_selected else R.drawable.bg_dialog_item_unselected
+            )
+            llGoldLight.setBackgroundResource(
+                if (!isDark) R.drawable.bg_dialog_item_selected else R.drawable.bg_dialog_item_unselected
+            )
+        }
+
+        updateThemeSelectionUI()
+
+        val selectDarkAction = {
+            selectedTheme = ThemeManager.THEME_GOLD_DARK
+            updateThemeSelectionUI()
+        }
+
+        val selectLightAction = {
+            selectedTheme = ThemeManager.THEME_GOLD_LIGHT
+            updateThemeSelectionUI()
+        }
+
+        llGoldDark.setOnClickListener { selectDarkAction() }
+        rbGoldDark.setOnClickListener { selectDarkAction() }
+
+        llGoldLight.setOnClickListener { selectLightAction() }
+        rbGoldLight.setOnClickListener { selectLightAction() }
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(view)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnClose.setOnClickListener { dialog.dismiss() }
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        btnApply.setOnClickListener {
+            if (selectedTheme != currentTheme) {
+                ThemeManager.setSelectedTheme(requireContext(), selectedTheme)
+                activity?.let { act ->
+                    ThemeManager.recreateActivitySmoothly(act)
+                }
+            }
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     override fun onDestroyView() {

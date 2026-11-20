@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="14dp"
+    android:background="@drawable/bg_search_rounded"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvCompletedEmoji"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_card_outline"
+            android:gravity="center"
+            android:textSize="26sp"
+            tools:text="🎯" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvCompletedName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="?attr/appTextColorPrimary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                tools:text="Mobile App Launch" />
+
+            <TextView
+                android:id="@+id/tvCompletedDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/gold_primary"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                tools:text="Accomplished Oct 24, 2024" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnReactivateProject"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:backgroundTint="?attr/appCardBgColor"
+            android:paddingHorizontal="12dp"
+            android:text="Reactivate"
+            android:textColor="@color/gold_primary"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginVertical="12dp"
+        android:background="#2C2C2E" />
+
+    <!-- Detailed Stats Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="3">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Total Focus"
+                android:textColor="@color/text_muted"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/tvCompletedTotalTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="?attr/appTextColorPrimary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                tools:text="14h 30m" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sessions"
+                android:textColor="@color/text_muted"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/tvCompletedSessionsCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="?attr/appTextColorPrimary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                tools:text="12 (45m avg)" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Goal Met"
+                android:textColor="@color/text_muted"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/tvCompletedGoalStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/gold_primary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                tools:text="10h (145% hit)" />
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>
